@@ -1,0 +1,16 @@
+{
+  "name": "ploorpbot",
+  "type": "module",
+  "scripts": {
+    "start": "node --no-warnings ploorp.js"
+  },
+  "version": "1.0.0",
+  "description": "bot",
+  "main": "ploorp.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@kararty/dank-twitch-irc": "^6.0.0",
+    "axios": "^1.8.4"
+  }
+}
