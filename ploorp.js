@@ -9,7 +9,7 @@ client.on('PRIVMSG', async (msg) => {
   }
   */
 
-  if (msg.messageText.startsWith('!ping')) {
+  if (msg.messageText.startsWith('ping')) {
     return client.say(msg.channelName, 'pong');
   }
 
@@ -18,6 +18,7 @@ client.on('PRIVMSG', async (msg) => {
   }
 
   if (msg.messageText.includes('ploorp') || msg.messageText.includes('plorp')) {
+    if (msg.senderUsername === 'ploorp') {return;}
     return client.say(msg.channelName, msg.senderUsername);
   }
 
