@@ -3,8 +3,22 @@ import config from './config.json' with { type: 'json' };
 import axios from 'axios';
 
 client.on('PRIVMSG', async (msg) => {
+  /*
   if (!config.whitelist_channels.includes(msg.senderUsername.toLowerCase())) {
     return;
+  }
+  */
+
+  if (msg.messageText.startsWith('!ping')) {
+    return client.say(msg.channelName, 'pong');
+  }
+
+  if (msg.messageText.includes('pl 00 rp')) {
+    return client.say(msg.channelName, '00');
+  }
+
+  if (msg.messageText.includes('ploorp') || msg.messageText.contains('plorp')) {
+    return client.say(msg.channelName, msg.senderUsername);
   }
 
   if (msg.messageText.startsWith('!boxd')) {
