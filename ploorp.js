@@ -9,17 +9,12 @@ client.on('PRIVMSG', async (msg) => {
   }
   */
 
-  if (msg.messageText.startsWith('ping')) {
-    return client.say(msg.channelName, 'pong');
+  if (msg.messageText.trim() === 'ping') {
+    return client.say(msg.channelName, msg.senderUsername + ', pong');
   }
 
   if (msg.messageText.includes('pl 00 rp')) {
     return client.say(msg.channelName, '00');
-  }
-
-  if (msg.messageText.includes('ploorp') || msg.messageText.includes('plorp')) {
-    if (msg.senderUsername === 'ploorp') {return;}
-    return client.say(msg.channelName, msg.senderUsername);
   }
 
   if (msg.messageText.startsWith('!boxd')) {
