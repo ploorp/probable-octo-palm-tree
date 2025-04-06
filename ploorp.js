@@ -17,7 +17,7 @@ client.on('PRIVMSG', async (msg) => {
     return client.say(msg.channelName, '00');
   }
 
-  if (msg.messageText.includes('ploorp') || msg.messageText.contains('plorp')) {
+  if (msg.messageText.includes('ploorp') || msg.messageText.includes('plorp')) {
     return client.say(msg.channelName, msg.senderUsername);
   }
 
