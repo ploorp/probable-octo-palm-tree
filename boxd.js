@@ -12,7 +12,7 @@ export default async function boxd(msg) {
   if (!args[0].length) {
     rssUrl = `https://letterboxd.com/${msg.senderUsername}/rss/`;
     try {
-    response = await axios.get(rssUrl);
+      response = await axios.get(rssUrl);
     } catch (error) {
     return client.say(
       msg.channelName,
@@ -24,7 +24,7 @@ export default async function boxd(msg) {
     username = args[0].toLowerCase();
     rssUrl = `https://letterboxd.com/${username}/rss/`;
     try {
-    response = await axios.get(rssUrl);
+      response = await axios.get(rssUrl);
     } catch (error) {
     return client.say(
       msg.channelName,
