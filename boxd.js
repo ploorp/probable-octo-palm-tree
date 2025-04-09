@@ -1,3 +1,4 @@
+import { client } from './src/client.js';
 import axios from 'axios';    
 
 export default async function boxd(msg) {
