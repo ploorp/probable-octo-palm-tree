@@ -82,3 +82,5 @@ async function boxd(msg) {
     message
   );
 }
+
+export { boxd };
