@@ -30,7 +30,7 @@ client.on('PRIVMSG', async (msg) => {
     return client.say(msg.channelName, message);
   }
 
-  if (msg.senderUsername.toLowerCase() === 'deepdankdungeonbot') {
+  if (msg.senderUsername === 'DeepDankDungeonBot') {
     if (msg.messageText.startsWith('A Raid')) {
       return client.say(msg.channelName, '+ed');
     }
@@ -44,12 +44,12 @@ client.on('PRIVMSG', async (msg) => {
     return client.say(msg.channelName, 'AA');
   }
 
-  if (msg.messageText.strip() === 'test') {
+  if (msg.messageText.trim() === 'test') {
     return client.say(msg.channelName, 'a');
   }
 
-  if (!msg.senderUsername === 'ploorp') {
-    if (msg.messageText.strip() === 'gup') {
+  if (!msg.senderUserID === '502913017') {
+    if (msg.messageText.trim() === 'gup') {
       return client.say(msg.channelName, 'gup');
     }
   }
