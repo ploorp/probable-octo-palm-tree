@@ -1,6 +1,6 @@
 import axios from 'axios';    
 
-async function boxd(msg) {
+export default async function boxd(msg) {
   const args = msg.messageText.slice(5).trim().split(' ');
 
   let username;
@@ -82,5 +82,3 @@ async function boxd(msg) {
     message
   );
 }
-
-export { boxd };
