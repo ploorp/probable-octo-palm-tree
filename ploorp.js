@@ -30,7 +30,7 @@ client.on('PRIVMSG', async (msg) => {
     return client.say(msg.channelName, message);
   }
 
-  if (msg.senderUsername === 'DeepDankDungeonBot') {
+  if (msg.senderUserID === '883453487') {
     if (msg.messageText.startsWith('A Raid')) {
       return client.say(msg.channelName, '+ed');
     }
