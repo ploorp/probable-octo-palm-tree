@@ -26,10 +26,10 @@ export default async function boxd(msg) {
     try {
       response = await axios.get(rssUrl);
     } catch (error) {
-    return client.say(
-      msg.channelName,
-      'bad username'
-    );
+      return client.say(
+        msg.channelName,
+        'bad username'
+      );
     }
   }
 
@@ -38,8 +38,8 @@ export default async function boxd(msg) {
 
   if (!linkMatch || !linkMatch[1].includes('/film/')) {
     return client.say(
-    msg.channelName,
-    `${username} has not logged any movies`
+      msg.channelName,
+      `${username} has not logged any movies`
     );
   }
 
@@ -49,10 +49,10 @@ export default async function boxd(msg) {
   try {
     jsonResponse = await axios.get(jsonUrl);
   } catch (error) {
-    return client.say(
-    msg.channelName,
-    'error Reacting'
-    );
+      return client.say(
+        msg.channelName,
+        'error Reacting'
+      );
   }
 
   const jsonData = jsonResponse.data;

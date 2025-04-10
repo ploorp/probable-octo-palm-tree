@@ -26,8 +26,8 @@ client.on('PRIVMSG', async (msg) => {
   }
 
   if (msg.messageText.startsWith('!boxd')) {
-    const message = await boxd(msg);
-    return client.say(msg.channelName, message);
+    await boxd(msg);
+    return;
   }
 
   if (msg.senderUserID === '883453487') {
@@ -38,6 +38,8 @@ client.on('PRIVMSG', async (msg) => {
     if (msg.messageText.includes('30 seconds')) {
       return client.say(msg.channelName, '+join');
     }
+
+    return;
   }
 
   if (msg.messageText.includes('ploorp') && msg.messageText.includes('bot')) {
@@ -52,5 +54,7 @@ client.on('PRIVMSG', async (msg) => {
     if (msg.messageText.trim() === 'gup') {
       return client.say(msg.channelName, 'gup');
     }
+
+    return;
   }
 });
