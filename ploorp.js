@@ -19,7 +19,7 @@ client.on('PRIVMSG', async (msg) => {
     const seconds = uptime % 60;
     const uptimeString = `${days}d ${hours}h ${minutes}m ${seconds}s`
 
-    return client.say(msg.channelName, msg.senderUsername + ' guptime: ' + uptimeString);
+    return client.say(msg.channelName, '@' + msg.senderUsername, + ' guptime: ' + uptimeString);
   }
 
   if (msg.messageText.includes('pl 00 rp')) {
