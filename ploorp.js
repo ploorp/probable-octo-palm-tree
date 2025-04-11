@@ -1,6 +1,6 @@
 import { client } from './src/client.js';
 import boxd from './boxd.js';
-import sleep from './src/utils.js';
+import { sleep } from './src/utils.js';
 
 const startTime = new Date();
 
