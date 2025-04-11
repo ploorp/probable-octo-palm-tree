@@ -1,5 +1,6 @@
 import { client } from './src/client.js';
 import boxd from './boxd.js';
+import sleep from './src/utils.js';
 
 const startTime = new Date();
 
@@ -32,10 +33,12 @@ client.on('PRIVMSG', async (msg) => {
 
   if (msg.senderUserID === '883453487') {
     if (msg.messageText.startsWith('A Raid')) {
+      await sleep(Math.random() * 10000 + 5000);
       return client.say(msg.channelName, '+ed');
     }
 
     if (msg.messageText.includes('30 seconds')) {
+      await sleep(Math.random() * 10000 + 5000);
       return client.say(msg.channelName, '+join');
     }
 
