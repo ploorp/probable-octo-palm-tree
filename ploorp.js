@@ -76,7 +76,6 @@ client.on('PRIVMSG', async (msg) => {
   if (config.whitelist_channels.includes(msg.senderUsername)) {
     if (msg.messageText.startsWith('-part')) {
       await client.part(msg.channelName);
-      return client.say(msg.channelName, 'parted ' + msg.channelName);
     }
 
     if (msg.messageText.startsWith('-join')) {
@@ -84,7 +83,6 @@ client.on('PRIVMSG', async (msg) => {
 
       if (args[0].length) {
         await client.join(args[0]);
-
         return client.say(msg.channelName, 'joined ' + args[0]);
       }
     }
