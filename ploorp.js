@@ -11,14 +11,9 @@ client.on("CLEARCHAT", (msg) => {
 
 client.on('PRIVMSG', async (msg) => {
 
-  // goodnight message
-  // ploorpbot username 
-  // send from queue of messages
-  // dev commands to stop and restart 
-  // pyramid and spam
-  // make sure bot is modded
-  // logs
-  // dl command
+  if (!msg.senderUserID === config.id) {
+    return;
+  }
 
   if (msg.messageText.startsWith('-ping')) {
     const uptime = Math.floor((Date.now() - startTime) / 1000);
@@ -63,15 +58,6 @@ client.on('PRIVMSG', async (msg) => {
   //   return client.say(msg.channelName, '00');
   // }
 
-  // commands that could loop
-  if (!msg.senderUserID === config.id) {
-    if (msg.messageText.trim() === 'gup') {
-      return client.say(msg.channelName, 'gup');
-    }
-
-    return;
-  }
-
   // commands only whitelisted users can use 
   if (config.whitelist_channels.includes(msg.senderUsername)) {
     if (msg.messageText.startsWith('-part')) {
@@ -86,8 +72,6 @@ client.on('PRIVMSG', async (msg) => {
         return client.say(msg.channelName, 'joined ' + args[0]);
       }
     }
-
-    return;
   }
 
   if (msg.messageText.includes(config.username)) {
@@ -96,5 +80,9 @@ client.on('PRIVMSG', async (msg) => {
 
   if (msg.messageText.trim() === 'test') {
     return client.say(msg.channelName, 'A');
+  }
+
+  if (msg.messageText.trim() === 'gup') {
+    return client.say(msg.channelName, 'gup');
   }
 });
