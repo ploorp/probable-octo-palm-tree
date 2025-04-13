@@ -42,7 +42,7 @@ client.on('PRIVMSG', async (msg) => {
   }
 
   if (msg.messageText.startsWith('-help')) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, commands: -ping, -boxd <username>'`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, commands: -ping, -boxd <username>`);
   }
 
   // if (msg.senderUserID === '883453487') {
@@ -62,14 +62,6 @@ client.on('PRIVMSG', async (msg) => {
   // if (msg.messageText.includes('pl 00 rp')) {
   //   return client.say(msg.channelName, '00');
   // }
-
-  if (msg.messageText.includes(config.username)) {
-    return client.say(msg.channelName, msg.senderUserID + ' hi');
-  }
-
-  if (msg.messageText.trim() === 'test') {
-    return client.say(msg.channelName, 'A');
-  }
 
   // commands that could loop
   if (!msg.senderUserID === config.id) {
@@ -98,5 +90,13 @@ client.on('PRIVMSG', async (msg) => {
     }
 
     return;
+  }
+
+  if (msg.messageText.includes(config.username)) {
+    return client.say(msg.channelName, msg.senderUsername + ' hi');
+  }
+
+  if (msg.messageText.trim() === 'test') {
+    return client.say(msg.channelName, 'A');
   }
 });
