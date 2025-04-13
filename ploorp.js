@@ -16,7 +16,7 @@ client.on('PRIVMSG', async (msg) => {
     return;
   }
 
-  if (msg.messageText.startsWith('-ping')) {
+  if (msg.messageText.startsWith(config.prefix + 'ping')) {
     const uptime = Math.floor((Date.now() - startTime) / 1000);
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
@@ -32,13 +32,15 @@ client.on('PRIVMSG', async (msg) => {
     return client.say(msg.channelName, `@${msg.senderUsername}, catHop guptime: ${uptimeStr}`);
   }
 
-  if (msg.messageText.startsWith('-boxd')) {
+  if (msg.messageText.startsWith(config.prefix + 'boxd')) {
     await boxd(msg);
     return;
   }
 
-  if (msg.messageText.startsWith('-help')) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, commands: -ping, -boxd <username>`);
+  if (msg.messageText.startsWith(config.prefix + 'help')) {
+    const p = config.prefix;
+    return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}ping, ${p}boxd <username>, ${p}help`);
+
   }
 
   // if (msg.senderUserID === '883453487') {
@@ -61,11 +63,11 @@ client.on('PRIVMSG', async (msg) => {
 
   // commands only whitelisted users can use 
   if (config.whitelist_channels.includes(msg.senderUsername)) {
-    if (msg.messageText.startsWith('-part')) {
+    if (msg.messageText.startsWith(config.prefix + 'part')) {
       await client.part(msg.channelName);
     }
 
-    if (msg.messageText.startsWith('-join')) {
+    if (msg.messageText.startsWith(config.prefix + 'join')) {
       const args = msg.messageText.slice(5).trim().split(' ');
 
       if (args[0].length) {

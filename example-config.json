@@ -3,6 +3,7 @@
   "username": "your_username",
   "access_token": "https://twitchtokengenerator.com/",
   "helix_id": "https://twitchtokengenerator.com/",
+  "prefix": "%",
   "channels": [
       "your_channel",
       "forsen",
