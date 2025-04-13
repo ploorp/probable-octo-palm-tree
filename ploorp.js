@@ -6,7 +6,9 @@ import config from './config.json' with { type: 'json' };
 const startTime = new Date();
 
 client.on("CLEARCHAT", (msg) => {
-  return client.say(msg.channelName, 'BAND');
+  if (!msg.userID === config.id) {
+    return client.say(msg.channelName, 'BAND');
+  }
 });
 
 client.on('PRIVMSG', async (msg) => {
