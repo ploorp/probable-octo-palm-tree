@@ -1,7 +1,7 @@
 import { client } from './src/client.js';
 import boxd from './boxd.js';
 import { sleep } from './src/utils.js';
-import config from '../config.json' with { type: 'json' };
+import config from './config.json' with { type: 'json' };
 
 const startTime = new Date();
 
