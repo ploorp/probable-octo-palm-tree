@@ -12,8 +12,7 @@ client.on("CLEARCHAT", (msg) => {
 });
 
 client.on('PRIVMSG', async (msg) => {
-
-  if (!msg.senderUserID === config.id) {
+  if (msg.senderUserID == config.id) {
     return;
   }
 
