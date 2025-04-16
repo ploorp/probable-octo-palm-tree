@@ -12,6 +12,10 @@ client.on("CLEARCHAT", (msg) => {
 });
 
 client.on('PRIVMSG', async (msg) => {
+  if (!client.privileges[msg.channelName]?.isModerator) {
+    return;
+  }
+
   if (msg.senderUserID == config.id) {
     return;
   }
