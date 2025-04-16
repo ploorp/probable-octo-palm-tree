@@ -18,7 +18,7 @@ client.on('PRIVMSG', async (msg) => {
   const roomState = client.roomStateTracker?.channelStates?.[msg.channelName];
   const botState = client.userStateTracker?.channelStates?.[msg.channelName];
 
-  if(!botState.isMod && (roomState.emoteOnly || roomState.subOnly || roomState.followersOnlyDuration > -1)) {
+  if (!botState.isMod && (roomState.emoteOnly || roomState.subOnly || roomState.followersOnlyDuration > -1)) {
     return;
   }
 
@@ -26,10 +26,10 @@ client.on('PRIVMSG', async (msg) => {
     return;
   }
 
-  const msgText = msg.messageText;
-  const args = msgText.trim().split(' ');
+  const msgText = msg.messageText.trim();
+  const args = msgText.split(' ');
 
-  if (mstText.startsWith(config.prefix + 'ping')) {
+  if (msgText.startsWith(config.prefix + 'ping')) {
     const uptime = Math.floor((Date.now() - startTime) / 1000);
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
@@ -37,58 +37,57 @@ client.on('PRIVMSG', async (msg) => {
     const seconds = uptime % 60;
 
     let uptimeStr = 
-    days > 0 ? `${days}d ${hours}h` :
-    hours > 0 ? `${hours}h ${minutes}m` :
-    minutes > 0 ? `${minutes}m ${seconds}s` :
-    `${seconds}s`;
+      days > 0 ? `${days}d ${hours}h` :
+      hours > 0 ? `${hours}h ${minutes}m` :
+      minutes > 0 ? `${minutes}m ${seconds}s` :
+      `${seconds}s`;
 
     return client.say(msg.channelName, `@${msg.senderUsername}, catHop guptime: ${uptimeStr}`);
   }
 
   if (args[0] === config.prefix + 'boxd') {
     await boxd(msg);
-
     return;
   }
 
   if (args[0] === config.prefix + 'help') {
     const p = config.prefix;
-
     return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}ping, ${p}boxd <username>, ${p}follows <username>, ${p}help`);
   }
 
-  // commands only whitelisted users can use 
+  // Commands only whitelisted users can use
   if (config.whitelist_channels.includes(msg.senderUsername)) {
     if (args[0] === config.prefix + 'part') {
       await client.part(msg.channelName);
     }
 
     if (args[0] === config.prefix + 'join') {
-      if (args[1].length) {
+      if (args[1]?.length) {
         await client.join(args[1]);
-
         return client.say(msg.channelName, 'joined ' + args[1]);
       }
+
+      return;
     }
   }
 
-  if (mstText.includes(config.username)) {
+  if (msgText.includes(config.username)) {
     return client.say(msg.channelName, msg.senderUsername + ' hi');
   }
 
-  if (mstText.trim() === 'test') {
+  if (msgText === 'test') {
     return client.say(msg.channelName, 'A');
   }
 
-  if (mstText.trim() === 'gup') {
+  if (msgText === 'gup') {
     return client.say(msg.channelName, 'gup');
   }
 
   if (args[0] === config.prefix + 'f' || args[0] === config.prefix + 'follows') {
-    if (!args[1].length) {
-      return client.say(msg.channelName,`https://tools.2807.eu/follows?user=${msg.senderUsername}`);
+    if (!args[1]?.length) {
+      return client.say(msg.channelName, `https://tools.2807.eu/follows?user=${msg.senderUsername}`);
     }
 
-    return client.say(msg.channelName, `https://tools.2807.eu/follows?user=${args[0]}`);
+    return client.say(msg.channelName, `https://tools.2807.eu/follows?user=${args[1]}`);
   }
 });
