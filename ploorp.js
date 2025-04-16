@@ -84,10 +84,7 @@ client.on('PRIVMSG', async (msg) => {
   }
 
   if (args[0] === config.prefix + 'f' || args[0] === config.prefix + 'follows') {
-    if (!args[1]?.length) {
-      return client.say(msg.channelName, `https://tools.2807.eu/follows?user=${msg.senderUsername}`);
-    }
-
-    return client.say(msg.channelName, `https://tools.2807.eu/follows?user=${args[1]}`);
+    const username = args[1] ? args[1] : '';
+    return client.say(msg.channelName, `https://tools.2807.eu/follows?user=${username}`);
   }
 });
