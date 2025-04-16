@@ -10,6 +10,7 @@ client.on("CLEARCHAT", async (msg) => {
     return client.say(msg.channelName, 'BAND');
   }
   await sleep(msg.timeout * 1000);
+
   return;
 });
 
@@ -46,11 +47,13 @@ client.on('PRIVMSG', async (msg) => {
 
   if (args[0] === config.prefix + 'boxd') {
     await boxd(msg);
+
     return;
   }
 
   if (args[0] === config.prefix + 'help') {
     const p = config.prefix;
+
     return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}ping, ${p}boxd <username>, ${p}follows <username>, ${p}help`);
   }
 
@@ -63,6 +66,7 @@ client.on('PRIVMSG', async (msg) => {
     if (args[0] === config.prefix + 'join') {
       if (args[1].length) {
         await client.join(args[1]);
+
         return client.say(msg.channelName, 'joined ' + args[1]);
       }
     }
@@ -81,11 +85,10 @@ client.on('PRIVMSG', async (msg) => {
   }
 
   if (args[0] === config.prefix + 'f' || args[0] === config.prefix + 'follows') {
-
     if (!args[1].length) {
       return client.say(msg.channelName,`https://tools.2807.eu/follows?user=${msg.senderUsername}`);
     }
-
+    
     return client.say(msg.channelName, `https://tools.2807.eu/follows?user=${args[0]}`);
   }
 });
