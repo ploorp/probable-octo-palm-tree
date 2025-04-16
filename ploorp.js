@@ -10,7 +10,6 @@ client.on("CLEARCHAT", async (msg) => {
   if (!msg.ircTags["target-user-id"] === config.id) {
     return client.say(msg.channelName, 'BAND');
   }
-  console.log('else', msg);
 });
 
 client.on('PRIVMSG', async (msg) => {
