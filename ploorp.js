@@ -6,7 +6,7 @@ import config from './config.json' with { type: 'json' };
 const startTime = new Date();
 
 client.on("CLEARCHAT", async (msg) => {
-  if (!msg.target-user-id === config.id) {
+  if (!msg.ircTags["target-user-id"] === config.id) {
     console.log('if', msg);
     return client.say(msg.channelName, 'BAND');
   }
