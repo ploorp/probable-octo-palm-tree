@@ -26,8 +26,8 @@ client.on('PRIVMSG', async (msg) => {
     return;
   }
 
-  var msgText = msg.messageText;
-  var args = msgText.trim().split(' ');
+  const msgText = msg.messageText;
+  const args = msgText.trim().split(' ');
 
   if (mstText.startsWith(config.prefix + 'ping')) {
     const uptime = Math.floor((Date.now() - startTime) / 1000);
@@ -88,7 +88,7 @@ client.on('PRIVMSG', async (msg) => {
     if (!args[1].length) {
       return client.say(msg.channelName,`https://tools.2807.eu/follows?user=${msg.senderUsername}`);
     }
-    
+
     return client.say(msg.channelName, `https://tools.2807.eu/follows?user=${args[0]}`);
   }
 });
