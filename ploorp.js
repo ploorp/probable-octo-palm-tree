@@ -29,7 +29,7 @@ client.on('PRIVMSG', async (msg) => {
   const msgText = msg.messageText.trim();
   const args = msgText.split(' ');
 
-  if (msgText.startsWith(config.prefix + 'ping')) {
+  if (args[0] === config.prefix + 'ping') {
     const uptime = Math.floor((Date.now() - startTime) / 1000);
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
