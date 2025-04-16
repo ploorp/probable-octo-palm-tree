@@ -9,9 +9,6 @@ client.on("CLEARCHAT", async (msg) => {
   if (!msg.userID === config.id) {
     return client.say(msg.channelName, 'BAND');
   }
-  await sleep(msg.timeout * 1000);
-
-  return;
 });
 
 client.on('PRIVMSG', async (msg) => {
