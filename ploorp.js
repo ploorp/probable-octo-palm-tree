@@ -5,10 +5,12 @@ import config from './config.json' with { type: 'json' };
 
 const startTime = new Date();
 
-client.on("CLEARCHAT", (msg) => {
+client.on("CLEARCHAT", async (msg) => {
   if (!msg.userID === config.id) {
     return client.say(msg.channelName, 'BAND');
   }
+  await sleep(msg.timeout * 1000);
+  return;
 });
 
 client.on('PRIVMSG', async (msg) => {
@@ -17,7 +19,7 @@ client.on('PRIVMSG', async (msg) => {
 
 
   if (!botState.isMod) {
-      if(roomState.emoteOnly || roomState.subOnly || roomState.followersOnlyDuration > 0) {
+      if(roomState.emoteOnly || roomState.subOnly || roomState.followersOnlyDuration > -1) {
         return;
       }
   }
