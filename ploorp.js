@@ -12,8 +12,14 @@ client.on("CLEARCHAT", (msg) => {
 });
 
 client.on('PRIVMSG', async (msg) => {
-  if (!client.privileges[msg.channelName]?.isModerator) {
-    return;
+  const roomState = client.roomStateTracker?.channelStates?.[msg.channelName];
+  const botState = client.userStateTracker?.channelStates?.[msg.channelName];
+
+
+  if (!botState.isMod) {
+      if(roomState.emoteOnly || roomState.subOnly || roomState.followersOnlyDuration > 0) {
+        return;
+      }
   }
 
   if (msg.senderUserID == config.id) {
