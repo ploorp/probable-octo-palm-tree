@@ -14,10 +14,7 @@ export default async function boxd(msg) {
     try {
       response = await axios.get(rssUrl);
     } catch (error) {
-    return client.say(
-      msg.channelName,
-      'format is !boxd <username>'
-    );
+      return client.say(msg.channelName, `@${msg.senderUsername}, format is !boxd <username>`);
     }
     username = msg.senderUsername;
   } else {
@@ -26,10 +23,7 @@ export default async function boxd(msg) {
     try {
       response = await axios.get(rssUrl);
     } catch (error) {
-      return client.say(
-        msg.channelName,
-        'bad username'
-      );
+      return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
     }
   }
 
@@ -37,10 +31,7 @@ export default async function boxd(msg) {
   const linkMatch = xmlData.match(/<item>.*?<link>(.*?)<\/link>/s);
 
   if (!linkMatch || !linkMatch[1].includes('/film/')) {
-    return client.say(
-      msg.channelName,
-      `${username} has not logged any movies`
-    );
+    return client.say(msg.channelName,`@${msg.senderUsername}, ${username} has not logged any movies`);
   }
 
   const jsonUrl = linkMatch[1] + '/json';
@@ -49,10 +40,7 @@ export default async function boxd(msg) {
   try {
     jsonResponse = await axios.get(jsonUrl);
   } catch (error) {
-      return client.say(
-        msg.channelName,
-        'error Reacting'
-      );
+    return client.say(msg.channelName,`@${msg.senderUsername}, error Reacting`);
   }
 
   const jsonData = jsonResponse.data;
@@ -78,8 +66,5 @@ export default async function boxd(msg) {
 
   const message = `${dateLogged} ${username} ${rewatch} ${movieTitle} (${releaseDate}) ${ratingText} ${reviewUrl}`;
 
-  return client.say(
-    msg.channelName,
-    message
-  );
+  return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }
