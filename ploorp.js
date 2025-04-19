@@ -54,11 +54,6 @@ client.on('PRIVMSG', async (msg) => {
     setTimeout(() => cooldowns.delete(senderID), 5000);
   }
 
-  if (!command?.match(/^[\x20-\x7E]+$/)) {
-    return client.say(msg.channelName, 'what');
-  }
-
-
   // COMMANDS
   if (command === 'ping') {
     const uptime = Math.floor((Date.now() - startTime) / 1000);
