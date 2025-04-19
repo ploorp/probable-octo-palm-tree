@@ -3,7 +3,7 @@ import {
   ChatClient,
   AlternateMessageModifier,
   SlowModeRateLimiter
-} from '@kararty/dank-twitch-irc';
+} from '@mastondzn/dank-twitch-irc';
 import { sleep, logToFile } from './utils.js';
 
 if (!config.username || !config.access_token) {
@@ -11,7 +11,7 @@ if (!config.username || !config.access_token) {
 }
 
 /**
- * @typedef {import('@kararty/dank-twitch-irc').ChatClient} ChatClient
+ * @typedef {import('@mastondzn/dank-twitch-irc').ChatClient} ChatClient
  */
 const client = new ChatClient({
   username: config.username.toLowerCase(),
@@ -33,7 +33,7 @@ client.on('error', (err) => {
  * Notifications of JOINs sent to any connected client, upon successful
  * joining of a channel.
  *
- * @typedef {import('@kararty/dank-twitch-irc').JoinMessage} JoinMessage
+ * @typedef {import('@mastondzn/dank-twitch-irc').JoinMessage} JoinMessage
  */
 client.on('JOIN', (msg) => {
   console.log(`Joined #${msg.channelName}`);
@@ -44,7 +44,7 @@ client.on('JOIN', (msg) => {
  * Notifications of PARTs sent to any connected client, upon parting
  * of a channel.
  *
- * @typedef {import('@kararty/dank-twitch-irc').PartMessage} PartMessage
+ * @typedef {import('@mastondzn/dank-twitch-irc').PartMessage} PartMessage
  */
 client.on('PART', (msg) => {
   console.log(`Parted #${msg.channelName}`)
