@@ -4,7 +4,7 @@ import {
   AlternateMessageModifier,
   SlowModeRateLimiter
 } from '@kararty/dank-twitch-irc';
-import { sleep } from './utils.js';
+import { sleep, logToFile } from './utils.js';
 
 if (!config.username || !config.access_token) {
   throw new Error('Missing username or access_token in config.json');
@@ -24,7 +24,10 @@ client.use(new AlternateMessageModifier(client));
 client.use(new SlowModeRateLimiter(client, 10));
 client.connect();
 
-client.on('error', (err) => console.error(err.message));
+client.on('error', (err) => {
+  console.error(err.message);
+  logToFile(`Dank error: ${err.message}`, 'bot.log');
+});
 
 /**
  * Notifications of JOINs sent to any connected client, upon successful
@@ -32,7 +35,10 @@ client.on('error', (err) => console.error(err.message));
  *
  * @typedef {import('@kararty/dank-twitch-irc').JoinMessage} JoinMessage
  */
-client.on('JOIN', (msg) => console.log(`Joined #${msg.channelName}`));
+client.on('JOIN', (msg) => {
+  console.log(`Joined #${msg.channelName}`);
+  logToFile(`Joined #${msg.channelName}`, 'bot.log');
+});
 
 /**
  * Notifications of PARTs sent to any connected client, upon parting
@@ -40,11 +46,15 @@ client.on('JOIN', (msg) => console.log(`Joined #${msg.channelName}`));
  *
  * @typedef {import('@kararty/dank-twitch-irc').PartMessage} PartMessage
  */
-client.on('PART', (msg) => console.log(`Parted #${msg.channelName}`));
+client.on('PART', (msg) => {
+  console.log(`Parted #${msg.channelName}`)
+  logToFile(`Parted #${msg.channelName}`, 'bot.log');
+});
 
 async function joinChannels() {
   if (!config.channels?.length) {
     console.log('No channels to join in config.json');
+    logToFile('No channels to join in config.json', 'bot.log');
   }
 
   for (const channel of config.channels) {
@@ -54,6 +64,7 @@ async function joinChannels() {
 
 client.on('ready', () => {
   console.log('Connected to Twitch');
+  logToFile('Connected to Twitch', 'bot.log');
   return joinChannels();
 });
 
