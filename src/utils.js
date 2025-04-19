@@ -6,5 +6,9 @@ export const logToFile = (message, file) => {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}\n`;
 
-  fs.appendFile(file, logMessage);
+  fs.appendFile(file, logMessage, err => {
+    if (err) {
+      console.error(`Error writing to log file: ${err}`);
+    }
+  });
 }
