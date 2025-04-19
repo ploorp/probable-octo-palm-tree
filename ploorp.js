@@ -51,7 +51,7 @@ client.on('PRIVMSG', async (msg) => {
     }
     cooldowns.set(senderID, now);
 
-    setTimeout(() => cooldowns.delete(userId), 5000);
+    setTimeout(() => cooldowns.delete(senderID), 5000);
   }
 
   if (!command?.match(/^[\x20-\x7E]+$/)) {
