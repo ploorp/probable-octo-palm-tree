@@ -3,7 +3,7 @@ import path from 'path';
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const toLogFile = (message, file) => {
+export const logToFile = (message, file) => {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}\n`;
   const logFile = path.join(__dirname, file);
