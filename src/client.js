@@ -4,7 +4,7 @@ import {
   AlternateMessageModifier,
   SlowModeRateLimiter
 } from '@kararty/dank-twitch-irc';
-import { sleep, logToFile } from './utils.js';
+import { sleep, toLogFile } from './utils.js';
 
 if (!config.username || !config.access_token) {
   throw new Error('Missing username or access_token in config.json');
