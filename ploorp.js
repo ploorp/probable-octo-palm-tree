@@ -97,12 +97,7 @@ client.on('PRIVMSG', async (msg) => {
 
     if (command === 'help') {
       const p = config.prefix;
-      return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}ping, ${p}boxd <username>, ${p}follows <username>, ${p}help`);
-    }
-
-    if (command === 'f' || command === 'follows') {
-      const username = args[1] ? args[1] : '';
-      return client.say(msg.channelName, `@${msg.senderUsername}, https://tools.2807.eu/follows?user=${username}`);
+      return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}ping, ${p}boxd <username>, ${p}help`);
     }
 
     // Commands only whitelisted users can use
