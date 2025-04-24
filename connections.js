@@ -36,6 +36,7 @@ export default async function connections(msg) {
   const connections = response.data["data"][0]["connections"];
   let spotify;
   let lastfm;
+  let monkeytype;
 
   for (let i = 0; i < connections.length; i++) {
     const platform = connections[i]["platform"];
@@ -43,20 +44,24 @@ export default async function connections(msg) {
     if (platform === "SPOTIFY") {
       spotify = connections[i]["id"];
     }
-
-    if (platform === "LASTFM") {
+    else if (platform === "LASTFM") {
       lastfm = connections[i]["id"];
     }
+    else if (platform === "MONKEYTYPE") {
+      monkeytype = connections[i]["username"];
+    }
+
   }
 
-  if (!spotify && !lastfm) {
+  if (!spotify && !lastfm && !monkeytype) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
   }
 
   const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify}` : ''}`;
   const lastfmUrl = `${lastfm ? `https://www.last.fm/${lastfm}` : ''}`;
+  const monkeytypeUrl = `${monkeytype ? `https://monkeytype.com/profile/${monkeytype}` : ''}`;
 
-  const message = `${username}'s connected accounts: ${spotifyUrl} ${lastfmUrl}`;
+  const message = `${username}'s connected accounts: ${spotifyUrl} ${lastfmUrl} ${monkeytypeUrl}`;
 
   return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }
