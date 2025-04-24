@@ -1,5 +1,6 @@
 import { client } from './src/client.js';
 import boxd from './boxd.js';
+import connections from './connections.js';
 import { sleep, logToFile } from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 
@@ -95,9 +96,14 @@ client.on('PRIVMSG', async (msg) => {
       return;
     }
 
+    if (command === 'conn') {
+      await connections(msg);
+      return;
+    }
+
     if (command === 'help') {
       const p = config.prefix;
-      return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}ping, ${p}boxd <username>, ${p}help`);
+      return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}help, ${p}ping, ${p}boxd <username>, ${p}conn <username>`);
     }
 
     // Commands only whitelisted users can use
