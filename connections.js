@@ -37,10 +37,12 @@ export default async function connections(msg) {
   }
 
   const connections = response.data.data[0].user.connections;
+  
   let spotify;
   let lastfm;
   let monkeytype;
   let anilist;
+  let steam;
 
   for (let i = 0; i < connections.length; i++) {
     const platform = connections[i].platform;
@@ -56,6 +58,9 @@ export default async function connections(msg) {
     }
     else if (platform === "ANILIST") {
       anilist = connections[i].username;
+    } 
+    else if (platform === "STEAM") {
+      steam = 76561197960265728 + connections[i].id;
     }
   }
 
@@ -65,10 +70,11 @@ export default async function connections(msg) {
 
   const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify}` : ''}`;
   const lastfmUrl = `${lastfm ? `https://www.last.fm/user/${lastfm}` : ''}`;
+  const steamUrl = `${steam ? `https://steamcommunity.com/profiles/${steam}` : ''}`;
   const monkeytypeUrl = `${monkeytype ? `https://monkeytype.com/profile/${monkeytype}` : ''}`;
   const anilistUrl = `${anilist ? `https://anilist.co/user/${anilist}` : ''}`;
 
-  const message = `${username}'s connected accounts: ${spotifyUrl} ${lastfmUrl} ${monkeytypeUrl} ${anilistUrl}`;
+  const message = `${username}'s connected accounts: ${spotifyUrl} ${lastfmUrl} ${steamUrl} ${monkeytypeUrl} ${anilistUrl}`;
 
   return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }
