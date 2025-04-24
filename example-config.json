@@ -11,5 +11,6 @@
   ],
   "whitelist_channels": [
       "your_channel"
-  ]
+  ],
+  "log_file": "/home/ploorp/probable-octo-palm-tree/bot.log"
 }

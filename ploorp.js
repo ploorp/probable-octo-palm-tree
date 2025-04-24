@@ -7,15 +7,15 @@ import config from './config.json' with { type: 'json' };
 const startTime = new Date();
 const cooldowns = new Map();
 
-logToFile('Bot is starting', 'bot.log');
+logToFile('Bot is starting', 'config.log_file');
 
 process.on('uncaughtException', (err) => {
-  logToFile(`Uncaught Exception: ${err.stack || err.message}`, 'bot.log');
+  logToFile(`Uncaught Exception: ${err.stack || err.message}`, 'config.log_file');
   setTimeout(() => process.exit(1), 100);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logToFile(`Unhandled Rejection: ${reason}`, 'bot.log');
+  logToFile(`Unhandled Rejection: ${reason}`, 'config.log_file');
   setTimeout(() => process.exit(1), 100);
 });
 
