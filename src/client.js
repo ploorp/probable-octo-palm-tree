@@ -58,7 +58,9 @@ async function joinChannels() {
   }
 
   for (const channel of config.channels) {
-    await sleep(500).then(() => client.join(channel.toLowerCase()));
+    try {
+      await sleep(500).then(() => client.join(channel.toLowerCase()));
+    } catch (err) {}
   }
 }
 
