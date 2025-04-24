@@ -19,12 +19,11 @@ export default async function connections(msg) {
       return client.say(msg.channelName, `@${msg.senderUsername}, you were never seen by potatbotat Reacting`);
     }
   } else {
-    username = args[0].toLowerCase();
+    username = args[0].toLowerCase().replace(/^@/, '');
 
     if (!/^[a-z0-9_]+$/.test(username)) {
       return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
     }
-
     
     try {
       response = await axios.get(endpoint + username);

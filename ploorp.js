@@ -11,12 +11,12 @@ logToFile('Bot is starting', 'bot.log');
 
 process.on('uncaughtException', (err) => {
   logToFile(`Uncaught Exception: ${err.stack || err.message}`, 'bot.log');
-  process.exit(1);
+  setTimeout(() => process.exit(1), 100);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   logToFile(`Unhandled Rejection: ${reason}`, 'bot.log');
-  process.exit(1);
+  setTimeout(() => process.exit(1), 100);
 });
 
 // client.on("CLEARCHAT", async (msg) => {
