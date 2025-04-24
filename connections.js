@@ -66,7 +66,7 @@ export default async function connections(msg) {
 
   if (!spotify && !lastfm && !monkeytype) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
-  }];
+  };
 
   const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify}` : ''}`;
   const lastfmUrl = `${lastfm ? `https://www.last.fm/user/${lastfm}` : ''}`;
