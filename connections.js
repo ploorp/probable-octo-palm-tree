@@ -60,7 +60,7 @@ export default async function connections(msg) {
       anilist = connections[i].username;
     } 
     else if (platform === "STEAM") {
-      steam = 76561197960265728 + connections[i].id;
+      steam = BigInt(76561197960265728) + connections[i].id;
     }
   }
 
@@ -68,10 +68,10 @@ export default async function connections(msg) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
   }
 
-  const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify}` : ''}`;
-  const lastfmUrl = `${lastfm ? `https://www.last.fm/user/${lastfm}` : ''}`;
-  const steamUrl = `${steam ? `https://steamcommunity.com/profiles/${steam}` : ''}`;
-  const monkeytypeUrl = `${monkeytype ? `https://monkeytype.com/profile/${monkeytype}` : ''}`;
+  const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify} |` : ''}`;
+  const lastfmUrl = `${lastfm ? `https://www.last.fm/user/${lastfm} |` : ''}`;
+  const steamUrl = `${steam ? `https://steamcommunity.com/profiles/${steam} |` : ''}`;
+  const monkeytypeUrl = `${monkeytype ? `https://monkeytype.com/profile/${monkeytype} |` : ''}`;
   const anilistUrl = `${anilist ? `https://anilist.co/user/${anilist}` : ''}`;
 
   const message = `${username}'s connected accounts: ${spotifyUrl} ${lastfmUrl} ${steamUrl} ${monkeytypeUrl} ${anilistUrl}`;
