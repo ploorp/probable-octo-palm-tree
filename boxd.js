@@ -19,6 +19,11 @@ export default async function boxd(msg) {
     username = msg.senderUsername;
   } else {
     username = args[0].toLowerCase();
+    
+    if (!/^[a-z0-9_]+$/.test(username)) {
+      return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
+    }
+
     rssUrl = `https://letterboxd.com/${username}/rss/`;
     try {
       response = await axios.get(rssUrl);
