@@ -66,15 +66,17 @@ export default async function connections(msg) {
 
   if (!spotify && !lastfm && !monkeytype) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
-  }
+  }];
 
-  const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify} |` : ''}`;
-  const lastfmUrl = `${lastfm ? `https://www.last.fm/user/${lastfm} |` : ''}`;
-  const steamUrl = `${steam ? `https://steamcommunity.com/profiles/${steam.toString()} |` : ''}`;
-  const monkeytypeUrl = `${monkeytype ? `https://monkeytype.com/profile/${monkeytype} |` : ''}`;
+  const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify}` : ''}`;
+  const lastfmUrl = `${lastfm ? `https://www.last.fm/user/${lastfm}` : ''}`;
+  const steamUrl = `${steam ? `https://steamcommunity.com/profiles/${steam.toString()}` : ''}`;
+  const monkeytypeUrl = `${monkeytype ? `https://monkeytype.com/profile/${monkeytype}` : ''}`;
   const anilistUrl = `${anilist ? `https://anilist.co/user/${anilist}` : ''}`;
 
-  const message = `${username}'s connected accounts: ${spotifyUrl} ${lastfmUrl} ${steamUrl} ${monkeytypeUrl} ${anilistUrl}`;
+  const links = [spotifyUrl, lastfmUrl, steamUrl, monkeytypeUrl, anilistUrl].filter(Boolean).join(' • ');
+
+  const message = `${username}'s connected accounts: ${links}`;
 
   return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }
