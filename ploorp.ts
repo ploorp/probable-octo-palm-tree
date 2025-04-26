@@ -46,6 +46,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   let msgText;
 
+  // deal with reply commands
   if (msg.replyParentMessageBody) {
     msgText = msg.messageText.split(' ').slice(1);
     msgText.push(msg.replyParentMessageBody);
@@ -57,10 +58,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const args = msgText.split(' ');
   const command = args[0].slice(config.prefix.length);
 
-  console.log(msgText);
-  console.log(args);
-  console.log(command);
-
   // COMMANDS
   if (msgText.startsWith(config.prefix)) {
     switch (command) {
@@ -69,28 +66,28 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         return;
 
       case 'boxd':
-        await boxd(msg);
+        await boxd(msg, args);
         return;
 
       case 'connections':
       case 'conn':
-        await connections(msg);
+        await connections(msg, args);
         return;
 
       case 'listcmd':
       case 'listcmds':
       case 'lc':
-        await listcmds(msg);
+        await listcmds(msg, args);
         return;
 
       case 'searchlogs':
       case 'sl':
-        await searchlogs(msg);
+        await searchlogs(msg, args);
         return;
       
       case 'u':
       case 'unicode':
-        await unicode(msg);
+        await unicode(msg, args);
         return;
 
       case 'help':

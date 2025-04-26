@@ -3,9 +3,7 @@ import axios from 'axios';
 import config from '../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
-export default async function searchlogs(msg: PrivmsgMessage) {
-  const args = msg.messageText.trim().split(' ');
-  
+export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
   // if no arguments try to use the sender's username
   if (args.length < 3) {
     return client.say(msg.channelName, `@${msg.senderUsername}, format is ${config.prefix}searchlogs <channel> <username> <query>`);

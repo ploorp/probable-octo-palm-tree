@@ -2,9 +2,7 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../src/client.js';
 import axios from 'axios';    
 
-export default async function connections(msg: PrivmsgMessage) {
-  const args = msg.messageText.trim().split(' ');
-
+export default async function connections(msg: PrivmsgMessage, args: string[]) {
   let username;
   let response;
 

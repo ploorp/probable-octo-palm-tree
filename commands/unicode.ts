@@ -1,16 +1,8 @@
 import { client } from '../src/client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
-export default async function unicode(msg: PrivmsgMessage) {
-  const args = msg.messageText.trim().split(' ');
-
-  let message;
-
-  if (msg.replyParentMessageBody) {
-    message = msg.replyParentMessageBody.trim();
-  } else {
-    message = args.slice(1).join(' ').trim();
-  }
+export default async function unicode(msg: PrivmsgMessage, args: string[]) {
+  const message = args.join(' ').trim();
 
   if (message.length < 1) {
     return client.say(msg.channelName, `@${msg.senderUsername}, uuh include some characters`);

@@ -3,9 +3,7 @@ import axios from 'axios';
 import config from '../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
-export default async function boxd(msg: PrivmsgMessage) {
-  const args = msg.messageText.trim().split(' ');
-
+export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   let username;
   let rssUrl;
   let response;
