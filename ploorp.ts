@@ -95,7 +95,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         const p = config.prefix;
         return client.say(
           msg.channelName,
-          `@${msg.senderUsername}, commands: ${p}help, ${p}ping, ${p}boxd <username>, ${p}conn <username>, ${p}listcmd <channel>, ${p}searchlogs <channel> <username> <query>`
+          `@${msg.senderUsername}, commands: ${p}help, ${p}ping, ${p}boxd <username>, ${p}conn <username>, ${p}listcmd <channel>, ${p}searchlogs <channel> <username> <query>, ${p}unicode <message>`,
         );
       }
     }
