@@ -98,7 +98,7 @@ client.on('PRIVMSG', async (msg) => {
       return;
     }
 
-    if (command === 'conn') {
+    if (command === 'connections' || command === 'conn') {
       await connections(msg);
       return;
     }

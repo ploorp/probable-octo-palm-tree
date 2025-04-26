@@ -2,7 +2,7 @@ import { client } from './src/client.js';
 import axios from 'axios';    
 
 export default async function listcmds(msg) {
-  const args = msg.messageText.slice(5).trim().split(' ');
+  const args = msg.messageText.trim().split(' ');
 
   let username;
   let response;
@@ -11,10 +11,10 @@ export default async function listcmds(msg) {
   const endpoint = "https://api.potat.app/users/"
   
   // if no arguments try to use the sender's username
-  if (!args[0].length) {
+  if (!args[1].length) {
     userID = msg.channelID;
   } else {
-    username = args[0].toLowerCase().replace(/^@/, '');
+    username = args[1].toLowerCase().replace(/^@/, '');
 
     if (!/^[a-z0-9_]+$/.test(username)) {
       return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);

@@ -1,15 +1,15 @@
 import { client } from './src/client.js';
 
 export default async function searchlogs(msg) {
-  const args = msg.messageText.slice(5).trim().split(' ');
+  const args = msg.messageText.trim().split(' ');
   
   // if no arguments try to use the sender's username
   if (args.length < 3) {
     return client.say(msg.channelName, `@${msg.senderUsername}, format is !searchlogs <channel> <username> <query>`);
   }
 
-  const channel = args[0].toLowerCase().replace(/^@/, '');
-  const username = args[1].toLowerCase().replace(/^@/, '');
+  const channel = args[1].toLowerCase().replace(/^@/, '');
+  const username = args[2].toLowerCase().replace(/^@/, '');
   const query = args.slice(2).join(' ').toLowerCase();
 
   if (!/^[a-z0-9_]+$/.test(username) || !/^[a-z0-9_]+$/.test(channel)) {
