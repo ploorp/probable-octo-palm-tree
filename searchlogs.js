@@ -10,7 +10,7 @@ export default async function searchlogs(msg) {
 
   const channel = args[1].toLowerCase().replace(/^@/, '');
   const username = args[2].toLowerCase().replace(/^@/, '');
-  const query = args.slice(2).join(' ').toLowerCase();
+  const query = args.slice(3).join(' ').toLowerCase();
 
   if (!/^[a-z0-9_]+$/.test(username) || !/^[a-z0-9_]+$/.test(channel)) {
     return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
