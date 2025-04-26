@@ -44,20 +44,18 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     setTimeout(() => cooldowns.delete(senderID), config.cooldown);
   }
 
-  var msgText;
+  let msgText;
 
   if (msg.replyParentMessageBody) {
-    msgText = msg.messageText.split(' ').slice(1).join(' ').trim();
+    msgText = msg.messageText.split(' ').slice(1);
+    msgText.push(msg.replyParentMessageBody);
+    msgText = msgText.join(' ').trim();
   } else {
     msgText = msg.messageText.trim();
   }
 
   const args = msgText.split(' ');
   const command = args[0].slice(config.prefix.length);
-
-  console.log(msgText);
-  console.log(args);
-  console.log(command);
 
   // COMMANDS
   if (msgText.startsWith(config.prefix)) {
