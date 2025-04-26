@@ -1,9 +1,10 @@
 import { client } from './src/client.js';
 import boxd from './boxd.js';
 import connections from './connections.js';
+import searchlogs from './searchlogs.js';
+import listcmds from './listcmds.js';
 import { sleep, logToFile } from './src/utils.js';
 import config from './config.json' with { type: 'json' };
-import listcmds from './listcmds.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
