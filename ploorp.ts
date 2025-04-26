@@ -55,6 +55,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const args = msgText.split(' ');
   const command = args[0].slice(config.prefix.length);
 
+  console.log(msgText);
+  console.log(args);
+  console.log(command);
+
   // COMMANDS
   if (msgText.startsWith(config.prefix)) {
     switch (command) {
