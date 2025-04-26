@@ -30,7 +30,13 @@ export default async function listcmds(msg) {
       return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potatbotat Reacting`);
     }
 
-    userID = response.data.data[0].channel.channel_id;
+    for (let i = 0; i < connections.length; i++) {
+      const platform = connections[i].platform;
+
+      if (platform === "TWITCH") {
+        userID = connections[i].id;
+      }
+    }
   }
 
   return client.say(msg.channelName, `@${msg.senderUsername}, https://api.potat.app/channel/commands?id=${userID}`);
