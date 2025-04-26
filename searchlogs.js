@@ -26,13 +26,12 @@ export default async function searchlogs(msg) {
   let response;
 
   try {
-    response = await axios.get(logs, { responseType: 'text' });
+    response = await axios.get(logs);
   } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return client.say(msg.channelName, `@${msg.senderUsername}, no matching logs found smh`);
+    }
     return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
-  }
-
-  if (response.data === "Not found") {
-    return client.say(msg.channelName, `@${msg.senderUsername}, no matching logs found smh`);
   }
 
   return client.say(msg.channelName, `@${msg.senderUsername}, ${logs}`);
