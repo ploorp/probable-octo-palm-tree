@@ -48,6 +48,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   if (msg.replyParentMessageBody) {
     console.log('replyParentMessageBody: ', msg.replyParentMessageBody);
+    msgText = msg.messageText.split(' ').slice(1).join(' ');
   }
 
   msgText = msg.messageText.trim();
