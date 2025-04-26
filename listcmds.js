@@ -10,32 +10,36 @@ export default async function listcmds(msg) {
 
   const endpoint = "https://api.potat.app/users/"
   
-  // if no arguments try to use the sender's username
+  // if no arguments try to use the current channel
   if (!args[1]) {
-    userID = msg.channelID;
+    username = msg.channelName.toLowerCase();
   } else {
     username = args[1].toLowerCase().replace(/^@/, '');
 
     if (!/^[a-z0-9_]+$/.test(username)) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
+      return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
+  }
 
-    try {
-      response = await axios.get(endpoint + username);
-    } catch (error) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
-    }
+  try {
+    response = await axios.get(endpoint + username);
+  } catch (error) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+  }
 
-    if (response.data.statusCode === 404) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potatbotat Reacting`);
-    }
+  if (response.data.statusCode === 404) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
+  }
 
-    try {
-      userID = response.data.data[0].user.user_id;
-    }
-    catch (error) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potatbotat Reacting`);
-    }
+  try {
+    userID = response.data.data[0].channel.channel_id;
+  }
+  catch (error) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potatbotat Reacting`);
+  }
+
+  if (!response.data.data[0].channel.commands) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, this user has no commands wtf`);
   }
 
   return client.say(msg.channelName, `@${msg.senderUsername}, https://api.potat.app/channel/commands?id=${userID}`);

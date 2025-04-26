@@ -27,7 +27,7 @@ export default async function connections(msg) {
   }
 
   if (response.data.statusCode === 404) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potatbotat Reacting`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
   }
 
   const connections = response.data.data[0].user.connections;

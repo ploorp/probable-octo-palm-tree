@@ -22,14 +22,14 @@ export default async function boxd(msg) {
     username = args[0].toLowerCase();
     
     if (!/^[a-z0-9_]+$/.test(username)) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
+      return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
 
     rssUrl = `https://letterboxd.com/${username}/rss/`;
     try {
       response = await axios.get(rssUrl);
     } catch (error) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
+      return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
   }
 
@@ -37,7 +37,7 @@ export default async function boxd(msg) {
   const linkMatch = xmlData.match(/<item>.*?<link>(.*?)<\/link>/s);
 
   if (!linkMatch || !linkMatch[1].includes('/film/')) {
-    return client.say(msg.channelName,`@${msg.senderUsername}, ${username} has not logged any movies`);
+    return client.say(msg.channelName,`@${msg.senderUsername}, ${username} has not logged any movies smh`);
   }
 
   const jsonUrl = linkMatch[1] + '/json';
