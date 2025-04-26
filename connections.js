@@ -10,7 +10,7 @@ export default async function connections(msg) {
   const endpoint = "https://api.potat.app/users/"
 
   // if no arguments try to use the sender's username
-  if (!args[1].length) {
+  if (!args[1]) {
     username = msg.senderUsername;
   } else {
     username = args[1].toLowerCase().replace(/^@/, '');
