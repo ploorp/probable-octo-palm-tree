@@ -46,11 +46,15 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   var msgText;
 
+  console.log('reply parent body: ', msg.replyParentMessageBody);
+
   if (msg.replyParentMessageBody) {
     msgText = msg.replyParentMessageBody.split(' ').slice(1).join(' ').trim();
   } else {
     msgText = msg.messageText.trim();
   }
+
+  console.log('msgText: ', msgText);
 
   const args = msgText.split(' ');
   const command = args[0].slice(config.prefix.length);
