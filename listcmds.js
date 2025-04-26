@@ -1,5 +1,5 @@
 import { client } from './src/client.js';
-import axios from 'axios';    
+import axios from 'axios';
 
 export default async function listcmds(msg) {
   const args = msg.messageText.trim().split(' ');

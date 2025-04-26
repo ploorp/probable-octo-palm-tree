@@ -1,5 +1,6 @@
 import { client } from './src/client.js';
-import axios from 'axios';    
+import axios from 'axios';
+import config from './config.json' with { type: 'json' };
 
 export default async function boxd(msg) {
   const args = msg.messageText.slice(5).trim().split(' ');
@@ -14,7 +15,7 @@ export default async function boxd(msg) {
     try {
       response = await axios.get(rssUrl);
     } catch (error) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, format is !boxd <username>`);
+      return client.say(msg.channelName, `@${msg.senderUsername}, format is ${config.prefix}boxd <username>`);
     }
     username = msg.senderUsername;
   } else {
