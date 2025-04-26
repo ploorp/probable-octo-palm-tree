@@ -38,7 +38,7 @@ export default async function listcmds(msg) {
     return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potatbotat Reacting`);
   }
 
-  if (!response.data.data[0].channel.commands) {
+  if (response.data.data[0].channel.commands.length === 0) {
     return client.say(msg.channelName, `@${msg.senderUsername}, this user has no commands wtf`);
   }
 
