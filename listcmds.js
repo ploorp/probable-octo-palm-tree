@@ -30,14 +30,11 @@ export default async function listcmds(msg) {
       return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potatbotat Reacting`);
     }
 
-    const connections = response.data.data[0].user.connections;
-
-    for (let i = 0; i < connections.length; i++) {
-      const platform = connections[i].platform;
-
-      if (platform === "TWITCH") {
-        userID = connections[i].id;
-      }
+    try {
+      userID = response.data.data[0].user.user_id;
+    }
+    catch (error) {
+      return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potatbotat Reacting`);
     }
   }
 
