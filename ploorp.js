@@ -3,6 +3,7 @@ import boxd from './boxd.js';
 import connections from './connections.js';
 import { sleep, logToFile } from './src/utils.js';
 import config from './config.json' with { type: 'json' };
+import listcmds from './listcmds.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -101,9 +102,19 @@ client.on('PRIVMSG', async (msg) => {
       return;
     }
 
+    if (command === 'listcmd' || command === 'lc') {
+      await listcmds(msg);
+      return;
+    }
+
+    if (command === 'searchlogs' || command === 'sl') {
+      await searchlogs(msg);
+      return;
+    }
+
     if (command === 'help') {
       const p = config.prefix;
-      return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}help, ${p}ping, ${p}boxd <username>, ${p}conn <username>`);
+      return client.say(msg.channelName, `@${msg.senderUsername}, commands: ${p}help, ${p}ping, ${p}boxd <username>, ${p}conn <username>, ${p}listcmd <channel>, ${p}searchlogs <channel> <username> <query>`);
     }
 
     // Commands only whitelisted users can use

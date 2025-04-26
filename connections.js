@@ -12,24 +12,18 @@ export default async function connections(msg) {
   // if no arguments try to use the sender's username
   if (!args[0].length) {
     username = msg.senderUsername;
-
-    try {
-      response = await axios.get(endpoint + username);
-    } catch (error) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
-    }
   } else {
     username = args[0].toLowerCase().replace(/^@/, '');
 
     if (!/^[a-z0-9_]+$/.test(username)) {
       return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
     }
-    
-    try {
-      response = await axios.get(endpoint + username);
-    } catch (error) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
-    }
+  }
+
+  try {
+    response = await axios.get(endpoint + username);
+  } catch (error) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
   if (response.data.statusCode === 404) {
