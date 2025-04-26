@@ -2,15 +2,16 @@
   "name": "ploorpbot",
   "type": "module",
   "scripts": {
-    "start": "node --no-warnings ploorp.js"
+    "start": "node --no-warnings dist/ploorp.js"
   },
   "version": "1.0.0",
   "description": "bot",
-  "main": "ploorp.js",
+  "main": "dist/ploorp.js",
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@mastondzn/dank-twitch-irc": "^7.2.1",
-    "axios": "^1.8.4"
+    "axios": "^1.8.4",
+    "typescript": "^5.8.3"
   }
 }

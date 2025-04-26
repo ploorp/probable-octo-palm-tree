@@ -1,16 +1,17 @@
-import { client } from './src/client.js';
+import { client } from '../src/client.js';
 import axios from 'axios';
-import config from './config.json' with { type: 'json' };
+import config from '../config.json' with { type: 'json' };
+import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
-export default async function boxd(msg) {
-  const args = msg.messageText.slice(5).trim().split(' ');
+export default async function boxd(msg: PrivmsgMessage) {
+  const args = msg.messageText.trim().split(' ');
 
   let username;
   let rssUrl;
   let response;
 
   // if no arguments try to use the sender's username
-  if (!args[0].length) {
+  if (!args[1]) {
     rssUrl = `https://letterboxd.com/${msg.senderUsername}/rss/`;
     try {
       response = await axios.get(rssUrl);
@@ -19,7 +20,7 @@ export default async function boxd(msg) {
     }
     username = msg.senderUsername;
   } else {
-    username = args[0].toLowerCase();
+    username = args[1].toLowerCase();
     
     if (!/^[a-z0-9_]+$/.test(username)) {
       return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);

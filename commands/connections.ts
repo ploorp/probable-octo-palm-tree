@@ -1,7 +1,8 @@
-import { client } from './src/client.js';
+import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
+import { client } from '../src/client.js';
 import axios from 'axios';    
 
-export default async function connections(msg) {
+export default async function connections(msg: PrivmsgMessage) {
   const args = msg.messageText.trim().split(' ');
 
   let username;
@@ -38,27 +39,27 @@ export default async function connections(msg) {
   let anilist;
   let steam;
 
-  for (let i = 0; i < connections.length; i++) {
-    const platform = connections[i].platform;
-
-    if (platform === "SPOTIFY") {
-      spotify = connections[i].id;
-    }
-    else if (platform === "LASTFM") {
-      lastfm = connections[i].id;
-    }
-    else if (platform === "MONKEYTYPE") {
-      monkeytype = connections[i].username;
-    }
-    else if (platform === "ANILIST") {
-      anilist = connections[i].username;
-    } 
-    else if (platform === "STEAM") {
-      steam = BigInt(76561197960265728) + BigInt(connections[i].id);
+  for (const connection of connections) {
+    switch (connection.platform) {
+      case "SPOTIFY":
+        spotify = connection.id;
+        break;
+      case "LASTFM":
+        lastfm = connection.id;
+        break;
+      case "MONKEYTYPE":
+        monkeytype = connection.username;
+        break;
+      case "ANILIST":
+        anilist = connection.username;
+        break;
+      case "STEAM":
+        steam = BigInt(76561197960265728) + BigInt(connection.id);
+        break;
     }
   }
 
-  if (!spotify && !lastfm && !monkeytype) {
+  if (!spotify && !lastfm && !monkeytype && !anilist && !steam) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
   };
 

@@ -4,7 +4,7 @@ import {
   AlternateMessageModifier,
   SlowModeRateLimiter
 } from '@mastondzn/dank-twitch-irc';
-import { sleep, logToFile } from './utils.js';
+import { sleep, timeLog } from './utils.js';
 
 if (!config.username || !config.access_token) {
   throw new Error('Missing username or access_token in config.json');
@@ -25,8 +25,7 @@ client.use(new SlowModeRateLimiter(client, 10));
 client.connect();
 
 client.on('error', (err) => {
-  console.error(err.message);
-  logToFile(`Dank error: ${err.message}`, 'bot.log');
+  timeLog(`Dank error: ${err.message}`);
 });
 
 /**
@@ -36,8 +35,7 @@ client.on('error', (err) => {
  * @typedef {import('@mastondzn/dank-twitch-irc').JoinMessage} JoinMessage
  */
 client.on('JOIN', (msg) => {
-  console.log(`Joined #${msg.channelName}`);
-  logToFile(`Joined #${msg.channelName}`, 'bot.log');
+  timeLog(`Joined #${msg.channelName}`);
 });
 
 /**
@@ -47,26 +45,25 @@ client.on('JOIN', (msg) => {
  * @typedef {import('@mastondzn/dank-twitch-irc').PartMessage} PartMessage
  */
 client.on('PART', (msg) => {
-  console.log(`Parted #${msg.channelName}`)
-  logToFile(`Parted #${msg.channelName}`, 'bot.log');
+  timeLog(`Parted #${msg.channelName}`);
 });
 
 async function joinChannels() {
   if (!config.channels?.length) {
-    console.log('No channels to join in config.json');
-    logToFile('No channels to join in config.json', 'bot.log');
+    timeLog('No channels to join in config.json');
   }
 
   for (const channel of config.channels) {
     try {
       await sleep(500).then(() => client.join(channel.toLowerCase()));
-    } catch (err) {}
+    } catch (err) {
+      timeLog(`Error joining ${channel}: ${err}`);
+    }
   }
 }
 
 client.on('ready', () => {
-  console.log('Connected to Twitch');
-  logToFile('Connected to Twitch', 'bot.log');
+  timeLog('Connected to Twitch');
   return joinChannels();
 });
 

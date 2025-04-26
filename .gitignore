@@ -2,5 +2,5 @@ config.json
 node_modules/
 .DS_Store
 .vscode
-bot.log
 service.log
+dist/

@@ -4,6 +4,7 @@
   "access_token": "https://twitchtokengenerator.com/",
   "helix_id": "https://twitchtokengenerator.com/",
   "prefix": "%",
+  "cooldown": 2000,
   "channels": [
       "your_channel",
       "forsen",
@@ -11,6 +12,5 @@
   ],
   "whitelist_channels": [
       "your_channel"
-  ],
-  "log_file": "/home/ploorp/probable-octo-palm-tree/bot.log"
+  ]
 }

@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+      "target": "ES2021",
+      "module": "ESNext",
+      "moduleResolution": "Node",
+      "outDir": "dist",
+      "rootDir": ".", 
+      "strict": true,
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "skipLibCheck": true,
+      "resolveJsonModule": true,
+      "noEmit": false
+    },
+    "include": [
+      "src/**/*.ts",
+      "commands/**/*.ts",
+      "ploorp.ts"
+    ],
+    "exclude": [
+      "node_modules",
+      "dist",
+      "service.log"
+    ]
+  }
+  
