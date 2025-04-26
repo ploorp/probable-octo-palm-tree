@@ -35,7 +35,7 @@ export default async function listcmds(msg) {
     userID = response.data.data[0].channel.channel_id;
   }
   catch (error) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen by potat󠀀botat Reacting`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, this user has never been seen Reacting`);
   }
 
   if (response.data.data[0].channel.commands.length === 0) {
