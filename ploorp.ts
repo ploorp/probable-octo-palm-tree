@@ -28,9 +28,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     return;
   }
 
-  const msgText = msg.messageText.trim();
-  const args = msgText.split(' ');
-  const command = args[0].slice(config.prefix.length);
   const senderID = msg.senderUserID;
 
   // set up coooldowns (except for whitelisted users)
@@ -46,6 +43,17 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
     setTimeout(() => cooldowns.delete(senderID), config.cooldown);
   }
+
+  var msgText;
+
+  if (msg.replyParentMessageBody) {
+    msgText = msg.replyParentMessageBody.split(' ').slice(1).join(' ').trim();
+  } else {
+    msgText = msg.messageText.trim();
+  }
+
+  const args = msgText.split(' ');
+  const command = args[0].slice(config.prefix.length);
 
   // COMMANDS
   if (msgText.startsWith(config.prefix)) {
@@ -76,7 +84,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       
       case 'u':
       case 'unicode':
-        await unicode(msg);
+        await unicode(msgText, msg);
         return;
 
       case 'help':
