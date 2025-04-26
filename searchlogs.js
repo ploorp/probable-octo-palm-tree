@@ -23,6 +23,7 @@ export default async function searchlogs(msg) {
   }
 
   const logs = `https://logs.zonian.dev/channel/${channel}/user/${username}/search?q=${encodeURIComponent(query)}&reverse=true`
+  let response;
 
   try {
     response = await axios.get(logs, { responseType: 'text' });
