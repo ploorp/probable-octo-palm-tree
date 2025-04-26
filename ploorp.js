@@ -11,16 +11,6 @@ const cooldowns = new Map();
 
 logToFile('Bot is starting', 'config.log_file');
 
-process.on('uncaughtException', (err) => {
-  logToFile(`Uncaught Exception: ${err.stack || err.message}`, 'config.log_file');
-  setTimeout(() => process.exit(1), 100);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  logToFile(`Unhandled Rejection: ${reason}`, 'config.log_file');
-  setTimeout(() => process.exit(1), 100);
-});
-
 // client.on("CLEARCHAT", async (msg) => {
 //   if (msg.ircTags["target-user-id"] !== config.id) {
 //     return client.say(msg.channelName, 'BAND');
