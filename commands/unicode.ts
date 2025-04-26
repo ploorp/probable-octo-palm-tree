@@ -2,7 +2,7 @@ import { client } from '../src/client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
 export default async function unicode(msg: PrivmsgMessage, args: string[]) {
-  args = args.slice(1); // Remove the command from the arguments
+  args = args.slice(1);
 
   const message = args.join(' ').trim();
 
