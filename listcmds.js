@@ -12,7 +12,7 @@ export default async function listcmds(msg) {
   
   // if no arguments try to use the sender's username
   if (!args[0].length) {
-    userID = msg.senderUserID;
+    userID = msg.channelID;
   } else {
     username = args[0].toLowerCase().replace(/^@/, '');
 
