@@ -48,10 +48,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   if (msg.replyParentMessageBody) {
     console.log('replyParentMessageBody: ', msg.replyParentMessageBody);
-    msgText = msg.messageText.split(' ').slice(1).join(' ');
+    msgText = msg.messageText.split(' ').slice(1).join(' ').trim();
+  } else {
+    msgText = msg.messageText.trim();
   }
-
-  msgText = msg.messageText.trim();
 
   const args = msgText.split(' ');
   const command = args[0].slice(config.prefix.length);
@@ -89,7 +89,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       
       case 'u':
       case 'unicode':
-        await unicode(msg);
+        await unicode(msgText, msg);
         return;
 
       case 'help':
