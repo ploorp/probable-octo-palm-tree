@@ -120,7 +120,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'adtm':
         case 'ban':
-          const channels = config.ban_list;
+          const channels = config.channels;
           for (const channel of channels) {
             await client.say(channel, `/me ${args[1]}`);
             //await client.sendRaw(`PRIVMSG #${channel} /BAN ${args[1]}`);
