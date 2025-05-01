@@ -6,6 +6,7 @@ import listcmds from './commands/listcmd.js';
 import ping from './commands/ping.js';
 import unicode from './commands/unicode.js';
 import { timeLog } from './src/utils.js';
+import { ttrim } from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
@@ -44,17 +45,15 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     setTimeout(() => cooldowns.delete(senderID), config.cooldown);
   }
 
-  let msgText;
+  let msgText = msg.messageText.trim();
 
   // deal with reply commands
   if (msg.replyParentMessageBody) {
-    msgText = msg.messageText.split(' ').slice(1);
-    msgText.push(msg.replyParentMessageBody);
-    msgText = msgText.join(' ').trim();
-  } else {
-    msgText = msg.messageText.trim();
+    let msgArr = msgText.split(' ').slice(1);
+    msgArr.push(msg.replyParentMessageBody);
+    msgText = msgArr.join(' ');
   }
-
+  
   const args = msgText.split(' ');
   const command = args[0].slice(config.prefix.length);
 
@@ -118,8 +117,18 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           return client.say(msg.channelName, 'joined ' + args[1]);
         }
         return;
+
+      case 'adtm':
+        case 'ban':
+          const channels = config.channels;
+          for (const channel of channels) {
+            await client.say(channel, `/ban ${args[1]}`);
+        }
+        return;
     }
   }
+
+  msgText = ttrim(msg.messageText);
 
   // STUFF THATS NOT REALLY A COMMAND
   if (msgText.includes(config.username)) {
