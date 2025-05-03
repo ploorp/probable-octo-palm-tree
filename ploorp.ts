@@ -6,15 +6,20 @@ import listcmds from './src/commands/listcmd.js';
 import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
 import { chatBan, chatUnban } from './src/helix.js';
-import { timeLog } from './src/utils.js';
-import { ttrim } from './src/utils.js';
+import { timeLog, ttrim, usernameToID } from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
 const startTime = new Date();
 const cooldowns = new Map();
+const lastBans = new Map<string, string>();
 
 timeLog('Bot is starting');
+
+client.on('JOIN', async (msg) => {
+  const joinedUser = msg.joinedUsername;
+  const userID = await usernameToID(joinedUser);
+});
 
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const roomState = client.roomStateTracker?.getChannelState(msg.channelName);
@@ -101,7 +106,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     }
   }
 
-  let lastBan: string = '';
   let banChannels = config.ban_list;
 
   // Commands only whitelisted users can use
@@ -124,21 +128,46 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'adtm':
       case 'ban':
-        lastBan = args[1];
-        for (const channel of banChannels) {
-          chatBan(args[1], channel, 'band');
+        const userToBan = args[1];
+        if (!userToBan) {
+          return client.say(msg.channelName, 'provide a userID to ban tupid');
         }
+
+        const banID = await usernameToID(userToBan);
+        if (!banID) {
+          return client.say(msg.channelName, 'error with userID Reacting');
+        }
+
+        for (const channel of banChannels) {
+          chatBan(banID, channel, 'band');
+        }
+        lastBans.set(msg.senderUsername, banID); 
         return;
 
       case 'undo':
-        for (const channel of banChannels) {
-          chatUnban(lastBan, channel)
-        return;
+        const userToUndo = lastBans.get(msg.senderUsername);
+        if (!userToUndo) {
+          return client.say(msg.channelName, 'nothing to undo tupid');
         }
 
-      case 'unban':
         for (const channel of banChannels) {
-          chatUnban(args[1], channel);
+          chatUnban(userToUndo, channel)
+        }
+        return;
+
+      case 'unban':
+        const userToUnban = args[1];
+        if (!userToUnban) {
+          return client.say(msg.channelName, 'provide a userID to ban tupid');
+        }
+
+        const unbanID = await usernameToID(userToUnban);
+        if (!banID) {
+          return client.say(msg.channelName, 'error with userID Reacting');
+        }
+
+        for (const channel of banChannels) {
+          chatUnban(unbanID, channel);
         }
         return;
     }
