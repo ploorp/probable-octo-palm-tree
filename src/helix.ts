@@ -35,6 +35,11 @@ export async function chatBan(userId: string, broadcasterId: string, reason: str
 }
 
 export async function chatUnban(userId: string, broadcasterId: string) {
+  if (!userId || !broadcasterId || !config.id) {
+    console.error('❌ Missing required IDs');
+    return;
+  }
+
   try {
     const response = await axios.request({
       method: 'DELETE',
@@ -45,9 +50,14 @@ export async function chatUnban(userId: string, broadcasterId: string) {
       },
       params: {
         user_id: userId,
-        moderator_id: config.id,
         broadcaster_id: broadcasterId,
+        moderator_id: config.id,
       },
+      paramsSerializer: params => {
+        return Object.entries(params)
+          .map(([key, val]) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
+          .join('&');
+      }
     });
 
     console.log(`Successfully unbanned user ${userId} in ${broadcasterId}`);
