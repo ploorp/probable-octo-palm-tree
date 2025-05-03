@@ -1,4 +1,4 @@
-import { client } from '../src/client.js';
+import { client } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
 export default async function unicode(msg: PrivmsgMessage, args: string[]) {

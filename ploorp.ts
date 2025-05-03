@@ -1,10 +1,11 @@
 import { client } from './src/client.js';
-import boxd from './commands/boxd.js';
-import connections from './commands/connections.js';
-import searchlogs from './commands/searchlogs.js';
-import listcmds from './commands/listcmd.js';
-import ping from './commands/ping.js';
-import unicode from './commands/unicode.js';
+import boxd from './src/commands/boxd.js';
+import connections from './src/commands/connections.js';
+import searchlogs from './src/commands/searchlogs.js';
+import listcmds from './src/commands/listcmd.js';
+import ping from './src/commands/ping.js';
+import unicode from './src/commands/unicode.js';
+import chatBan from './src/helix.js';
 import { timeLog } from './src/utils.js';
 import { ttrim } from './src/utils.js';
 import config from './config.json' with { type: 'json' };
@@ -100,6 +101,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     }
   }
 
+  let lastBan: Array<String> = [];
+
   // Commands only whitelisted users can use
   if (config.whitelist_channels.includes(msg.senderUsername)) {
     switch (command) {
@@ -119,10 +122,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         return;
 
       case 'adtm':
-        case 'ban':
-          const channels = config.ban_list;
-          for (const channel of channels) {
-            await client.sendRaw(`PRIVMSG #${channel} :/me${args[1]}`);
+      case 'ban':
+        const channels = config.ban_list;
+        for (const channel of channels) {
+          chatBan(args[1], channel, 'band');
+          lastBan.push(channel);
         }
         return;
     }

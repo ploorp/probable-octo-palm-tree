@@ -1,5 +1,5 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { client } from '../src/client.js';
+import { client } from '../client.js';
 
 export default async function ping(msg: PrivmsgMessage, startTime: Date) {
   const uptime = Math.floor((Date.now() - startTime.getTime()) / 1000);

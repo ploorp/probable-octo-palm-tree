@@ -1,6 +1,6 @@
-import { client } from '../src/client.js';
+import { client } from '../client.js';
 import axios from 'axios';
-import config from '../config.json' with { type: 'json' };
+import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
 export default async function boxd(msg: PrivmsgMessage, args: string[]) {
