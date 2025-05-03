@@ -35,11 +35,17 @@ client.on('JOIN', async (msg) => {
     return;
   }
 
-  const firstSeen = new Date(await getFirstSeen(userInfo));
-  const now = Date.now();
+  const firstSeenTimestamp = await getFirstSeen(userInfo);
+  let isNewChatter = false;
 
-  let isNewChatter = now - firstSeen.getTime() < 864000000; // 10 days
-  if (!userID) {isNewChatter = true;} // new account
+  if (!userID) {
+    isNewChatter = true; // new account
+
+  } else if (firstSeenTimestamp) {
+    const firstSeen = new Date(firstSeenTimestamp);
+    const now = Date.now();
+    isNewChatter = now - firstSeen.getTime() < 864000000; // 10 days
+  }
 
   const isColorChanged = !await isColorDefault(userInfo);
   const isPfpChanged = !await isPfpDefault(userInfo);
@@ -56,7 +62,7 @@ client.on('JOIN', async (msg) => {
     } else if (!isColorChanged && !isPfpChanged) {
       console.log('default color and pfp', joinedUser);
       chatTimeout(userID, msg.channelName, 3600, 'band');
-      return client.say(msg.channelName, `@${msg.channelName}, suspicious user @${joinedUser} joined, use %ban?`);
+      return client.say(msg.channelName, `@${msg.channelName}, sus user @${joinedUser} joined, use %ban?`);
     }
     console.log('asdf', joinedUser);
   }
