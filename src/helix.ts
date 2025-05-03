@@ -1,6 +1,6 @@
 import config from '../config.json' with { type: 'json' };
 import axios from 'axios';
-import { timeLog } from './utils';
+import { timeLog } from './utils.js';
 
 const BAN_API = 'https://api.twitch.tv/helix/moderation/bans';
 const clientId = config.helix.client_id;
