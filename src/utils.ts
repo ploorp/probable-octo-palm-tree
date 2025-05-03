@@ -39,5 +39,9 @@ export async function usernameToID(username: string) {
     return null;
   }
 
-  return response.data.data[0].channel.channel_id;
+  try {
+    return response.data.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").id;
+  } catch (error: any) {
+    return null;
+  }
 }
