@@ -33,5 +33,13 @@ export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
     return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
-  return client.say(msg.channelName, `@${msg.senderUsername}, ${logs}`);
+  try {
+    const shortenerResponse = await axios.get(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(logs)}`);
+    const shortenedUrl = shortenerResponse.data;
+
+    return client.say(msg.channelName, `@${msg.senderUsername}, ${shortenedUrl}`);
+  } catch (error: any) {
+    console.error(`Error shortening URL: ${error.message}`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+  }
 }

@@ -142,6 +142,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   }
 
   let banChannels = config.ban_list;
+  let userInfo;
 
   // Commands only whitelisted users can use
   if (config.whitelist_channels.includes(msg.senderUsername)) {
@@ -172,7 +173,9 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           return client.say(msg.channelName, '...');
         }
 
-        const banID = await usernameToID(userToBan);
+        userInfo = await getUserInfo(userToBan);
+
+        const banID = await usernameToID(userInfo);
         if (!banID) {
           return client.say(msg.channelName, 'error with userID Reacting');
         }
@@ -200,7 +203,9 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           return client.say(msg.channelName, 'provide a userID to ban tupid');
         }
 
-        const unbanID = await usernameToID(userToUnban);
+        userInfo = await getUserInfo(userToUnban);
+
+        const unbanID = await usernameToID(userInfo);
         if (!unbanID) {
           return client.say(msg.channelName, 'error with userID Reacting');
         }
