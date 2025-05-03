@@ -102,6 +102,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   }
 
   let lastBan: string = '';
+  let banChannels = config.ban_list;
 
   // Commands only whitelisted users can use
   if (config.whitelist_channels.includes(msg.senderUsername)) {
@@ -123,16 +124,14 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'adtm':
       case 'ban':
-        let channels = config.ban_list;
         lastBan = args[1];
-        for (const channel of channels) {
+        for (const channel of banChannels) {
           chatBan(args[1], channel, 'band');
         }
         return;
 
       case 'undo':
-        channels = config.ban_list;
-        for (const channel of channels) {
+        for (const channel of banChannels) {
           chatUnban(lastBan, channel)
         return;
         }
