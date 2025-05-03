@@ -48,7 +48,9 @@ client.on('JOIN', (msg) => {
  * @typedef {import('@mastondzn/dank-twitch-irc').PartMessage} PartMessage
  */
 client.on('PART', (msg) => {
-  timeLog(`Parted #${msg.channelName}`);
+  if (msg.partedUsername === config.username) {
+    timeLog(`Parted #${msg.channelName}`);
+  }
 });
 
 async function joinChannels() {
