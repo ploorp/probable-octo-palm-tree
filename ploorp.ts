@@ -162,7 +162,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         }
 
         const unbanID = await usernameToID(userToUnban);
-        if (!banID) {
+        if (!unbanID) {
           return client.say(msg.channelName, 'error with userID Reacting');
         }
 
