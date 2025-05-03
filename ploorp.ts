@@ -5,7 +5,7 @@ import searchlogs from './src/commands/searchlogs.js';
 import listcmds from './src/commands/listcmd.js';
 import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
-import chatBan from './src/helix.js';
+import { chatBan, chatUnban } from './src/helix.js';
 import { timeLog } from './src/utils.js';
 import { ttrim } from './src/utils.js';
 import config from './config.json' with { type: 'json' };
@@ -101,7 +101,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     }
   }
 
-  let lastBan: Array<String> = [];
+  let lastBan: string = '';
 
   // Commands only whitelisted users can use
   if (config.whitelist_channels.includes(msg.senderUsername)) {
@@ -123,12 +123,19 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'adtm':
       case 'ban':
-        const channels = config.ban_list;
+        let channels = config.ban_list;
+        lastBan = args[1];
         for (const channel of channels) {
           chatBan(args[1], channel, 'band');
-          lastBan.push(channel);
         }
         return;
+
+      case 'undo':
+        channels = config.ban_list;
+        for (const channel of channels) {
+          chatUnban(lastBan, channel)
+        return;
+        }
     }
   }
 

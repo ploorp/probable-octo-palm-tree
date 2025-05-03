@@ -3,6 +3,10 @@
   "username": "your_username",
   "access_token": "https://twitchtokengenerator.com/",
   "helix_id": "https://twitchtokengenerator.com/",
+  "helix": {
+    "client_id": "",
+    "access_token": ""
+  },
   "prefix": "%",
   "cooldown": 2000,
   "channels": [
@@ -12,5 +16,9 @@
   ],
   "whitelist_channels": [
       "your_channel"
+  ],
+  "ban_list": [
+      "123456789",
+      "987654321"
   ]
 }
