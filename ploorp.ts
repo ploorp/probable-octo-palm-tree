@@ -44,6 +44,7 @@ client.on('JOIN', async (msg) => {
     if (banPattern.test(joinedUser)) {
       for (const channel of banChannels) {
         chatBan(userID, channel, 'band');
+        client.say(channel, `@${msg.channelName}, banned ${joinedUser} use %undo to unban`);
       }
       lastBan = userID; 
     } else if (!isColorChanged && !isPfpChanged) {
