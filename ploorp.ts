@@ -41,8 +41,8 @@ client.on('JOIN', async (msg) => {
   let isNewChatter = now - firstSeen.getTime() < 864000000; // 10 days
   if (!userID) {isNewChatter = true;} // new account
 
-  const isColorChanged = await isColorDefault(userInfo);
-  const isPfpChanged = await isPfpDefault(userInfo);
+  const isColorChanged = !await isColorDefault(userInfo);
+  const isPfpChanged = !await isPfpDefault(userInfo);
 
   if (isNewChatter) {
     console.log('isNewChatter', joinedUser);
