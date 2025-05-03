@@ -19,10 +19,6 @@ export async function getUserInfo(username: string) {
   const endpoint = "https://api.potat.app/users/";
   let response;
 
-  if (!username) {
-    return null;
-  }
-
   username = username.replace(/^@/, '');
 
   if (!/^[a-z0-9_]+$/.test(username)) {
