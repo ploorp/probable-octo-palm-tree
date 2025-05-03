@@ -5,20 +5,48 @@ import searchlogs from './src/commands/searchlogs.js';
 import listcmds from './src/commands/listcmd.js';
 import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
-import { chatBan, chatUnban } from './src/helix.js';
-import { timeLog, ttrim, usernameToID } from './src/utils.js';
+import { chatBan, chatUnban, chatTimeout } from './src/helix.js';
+import { timeLog, ttrim, getUserInfo, usernameToID, getFirstSeen, isColorDefault, isPfpDefault} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
 const startTime = new Date();
 const cooldowns = new Map();
-const lastBans = new Map<string, string>();
+let lastBan: string | null = null;
 
 timeLog('Bot is starting');
 
 client.on('JOIN', async (msg) => {
   const joinedUser = msg.joinedUsername;
   const userID = await usernameToID(joinedUser);
+  const userInfo = await getUserInfo(joinedUser);
+  const banChannels = config.ban_list;
+  const banPattern = new RegExp(config.ban_pattern, "i");
+
+  if (!userID || userID === config.id || config.channels.includes(joinedUser)) {
+    return;
+  }
+
+  const firstSeen = new Date(await getFirstSeen(userInfo));
+  const now = Date.now();
+
+  const isnewChatter = now - firstSeen.getTime() < 864000000; // 10 days
+  const isColorChanged = await isColorDefault(userInfo);
+  const isPfpChanged = await isPfpDefault(userInfo);
+
+  if (isnewChatter) {
+    if (banPattern.test(joinedUser)) {
+      for (const channel of banChannels) {
+        chatBan(userID, channel, 'band');
+      }
+      lastBan = userID; 
+    } else if (!isColorChanged && !isPfpChanged) {
+      chatTimeout(userID, msg.channelName, 3600, 'band');
+      return client.say(msg.channelName, `@${msg.channelName}, suspicious user @${joinedUser} joined, use %ban?`);
+    }
+  }
+  
+  return;
 });
 
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
@@ -130,7 +158,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'ban':
         const userToBan = args[1];
         if (!userToBan) {
-          return client.say(msg.channelName, 'provide a userID to ban tupid');
+          return client.say(msg.channelName, 'provide a user to ban tupid');
+        }
+
+        if (userToBan.toLowerCase() === 'ploorp') {
+          return client.say(msg.channelName, '...');
         }
 
         const banID = await usernameToID(userToBan);
@@ -141,11 +173,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         for (const channel of banChannels) {
           chatBan(banID, channel, 'band');
         }
-        lastBans.set(msg.senderUsername, banID); 
+        lastBan = banID; 
         return;
 
       case 'undo':
-        const userToUndo = lastBans.get(msg.senderUsername);
+        const userToUndo = lastBan;
         if (!userToUndo) {
           return client.say(msg.channelName, 'nothing to undo tupid');
         }

@@ -1,6 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../client.js';
-import axios from 'axios';    
+import axios from 'axios';
+import { getUserInfo } from '../utils.js';
 
 export default async function connections(msg: PrivmsgMessage, args: string[]) {
   let username;

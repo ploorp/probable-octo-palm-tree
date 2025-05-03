@@ -36,7 +36,7 @@ export async function chatBan(userId: string, broadcasterId: string, reason: str
 
 export async function chatUnban(userId: string, broadcasterId: string) {
   if (!userId || !broadcasterId || !config.id) {
-    console.error('❌ Missing required IDs');
+    console.error('Missing required IDs');
     return;
   }
 
@@ -63,5 +63,38 @@ export async function chatUnban(userId: string, broadcasterId: string) {
     console.log(`Successfully unbanned user ${userId} in ${broadcasterId}`);
   } catch (error: any) {
     console.error(`Error unbanning user ${userId} in ${broadcasterId}:`, error.response?.data || error.message);
+  }
+}
+
+export async function chatTimeout(userId: string, broadcasterId: string, durationSeconds: number, reason: string) {
+  if (!userId || !broadcasterId || !config.id) {
+    console.error('Missing required IDs');
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      BAN_API,
+      {
+        data: {
+          user_id: userId,
+          duration: durationSeconds,
+          reason: reason,
+        },
+        moderator_id: config.id,
+        broadcaster_id: broadcasterId,
+      },
+      {
+        headers: {
+          'Client-ID': clientId,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log(`Timed out user ${userId} for ${durationSeconds} seconds`);
+  } catch (error: any) {
+    console.error(`Error timing out user ${userId}:`, error.response?.data || error.message);
   }
 }

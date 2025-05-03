@@ -17,7 +17,8 @@ const client = new ChatClient({
   username: config.username.toLowerCase(),
   password: config.access_token,
   ignoreUnhandledPromiseRejections: true,
-  rateLimits: 'default' // 'default or 'verifiedBot'
+  rateLimits: 'default', // 'default or 'verifiedBot'
+  requestMembershipCapability: true
 });
 
 client.use(new AlternateMessageModifier(client));

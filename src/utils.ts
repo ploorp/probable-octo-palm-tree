@@ -15,7 +15,7 @@ export const ttrim = (str: string) => {
   return str.replace(pattern, '');
 }
 
-export async function usernameToID(username: string) {
+export async function getUserInfo(username: string) {
   const endpoint = "https://api.potat.app/users/";
   let response;
 
@@ -39,9 +39,55 @@ export async function usernameToID(username: string) {
     return null;
   }
 
+  return response.data;
+}
+
+export async function usernameToID(userInfo: any) {
+  if (!userInfo) {
+    return null;
+  }
+
   try {
-    return response.data.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").id;
+    return userInfo.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").id;
   } catch (error: any) {
     return null;
+  }
+}
+
+export async function getFirstSeen(userInfo: any) {
+  if (!userInfo) {
+    return null;
+  }
+
+  try {
+    return userInfo.data[0].user.firstSeen;
+  } catch (error: any) {
+    return null;
+  }
+}
+
+export async function isColorDefault(userInfo: any) {
+  if (!userInfo) {
+    return true;
+  }
+
+  try {
+    const color = userInfo.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").meta.color;
+    return color === null;
+  } catch (error: any) {
+    return true;
+  }
+}
+
+export async function isPfpDefault(userInfo: any) {
+  if (!userInfo) {
+    return true;
+  }
+
+  try {
+    const pfp = userInfo.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").pfp;
+    return pfp.includes("user-default");
+  } catch (error: any) {
+    return true;
   }
 }

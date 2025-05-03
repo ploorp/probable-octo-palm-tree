@@ -20,5 +20,6 @@
   "ban_list": [
       "123456789",
       "987654321"
-  ]
+  ],
+  "ban_pattern": "//\b(word1|word2|word3)\\b"
 }
