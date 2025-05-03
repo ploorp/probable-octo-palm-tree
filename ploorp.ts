@@ -17,6 +17,12 @@ let lastBan: string | null = null;
 timeLog('Bot is starting');
 
 client.on('JOIN', async (msg) => {
+  const botState = client.userStateTracker?.channelStates?.[msg.channelName];
+
+  if (!botState || !botState.isMod) {
+    return;
+  }
+
   const joinedUser = msg.joinedUsername;
   const userID = await usernameToID(joinedUser);
   const userInfo = await getUserInfo(joinedUser);
