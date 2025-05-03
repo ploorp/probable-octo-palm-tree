@@ -135,6 +135,12 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           chatUnban(lastBan, channel)
         return;
         }
+
+      case 'unban':
+        for (const channel of banChannels) {
+          chatUnban(args[1], channel);
+        }
+        return;
     }
   }
 
