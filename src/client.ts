@@ -36,7 +36,9 @@ client.on('error', (err) => {
  * @typedef {import('@mastondzn/dank-twitch-irc').JoinMessage} JoinMessage
  */
 client.on('JOIN', (msg) => {
-  timeLog(`Joined #${msg.channelName}`);
+  if (msg.joinedUsername === config.username) {
+    timeLog(`Joined #${msg.channelName}`);
+  }
 });
 
 /**

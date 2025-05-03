@@ -2,6 +2,7 @@ import { client } from '../client.js';
 import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
+import { timeLog } from '../utils.js';
 
 export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
   // if no arguments try to use the sender's username
@@ -39,7 +40,7 @@ export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
 
     return client.say(msg.channelName, `@${msg.senderUsername}, ${shortenedUrl}`);
   } catch (error: any) {
-    console.error(`Error shortening URL: ${error.message}`);
+    timeLog(`Error shortening URL: ${error.message}`);
     return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 }

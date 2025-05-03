@@ -1,6 +1,7 @@
 import { client } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from 'axios';
+import { timeLog } from '../utils.js';
 
 export default async function unicode(msg: PrivmsgMessage, args: string[]) {
   args = args.slice(1);
@@ -24,7 +25,7 @@ export default async function unicode(msg: PrivmsgMessage, args: string[]) {
 
     return client.say(msg.channelName, `@${msg.senderUsername}, ${shortenedUrl}`);
   } catch (error: any) {
-    console.error(`Error shortening URL: ${error.message}`);
+    timeLog(`Error shortening URL: ${error.message}`);
     return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
