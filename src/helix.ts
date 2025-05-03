@@ -2,8 +2,8 @@ import config from '../config.json' with { type: 'json' };
 import axios from 'axios';
 
 const BAN_API = 'https://api.twitch.tv/helix/moderation/bans';
-const clientId = config.client_id;
-const accessToken = config.access_token2;
+const clientId = config.helix.client_id;
+const accessToken = config.helix.access_token;
 
 export default async function chatBan(userId: string, broadcasterId: string, reason: string) {
   try {
