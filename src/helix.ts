@@ -12,12 +12,14 @@ export async function chatBan(userId: string, broadcasterId: string, reason: str
       {
         data: {
           user_id: userId,
-          reason,
+          reason: reason,
         },
-        moderator_id: config.id,
-        broadcaster_id: broadcasterId,
       },
       {
+        params: {
+          broadcaster_id: broadcasterId,
+          moderator_id: config.id,
+        },
         headers: {
           'Client-ID': clientId,
           'Authorization': `Bearer ${accessToken}`,
@@ -26,28 +28,30 @@ export async function chatBan(userId: string, broadcasterId: string, reason: str
       }
     );
 
-    console.log(`Successfully banned user ${userId}`);
+    console.log(`Successfully banned user ${userId} in ${broadcasterId}`);
   } catch (error: any) {
-    console.error(`Error banning user ${userId}:`, error.response?.data || error.message);
+    console.error(`Error banning user ${userId} in ${broadcasterId}:`, error.response?.data || error.message);
   }
 }
 
 export async function chatUnban(userId: string, broadcasterId: string) {
   try {
-    const response = await axios.delete(BAN_API, {
+    const response = await axios.request({
+      method: 'DELETE',
+      url: BAN_API,
+      headers: {
+        'Client-ID': clientId,
+        'Authorization': `Bearer ${accessToken}`,
+      },
       params: {
         user_id: userId,
         moderator_id: config.id,
         broadcaster_id: broadcasterId,
       },
-      headers: {
-        'Client-ID': clientId,
-        'Authorization': `Bearer ${accessToken}`,
-      },
     });
 
-    console.log(`Successfully unbanned user ${userId}`);
+    console.log(`Successfully unbanned user ${userId} in ${broadcasterId}`);
   } catch (error: any) {
-    console.error(`Error unbanning user ${userId}:`, error.response?.data || error.message);
+    console.error(`Error unbanning user ${userId} in ${broadcasterId}:`, error.response?.data || error.message);
   }
 }
