@@ -40,7 +40,6 @@ client.on('JOIN', async (msg) => {
 
   if (!userID) {
     isNewChatter = true; // new account
-
   } else if (firstSeenTimestamp) {
     const firstSeen = new Date(firstSeenTimestamp);
     const now = Date.now();
