@@ -24,19 +24,21 @@ client.on('JOIN', async (msg) => {
   }
 
   const joinedUser = msg.joinedUsername;
-  const userID = await usernameToID(joinedUser);
   const userInfo = await getUserInfo(joinedUser);
+  const userID = await usernameToID(userInfo);
   const banChannels = config.ban_list;
   const banPattern = new RegExp(config.ban_pattern, "i");
 
-  if (!userID || userID === config.id || config.channels.includes(joinedUser)) {
+  if (userID === config.id || config.channels.includes(joinedUser)) {
     return;
   }
 
   const firstSeen = new Date(await getFirstSeen(userInfo));
   const now = Date.now();
 
-  const isnewChatter = now - firstSeen.getTime() < 864000000; // 10 days
+  let isnewChatter = now - firstSeen.getTime() < 864000000; // 10 days
+  if (!userID) {isnewChatter = true;} // new account
+
   const isColorChanged = await isColorDefault(userInfo);
   const isPfpChanged = await isPfpDefault(userInfo);
 
