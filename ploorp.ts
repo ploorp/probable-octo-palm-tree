@@ -29,8 +29,6 @@ client.on('JOIN', async (msg) => {
   const banChannels = config.ban_list;
   const banPattern = new RegExp(config.ban_pattern, "i");
 
-  //console.log(joinedUser, "joined", msg.channelName);
-
   if (userID === config.id || config.channels.includes(joinedUser)) {
     return;
   }
@@ -50,15 +48,17 @@ client.on('JOIN', async (msg) => {
   const isPfpChanged = !await isPfpDefault(userInfo);
 
   if (isNewChatter) {
-    timeLog('new chatter' + joinedUser);
+    timeLog('isNewChatter ' + joinedUser);
     if (banPattern.test(joinedUser)) {
+      timeLog('matched regex ' + joinedUser);
       for (const channel of banChannels) {
         chatBan(userID, channel, 'band');
         client.say(channel, `@${msg.channelName}, banned ${joinedUser} use %undo to unban`);
       }
       lastBan = userID; 
     } else if (!isColorChanged && !isPfpChanged) {
-      console.log('default color and pfp', joinedUser);
+      timeLog('matched regex ' + joinedUser);
+      timeLog('default color and pfp ' + joinedUser);
       chatTimeout(userID, msg.channelName, 3600, 'band');
       return client.say(msg.channelName, `@${msg.channelName}, sus user @${joinedUser} joined, use %ban?`);
     }
