@@ -151,82 +151,83 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         );
       }
     }
-  }
+  
 
-  let banChannels = config.ban_list;
-  let userInfo;
+    let banChannels = config.ban_list;
+    let userInfo;
 
-  // Commands only whitelisted users can use
-  if (config.whitelist_channels.includes(msg.senderUsername)) {
-    switch (command) {
-      case 'part':
-        await client.part(msg.channelName);
-        return;
+    // Commands only whitelisted users can use
+    if (config.whitelist_channels.includes(msg.senderUsername)) {
+      switch (command) {
+        case 'part':
+          await client.part(msg.channelName);
+          return;
 
-      case 'join':
-        if (args[1]?.length) {
-          try {
-            await client.join(args[1].toLowerCase());
-          } catch (error) {
-            return client.say(msg.channelName, 'error joining ' + args[1]);
+        case 'join':
+          if (args[1]?.length) {
+            try {
+              await client.join(args[1].toLowerCase());
+            } catch (error) {
+              return client.say(msg.channelName, 'error joining ' + args[1]);
+            }
+            return client.say(msg.channelName, 'joined ' + args[1]);
           }
-          return client.say(msg.channelName, 'joined ' + args[1]);
-        }
-        return;
+          return;
 
-      case 'adtm':
-      case 'ban':
-        const userToBan = args[1];
-        if (!userToBan) {
-          return client.say(msg.channelName, 'provide a user to ban tupid');
-        }
+        case 'adtm':
+        case 'ban':
+          const userToBan = args[1];
+          if (!userToBan) {
+            return client.say(msg.channelName, 'provide a user to ban tupid');
+          }
 
-        if (userToBan.toLowerCase() === 'ploorp') {
-          return client.say(msg.channelName, '...');
-        }
+          if (userToBan.toLowerCase() === 'ploorp') {
+            return client.say(msg.channelName, '...');
+          }
 
-        userInfo = await getUserInfo(userToBan);
+          userInfo = await getUserInfo(userToBan);
 
-        const banID = await usernameToID(userInfo);
-        if (!banID) {
-          return client.say(msg.channelName, 'error with userID Reacting');
-        }
+          const banID = await usernameToID(userInfo);
+          if (!banID) {
+            return client.say(msg.channelName, 'error with userID Reacting');
+          }
 
-        for (const channel of banChannels) {
-          chatBan(banID, channel, 'band');
-        }
-        lastBan = banID; 
-        return;
+          for (const channel of banChannels) {
+            chatBan(banID, channel, 'band');
+          }
+          lastBan = banID; 
+          return;
 
-      case 'undo':
-        const userToUndo = lastBan;
-        if (!userToUndo) {
-          return client.say(msg.channelName, 'nothing to undo tupid');
-        }
+        case 'undo':
+          const userToUndo = lastBan;
+          if (!userToUndo) {
+            return client.say(msg.channelName, 'nothing to undo tupid');
+          }
 
-        const undoID = await usernameToID(await getUserInfo(userToUndo));
+          const undoID = await usernameToID(await getUserInfo(userToUndo));
 
-        for (const channel of banChannels) {
-          chatUnban(undoID, channel)
-        }
-        return;
+          for (const channel of banChannels) {
+            chatUnban(undoID, channel)
+          }
+          return;
 
-      case 'unban':
-        const userToUnban = args[1];
-        if (!userToUnban) {
-          return client.say(msg.channelName, 'provide a userID to ban tupid');
-        }
+        case 'unban':
+          const userToUnban = args[1];
+          if (!userToUnban) {
+            return client.say(msg.channelName, 'provide a userID to ban tupid');
+          }
 
-        const unbanID = await usernameToID(await getUserInfo(userToUnban));
+          const unbanID = await usernameToID(await getUserInfo(userToUnban));
 
-        if (!unbanID) {
-          return client.say(msg.channelName, 'error with userID Reacting');
-        }
+          if (!unbanID) {
+            return client.say(msg.channelName, 'error with userID Reacting');
+          }
 
-        for (const channel of banChannels) {
-          chatUnban(unbanID, channel);
-        }
-        return;
+          for (const channel of banChannels) {
+            chatUnban(unbanID, channel);
+          }
+          return;
+      }
     }
   }
 
