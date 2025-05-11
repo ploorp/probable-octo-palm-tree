@@ -18,12 +18,12 @@ timeLog('Bot is starting');
 
 client.on('JOIN', async (msg) => {
   const botState = client.userStateTracker?.channelStates?.[msg.channelName];
+  const joinedUser = msg.joinedUsername;
 
-  if (!botState || !botState.isMod) {
+  if (!botState || !botState.isMod || joinedUser === lastBan) {
     return;
   }
-
-  const joinedUser = msg.joinedUsername;
+  
   const userInfo = await getUserInfo(joinedUser);
   const userID = await usernameToID(userInfo);
   const banChannels = config.ban_list;
@@ -55,7 +55,7 @@ client.on('JOIN', async (msg) => {
         chatBan(userID, channel, 'band');
         client.say(channel, `@${msg.channelName}, banned ${joinedUser} use %undo to unban`);
       }
-      lastBan = userID; 
+      lastBan = joinedUser; 
     } else if (!isColorChanged && !isPfpChanged) {
       timeLog('matched regex ' + joinedUser);
       timeLog('default color and pfp ' + joinedUser);
@@ -204,8 +204,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           return client.say(msg.channelName, 'nothing to undo tupid');
         }
 
+        const undoID = await usernameToID(await getUserInfo(userToUndo));
+
         for (const channel of banChannels) {
-          chatUnban(userToUndo, channel)
+          chatUnban(undoID, channel)
         }
         return;
 
@@ -215,9 +217,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           return client.say(msg.channelName, 'provide a userID to ban tupid');
         }
 
-        userInfo = await getUserInfo(userToUnban);
+        const unbanID = await usernameToID(await getUserInfo(userToUnban));
 
-        const unbanID = await usernameToID(userInfo);
         if (!unbanID) {
           return client.say(msg.channelName, 'error with userID Reacting');
         }
