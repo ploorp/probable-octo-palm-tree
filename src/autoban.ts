@@ -1,6 +1,6 @@
-import { client } from './client';
-import { getUserInfo, usernameToID, getFirstSeen, isColorDefault, isPfpDefault, timeLog } from './utils';
-import { chatBan, chatTimeout } from './helix';
+import { client } from './client.js';
+import { getUserInfo, usernameToID, getFirstSeen, isColorDefault, isPfpDefault, timeLog } from './utils.js';
+import { chatBan, chatTimeout } from './helix.js';
 import config from '../config.json' with { type: 'json' };
 
 export default async function autoban(joinedUser: string, lastBan: any, msg: any) {
