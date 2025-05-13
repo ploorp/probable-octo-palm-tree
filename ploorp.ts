@@ -1,14 +1,15 @@
 import { client } from './src/client.js';
-import boxd from './src/commands/boxd.js';
+import boxd from './src/commands/letterboxd.js';
 import connections from './src/commands/connections.js';
 import searchlogs from './src/commands/searchlogs.js';
 import listcmds from './src/commands/listcmd.js';
 import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
-import { chatBan, chatUnban, chatTimeout } from './src/helix.js';
-import { timeLog, ttrim, getUserInfo, usernameToID, getFirstSeen, isColorDefault, isPfpDefault} from './src/utils.js';
+import { chatBan, chatUnban } from './src/helix.js';
+import { timeLog, ttrim, getUserInfo, usernameToID} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
+import autoban from './src/autoban.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -24,48 +25,11 @@ client.on('JOIN', async (msg) => {
     return;
   }
   
-  const userInfo = await getUserInfo(joinedUser);
-  const userID = await usernameToID(userInfo);
-  const banChannels = config.ban_list;
-  const banPattern = new RegExp(config.ban_pattern, "i");
+  const bannedUser = await autoban(joinedUser, lastBan, msg);
 
-  if (userID === config.id || config.channels.includes(joinedUser)) {
-    return;
+  if (bannedUser) {
+    lastBan = bannedUser;
   }
-
-  const firstSeenTimestamp = await getFirstSeen(userInfo);
-  let isNewChatter = false;
-
-  if (!userID) {
-    isNewChatter = true; // new account
-  } else if (firstSeenTimestamp) {
-    const firstSeen = new Date(firstSeenTimestamp);
-    const now = Date.now();
-    isNewChatter = now - firstSeen.getTime() < 864000000; // 10 days
-  }
-
-  const isColorChanged = !await isColorDefault(userInfo);
-  const isPfpChanged = !await isPfpDefault(userInfo);
-
-  if (isNewChatter) {
-    timeLog('isNewChatter ' + joinedUser);
-    if (banPattern.test(joinedUser)) {
-      timeLog('matched regex ' + joinedUser);
-      for (const channel of banChannels) {
-        chatBan(userID, channel, 'band');
-        client.say(channel, `@${msg.channelName}, banned ${joinedUser} use %undo to unban`);
-      }
-      lastBan = joinedUser; 
-    } else if (!isColorChanged && !isPfpChanged) {
-      timeLog('matched regex ' + joinedUser);
-      timeLog('default color and pfp ' + joinedUser);
-      chatTimeout(userID, msg.channelName, 3600, 'band');
-      return client.say(msg.channelName, `@${msg.channelName}, sus user @${joinedUser} joined, use %ban?`);
-    }
-    console.log('asdf', joinedUser);
-  }
-  
-  return;
 });
 
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
@@ -117,6 +81,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await ping(msg, startTime);
         return;
 
+      case 'letterboxd':
+      case 'lb':
       case 'boxd':
         await boxd(msg, args);
         return;

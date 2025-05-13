@@ -22,16 +22,19 @@ export async function getUserInfo(username: string) {
   username = username.toLowerCase().replace(/^@/, '');
 
   if (!/^[a-z0-9_]+$/.test(username)) {
+    timeLog(`Invalid username: ${username}`);
     return null;
   }
 
   try {
     response = await axios.get(endpoint + username);
-  } catch (error) {
+  } catch (error : any) {
+    timeLog(`Error fetching user info for ${username}: ${error.message}`);
     return null;
   }
 
   if (response.data.statusCode === 404) {
+    timeLog(`Response 404 for: ${username}`);
     return null;
   }
 
@@ -46,6 +49,7 @@ export async function usernameToID(userInfo: any) {
   try {
     return userInfo.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").id;
   } catch (error: any) {
+    timeLog(`Error getting user ID: ${error.message}`);
     return null;
   }
 }
@@ -58,6 +62,7 @@ export async function getFirstSeen(userInfo: any) {
   try {
     return userInfo.data[0].user.firstSeen;
   } catch (error: any) {
+    timeLog(`Error getting first seen: ${error.message}`);
     return null;
   }
 }
@@ -71,6 +76,7 @@ export async function isColorDefault(userInfo: any) {
     const color = userInfo.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").meta.color;
     return color === null;
   } catch (error: any) {
+    timeLog(`Error getting color: ${error.message}`);
     return true;
   }
 }
@@ -84,6 +90,7 @@ export async function isPfpDefault(userInfo: any) {
     const pfp = userInfo.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").pfp;
     return pfp.includes("user-default");
   } catch (error: any) {
+    timeLog(`Error getting profile picture: ${error.message}`);
     return true;
   }
 }
