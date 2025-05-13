@@ -88,6 +88,12 @@ export async function isPfpDefault(userInfo: any) {
 
   try {
     const pfp = userInfo.data[0].user.connections.find((connection: any) => connection.platform === "TWITCH").pfp;
+    
+    if (!pfp) {
+      timeLog("pfp is null");
+      return true;
+    }
+    
     return pfp.includes("user-default");
   } catch (error: any) {
     timeLog(`Error getting profile picture: ${error.message}`);
