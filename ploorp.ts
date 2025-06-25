@@ -140,7 +140,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
           if (echoMsg) {
             try {
-              client.say(echoChannel, echoMsg);
+              await client.say(echoChannel, echoMsg);
             } catch (error) {
               return;
             }
