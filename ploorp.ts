@@ -125,6 +125,15 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     // Commands only whitelisted users can use
     if (config.whitelist_channels.includes(msg.senderUsername)) {
       switch (command) {
+        case 'echo':
+          const echoMsg = args[1];
+          const echoChannel = args[2] || msg.channelName;
+
+          if (echoMsg) {
+            client.say(echoChannel, echoMsg)
+          }
+          return;
+
         case 'part':
           await client.part(msg.channelName);
           return;
