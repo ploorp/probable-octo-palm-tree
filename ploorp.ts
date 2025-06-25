@@ -121,23 +121,32 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
     let banChannels = config.ban_list;
     let userInfo;
+    
 
     // Commands only whitelisted users can use
     if (config.whitelist_channels.includes(msg.senderUsername)) {
       switch (command) {
-        case 'echo':
-          const echoMsg = args[1];
-          const echoChannel = args[2] || msg.channelName;
+        case 'echo': {
+          let echoChannel = msg.channelName;
+          let echoArgs = args.slice(1);
+
+          const lastArg = echoArgs[echoArgs.length - 1];
+          if (lastArg && lastArg.startsWith('in:')) {
+            echoChannel = lastArg.slice(3).toLowerCase();
+            echoArgs.pop();
+          }
+
+          const echoMsg = echoArgs.join(' ').trim();
 
           if (echoMsg) {
             try {
-              client.say(echoChannel, echoMsg)
-            }
-            catch (error) {
+              client.say(echoChannel, echoMsg);
+            } catch (error) {
               return;
             }
           }
           return;
+        }
 
         case 'part':
           await client.part(msg.channelName);
