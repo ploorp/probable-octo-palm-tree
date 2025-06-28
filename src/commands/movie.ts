@@ -57,7 +57,7 @@ export default async function movie(msg: PrivmsgMessage, args: string[]) {
   if (!query) {
     return client.say(
       msg.channelName,
-      `@${msg.senderUsername}, usage: ${config.prefix}film <movie title>`
+      `@${msg.senderUsername}, usage: ${config.prefix}movie <movie title>`
     );
   }
 
