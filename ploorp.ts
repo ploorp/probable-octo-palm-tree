@@ -9,7 +9,8 @@ import { chatBan, chatUnban } from './src/helix.js';
 import { timeLog, ttrim, getUserInfo, usernameToID} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import autoban from './src/autoban.js';
+//import autoban from './src/autoban.js';
+import movie from './src/commands/movie.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -17,20 +18,20 @@ let lastBan: string | null = null;
 
 timeLog('Bot is starting');
 
-client.on('JOIN', async (msg) => {
-  const botState = client.userStateTracker?.channelStates?.[msg.channelName];
-  const joinedUser = msg.joinedUsername;
+// client.on('JOIN', async (msg) => {
+//   const botState = client.userStateTracker?.channelStates?.[msg.channelName];
+//   const joinedUser = msg.joinedUsername;
 
-  if (!botState || !botState.isMod || joinedUser === lastBan) {
-    return;
-  }
+//   if (!botState || !botState.isMod || joinedUser === lastBan) {
+//     return;
+//   }
   
-  const bannedUser = await autoban(joinedUser, lastBan, msg);
+//   const bannedUser = await autoban(joinedUser, lastBan, msg);
 
-  if (bannedUser) {
-    lastBan = bannedUser;
-  }
-});
+//   if (bannedUser) {
+//     lastBan = bannedUser;
+//   }
+// });
 
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const roomState = client.roomStateTracker?.getChannelState(msg.channelName);
@@ -85,6 +86,12 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'lb':
       case 'boxd':
         await boxd(msg, args);
+        return;
+
+      case 'movie':
+      case 'mv':
+      case 'film':
+        await movie(msg, args);
         return;
 
       case 'connections':
