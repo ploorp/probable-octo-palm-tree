@@ -18,21 +18,6 @@ let lastBan: string | null = null;
 
 timeLog('Bot is starting');
 
-// client.on('JOIN', async (msg) => {
-//   const botState = client.userStateTracker?.channelStates?.[msg.channelName];
-//   const joinedUser = msg.joinedUsername;
-
-//   if (!botState || !botState.isMod || joinedUser === lastBan) {
-//     return;
-//   }
-  
-//   const bannedUser = await autoban(joinedUser, lastBan, msg);
-
-//   if (bannedUser) {
-//     lastBan = bannedUser;
-//   }
-// });
-
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const roomState = client.roomStateTracker?.getChannelState(msg.channelName);
   const botState = client.userStateTracker?.channelStates?.[msg.channelName];
@@ -170,7 +155,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           }
           return;
 
-        case 'adtm':
         case 'ban':
           const userToBan = args[1];
           if (!userToBan) {
