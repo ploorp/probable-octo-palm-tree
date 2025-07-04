@@ -9,8 +9,8 @@ import { chatBan, chatUnban } from './src/helix.js';
 import { timeLog, ttrim, getUserInfo, usernameToID} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-//import autoban from './src/autoban.js';
 import movie from './src/commands/movie.js';
+import namechange from './src/commands/namechange.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -57,6 +57,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     msgText = msgArr.join(' ');
   }
   
+  msgText = ttrim(msgText); // removes the reserved character from the end
   const args = msgText.split(' ');
   const command = args[0].slice(config.prefix.length);
 
@@ -81,6 +82,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'connections':
       case 'conn':
+      case 'c':
         await connections(msg, args);
         return;
 
@@ -95,9 +97,14 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await searchlogs(msg, args);
         return;
       
-      case 'u':
       case 'unicode':
+      case 'u':
         await unicode(msg, args);
+        return;
+
+      case 'namechange':
+      case 'nc':
+        await namechange(msg, args);
         return;
 
       case 'help':
@@ -105,7 +112,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         const p = config.prefix;
         return client.say(
           msg.channelName,
-          `@${msg.senderUsername}, commands: ${p}help, ${p}ping, ${p}boxd <username>, ${p}conn <username>, ${p}listcmd <channel>, ${p}searchlogs <channel> <username> <query>, ${p}unicode <message>`,
+          `@${msg.senderUsername}, https://ploorp.com/commands <-- command usage and description`
         );
       }
     }
@@ -141,7 +148,17 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         }
 
         case 'part':
-          await client.part(msg.channelName);
+          if (args[1]?.length) {
+            try {
+              client.say(msg.channelName, 'leaving ' + args[1]);
+              await client.part(args[1].toLowerCase());
+            } catch (error) {
+              client.say(msg.channelName, 'error Reacting');
+            }
+          } else {
+            client.say(msg.channelName, 'leaving ' + msg.channelName);
+            await client.part(msg.channelName);
+          }
           return;
 
         case 'join':
@@ -151,7 +168,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
             } catch (error) {
               return client.say(msg.channelName, 'error joining ' + args[1]);
             }
-            return client.say(msg.channelName, 'joined ' + args[1]);
+            client.say(msg.channelName, 'joined ' + args[1]);
           }
           return;
 

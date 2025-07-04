@@ -10,7 +10,8 @@ export const timeLog = (message: string) => {
 }
 
 // trim, but it also removes the reserved character
-export const ttrim = (str: string) => {
+export const ttrim = (str: string | undefined) => {
+  if (str === undefined) return '';
   const pattern = /^[\s\u{E0000}]+|[\s\u{E0000}]+$/gu;
   return str.replace(pattern, '');
 }
