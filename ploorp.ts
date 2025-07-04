@@ -112,7 +112,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         const p = config.prefix;
         return client.say(
           msg.channelName,
-          `@${msg.senderUsername}, https://ploorp.com/commands <-- command usage and description`
+          `@${msg.senderUsername}, https://ploorp.com/commands`
         );
       }
     }
