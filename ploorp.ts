@@ -5,7 +5,6 @@ import searchlogs from './src/commands/searchlogs.js';
 import listcmds from './src/commands/listcmd.js';
 import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
-import { chatBan, chatUnban } from './src/helix.js';
 import { timeLog, ttrim, getUserInfo, usernameToID} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
