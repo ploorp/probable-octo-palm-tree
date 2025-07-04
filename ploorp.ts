@@ -14,7 +14,6 @@ import namechange from './src/commands/namechange.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
-let lastBan: string | null = null;
 
 timeLog('Bot is starting');
 
@@ -171,59 +170,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
             client.say(msg.channelName, 'joined ' + args[1]);
           }
           return;
-
-        case 'ban':
-          const userToBan = args[1];
-          if (!userToBan) {
-            return client.say(msg.channelName, 'provide a user to ban tupid');
-          }
-
-          if (userToBan.toLowerCase() === 'ploorp') {
-            return client.say(msg.channelName, '...');
-          }
-
-          userInfo = await getUserInfo(userToBan);
-
-          const banID = await usernameToID(userInfo);
-          if (!banID) {
-            return client.say(msg.channelName, 'error with userID Reacting');
-          }
-
-          for (const channel of banChannels) {
-            chatBan(banID, channel, 'band');
-          }
-          lastBan = banID; 
-          return;
-
-        case 'undo':
-          const userToUndo = lastBan;
-          if (!userToUndo) {
-            return client.say(msg.channelName, 'nothing to undo tupid');
-          }
-
-          const undoID = await usernameToID(await getUserInfo(userToUndo));
-
-          for (const channel of banChannels) {
-            chatUnban(undoID, channel)
-          }
-          return;
-
-        case 'unban':
-          const userToUnban = args[1];
-          if (!userToUnban) {
-            return client.say(msg.channelName, 'provide a userID to ban tupid');
-          }
-
-          const unbanID = await usernameToID(await getUserInfo(userToUnban));
-
-          if (!unbanID) {
-            return client.say(msg.channelName, 'error with userID Reacting');
-          }
-
-          for (const channel of banChannels) {
-            chatUnban(unbanID, channel);
-          }
-          return;
       }
     }
   }
@@ -235,11 +181,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     return client.say(msg.channelName, msg.senderUsername + ' hi');
   }
 
-  if (msgText === 'test') {
+  if (msgText === 'Test') {
     return client.say(msg.channelName, 'A');
   }
 
-  if (msgText === 'gup') {
+  if (msgText.toLowerCase() === 'gup') {
     return client.say(msg.channelName, 'gup');
   }
 });
