@@ -40,5 +40,24 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} never changed their name wow`);
   }
   
-  return client.say(msg.channelName, `@${msg.senderUsername}, previous names of ${username}: ${previousNames.join(', ')}`);
+  // make sure the message isnt too big
+  const prefix = `@${msg.senderUsername}, previous names of ${username}: `;
+  let oldUsernames = '';
+  let totalLength = prefix.length;
+  
+  for (let i = 0; i < previousNames.length; i++) {
+    const nextName = previousNames[i];
+    const delimiter = i > 0 ? ', ' : '';
+    const addition = delimiter + nextName;
+    
+    if (totalLength + addition.length + 3 > 500) {
+      oldUsernames += delimiter + '...';
+      break;
+    }
+    
+    oldUsernames += addition;
+    totalLength += addition.length;
+  }
+  
+  return client.say(msg.channelName, prefix + oldUsernames);
 }
