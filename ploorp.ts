@@ -115,11 +115,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         );
       }
     }
-  
-
-    let banChannels = config.ban_list;
-    let userInfo;
-    
 
     // Commands only whitelisted users can use
     if (config.whitelist_channels.includes(msg.senderUsername)) {
