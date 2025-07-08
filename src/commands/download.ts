@@ -59,6 +59,8 @@ function ytdlpDownload(url: string): Promise<string | null> {
       "-o", outputTemplate,
       "--no-playlist",
       "--cookies", cookiesPath,
+      "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
+      "--merge-output-format", "mp4",
       "--", url
     ];
     const proc = spawn("/usr/local/bin/yt-dlp", args);
@@ -70,6 +72,9 @@ function ytdlpDownload(url: string): Promise<string | null> {
 
     proc.on("close", (code) => {
       if (code !== 0) {
+        if (stderr.includes("No video formats found")) {
+          return resolve("not-video");
+        }
         timeLog("yt-dlp failed: " + stderr);
         return resolve(null);
       }
@@ -113,6 +118,7 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     timeLog("Download failed for: " + sanitized);
     return client.say(msg.channelName, `@${msg.senderUsername}, uh download failed`);
   }
+  if (filePath === "not-video") return;
 
   let stats;
   try {
