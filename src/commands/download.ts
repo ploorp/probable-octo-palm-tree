@@ -54,7 +54,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
   const outputTemplate = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.%(ext)s`);
 
   return new Promise((resolve) => {
-    const proc = spawn("yt-dlp", ["-o", outputTemplate, "--no-playlist", "--", url]);
+    const proc = spawn("/usr/local/bin/yt-dlp", ["-o", outputTemplate, "--no-playlist", "--", url]);
     let stderr = "";
 
     proc.stderr.on("data", (data) => {
