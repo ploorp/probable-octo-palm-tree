@@ -68,11 +68,28 @@ function ytdlpDownload(url: string): Promise<string | null> {
       }
 
       const match = stderr.match(/Destination:\s(.+)/);
-      if (!match) {
-        timeLog("yt-dlp did not report a file path: " + stderr);
-        return resolve(null);
+      if (match) {
+        return resolve(match[1].trim());
       }
-      resolve(match[1].trim());
+
+      const outDir = path.dirname(outputTemplate);
+      const outBase = path.basename(outputTemplate, ".%(ext)s");
+      try {
+        const files = fs.readdirSync(outDir);
+        const candidate = files.find(f => f.startsWith(outBase));
+        if (candidate) {
+          return resolve(path.join(outDir, candidate));
+        }
+      } catch (err) {
+        timeLog("error reading temp dir: " + err);
+      }
+
+      return resolve(null);
+    });
+
+    proc.on("error", (err) => {
+      timeLog("yt-dlp spawn error: " + err);
+      resolve(null);
     });
   });
 }
