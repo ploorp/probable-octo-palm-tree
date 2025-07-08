@@ -52,9 +52,16 @@ async function uploadMedia(filePath: string): Promise<string | undefined> {
 
 function ytdlpDownload(url: string): Promise<string | null> {
   const outputTemplate = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.%(ext)s`);
+  const cookiesPath = "/home/ploorp/cookies.txt"; // cookies for instant gram
 
   return new Promise((resolve) => {
-    const proc = spawn("/usr/local/bin/yt-dlp", ["-o", outputTemplate, "--no-playlist", "--", url]);
+    const args = [
+      "-o", outputTemplate,
+      "--no-playlist",
+      "--cookies", cookiesPath,
+      "--", url
+    ];
+    const proc = spawn("/usr/local/bin/yt-dlp", args);
     let stderr = "";
 
     proc.stderr.on("data", (data) => {
@@ -96,12 +103,15 @@ function ytdlpDownload(url: string): Promise<string | null> {
 
 export default async function download(msg: PrivmsgMessage, mediaLink: string) {
   const sanitized = sanitizeUrl(mediaLink);
-  if (!sanitized) throw new Error("Invalid URL");
+  if (!sanitized) {
+    timeLog("Invalid URL for downloader: " + mediaLink);
+    return;
+  }
 
   const filePath = await ytdlpDownload(sanitized);
   if (!filePath) {
     timeLog("Download failed for: " + sanitized);
-    return client.say(msg.channelName, `uh download failed`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, uh download failed`);
   }
 
   let stats;
@@ -109,7 +119,7 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     stats = fs.statSync(filePath);
   } catch (error) {
     timeLog("Error getting file stats: " + error);
-    return client.say(msg.channelName, `uh error downloading`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, uh error downloading`);
   }
 
   if (stats.size > sizeLimit) {
@@ -119,15 +129,15 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
       timeLog("Error deleting file: " + error);
     }
     timeLog(`File too large: ${stats.size} bytes, limit is ${sizeLimit} bytes`);
-    return client.say(msg.channelName, `uh file was too big`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, uh file was too big`);
   }
 
   try {
     const uploadedUrl = await uploadMedia(filePath);
     if (!uploadedUrl) {
-      await client.say(msg.channelName, `uh upload failed`);
+      await client.say(msg.channelName, `@${msg.senderUsername}, uh upload failed`);
     } else {
-      await client.say(msg.channelName, `${uploadedUrl}`);
+      await client.say(msg.channelName, `@${msg.senderUsername}, ${uploadedUrl}`);
     }
   } finally {
     try {
