@@ -7,9 +7,10 @@ import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
 import { timeLog, ttrim, getUserInfo, usernameToID} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
-import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
+import { me, PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
+import download from './src/commands/download.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -22,11 +23,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   // ignore if bot is not mod and channel is restricted
   if (botState && roomState && !botState.isMod && (roomState.emoteOnly || roomState.subscribersOnly || roomState.followersOnlyDuration > -1)) {
-    return;
-  }
-
-  // ignore if message is from bot
-  if (msg.senderUserID == config.id) {
     return;
   }
 
@@ -56,6 +52,15 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   }
   
   msgText = ttrim(msgText); // removes the reserved character from the end
+
+  // media download stuff
+  const downloadLinkPattern = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|tiktok\.com)\/\S*/gi;
+  const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
+
+  if (mediaLink) {
+    await download(msg, mediaLink);
+  }
+
   const args = msgText.split(' ');
   const command = args[0].slice(config.prefix.length);
 
@@ -171,15 +176,17 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   msgText = ttrim(msg.messageText);
 
   // STUFF THATS NOT REALLY A COMMAND
-  if (msgText.includes(config.username)) {
-    return client.say(msg.channelName, msg.senderUsername + ' hi');
-  }
+  if (msg.senderUserID != config.id) {
+    if (msgText === 'Test') {
+      return client.say(msg.channelName, 'A');
+    }
 
-  if (msgText === 'Test') {
-    return client.say(msg.channelName, 'A');
-  }
+    if (msgText.includes(config.username)) {
+      return client.say(msg.channelName, msg.senderUsername + ' hi');
+    }
 
-  if (msgText.toLowerCase() === 'gup') {
-    return client.say(msg.channelName, 'gup');
+    if (msgText.toLowerCase() === 'gup') {
+      return client.say(msg.channelName, 'gup');
+    }
   }
 });
