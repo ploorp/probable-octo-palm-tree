@@ -42,23 +42,21 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     setTimeout(() => cooldowns.delete(senderID), config.cooldown);
   }
 
-  let msgText = msg.messageText.trim();
+  let msgText = ttrim(msg.messageText);
+
+    // media download stuff
+  const downloadLinkPattern = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|tiktok\.com)\/\S*/gi;
+  const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
+
+  if (mediaLink) {
+    await download(msg, mediaLink);
+  }
 
   // deal with reply commands
   if (msg.replyParentMessageBody) {
     let msgArr = msgText.split(' ').slice(1);
     msgArr.push(msg.replyParentMessageBody);
     msgText = msgArr.join(' ');
-  }
-  
-  msgText = ttrim(msgText); // removes the reserved character from the end
-
-  // media download stuff
-  const downloadLinkPattern = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|tiktok\.com)\/\S*/gi;
-  const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
-
-  if (mediaLink) {
-    await download(msg, mediaLink);
   }
 
   const args = msgText.split(' ');
@@ -172,8 +170,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       }
     }
   }
-
-  msgText = ttrim(msg.messageText);
 
   // STUFF THATS NOT REALLY A COMMAND
   if (msg.senderUserID != config.id) {
