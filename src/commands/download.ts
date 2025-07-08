@@ -7,8 +7,9 @@ import path from "path";
 import axios from "axios";
 import FormData from "form-data";
 import crypto from "crypto";
-import { isURL, trim } from "validator";
 import { timeLog } from '../utils.js';
+import validator from "validator";
+const { isURL, trim } = validator;
 
 const sizeLimit = 200 * 1024 * 1024;
 
