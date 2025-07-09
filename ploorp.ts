@@ -173,7 +173,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   // STUFF THATS NOT REALLY A COMMAND
   if (msg.senderUserID != config.id) {
-    if (msgText === 'Test') {
+    if (msgText === 'test') {
       return client.say(msg.channelName, 'A');
     }
 
