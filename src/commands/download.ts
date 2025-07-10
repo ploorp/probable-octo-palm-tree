@@ -76,7 +76,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
 
     proc.on("close", (code) => {
       if (code !== 0) {
-        if (stderr.includes("No video formats found")) {
+        if (stderr.includes("No video formats found") || stderr.includes("Unsupported URL")) {
           return resolve("not-video");
         }
         timeLog("yt-dlp failed: " + stderr);
@@ -120,7 +120,7 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
   const filePath = await ytdlpDownload(sanitized);
   if (!filePath) {
     timeLog("Download failed for: " + sanitized);
-    return client.say(msg.channelName, `@${msg.senderUsername}, uh download failed`);
+    return client.say(msg.channelName, `uh download failed`);
   }
   if (filePath === "not-video") return;
 
@@ -129,7 +129,7 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     stats = fs.statSync(filePath);
   } catch (error) {
     timeLog("Error getting file stats: " + error);
-    return client.say(msg.channelName, `@${msg.senderUsername}, uh error downloading`);
+    return client.say(msg.channelName, `uh error downloading`);
   }
 
   if (stats.size > sizeLimit) {
@@ -139,15 +139,15 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
       timeLog("Error deleting file: " + error);
     }
     timeLog(`File too large: ${stats.size} bytes, limit is ${sizeLimit} bytes`);
-    return client.say(msg.channelName, `@${msg.senderUsername}, uh file was too big`);
+    return client.say(msg.channelName, `uh file was too big`);
   }
 
   try {
     const uploadedUrl = await uploadMedia(filePath);
     if (!uploadedUrl) {
-      await client.say(msg.channelName, `@${msg.senderUsername}, uh upload failed`);
+      await client.say(msg.channelName, `uh upload failed`);
     } else {
-      await client.say(msg.channelName, `@${msg.senderUsername}, ${uploadedUrl}`);
+      await client.say(msg.channelName, `mirror: ${uploadedUrl}`);
     }
   } finally {
     try {
