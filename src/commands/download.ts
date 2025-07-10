@@ -18,7 +18,7 @@ function sanitizeUrl(rawUrl: string): string | null {
 
   if (!isURL(cleaned, { require_protocol: false })) return null;
 
-  const allowedDomains = /(instagram\.com|tiktok\.com|vm\.tiktok\.com)/i;
+  const allowedDomains = /(instagram\.com|tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com)/i;
   try {
     const url = new URL(cleaned.startsWith("http") ? cleaned : "https://" + cleaned);
     if (!allowedDomains.test(url.hostname)) return null;
