@@ -18,7 +18,7 @@ function sanitizeUrl(rawUrl: string): string | null {
 
   if (!isURL(cleaned, { require_protocol: false })) return null;
 
-  const allowedDomains = /(instagram\.com|tiktok\.com)/i;
+  const allowedDomains = /(instagram\.com|tiktok\.com|vm\.tiktok\.com)/i;
   try {
     const url = new URL(cleaned.startsWith("http") ? cleaned : "https://" + cleaned);
     if (!allowedDomains.test(url.hostname)) return null;
@@ -122,7 +122,10 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     timeLog("Download failed for: " + sanitized);
     return client.say(msg.channelName, `uh download failed`);
   }
-  if (filePath === "not-video") return;
+  if (filePath === "not-video") {
+    timeLog("Not a video: " + sanitized);
+    return;
+  }
 
   let stats;
   try {
