@@ -45,7 +45,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   let msgText = ttrim(msg.messageText);
 
     // media download stuff
-  const downloadLinkPattern = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|tiktok\.com)\/\S*/gi;
+  const downloadLinkPattern = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com)\/\S*/gi;
   const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
 
   if (mediaLink) {
