@@ -37,6 +37,7 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   let monkeytype;
   let anilist;
   let steam;
+  let trakt;
 
   for (const connection of connections) {
     switch (connection.platform) {
@@ -55,6 +56,9 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
       case "STEAM":
         steam = BigInt(76561197960265728) + BigInt(connection.id);
         break;
+      case "TRAKT":
+        trakt = connection.username;
+        break;
     }
   }
 
@@ -67,8 +71,9 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   const steamUrl = `${steam ? `https://steamcommunity.com/profiles/${steam.toString()}` : ''}`;
   const monkeytypeUrl = `${monkeytype ? `https://monkeytype.com/profile/${monkeytype}` : ''}`;
   const anilistUrl = `${anilist ? `https://anilist.co/user/${anilist}` : ''}`;
+  const traktUrl = `${trakt ? `https://trakt.tv/users/${trakt}` : ''}`;
 
-  const links = [spotifyUrl, lastfmUrl, steamUrl, monkeytypeUrl, anilistUrl].filter(Boolean).join(' • ');
+  const links = [spotifyUrl, lastfmUrl, steamUrl, monkeytypeUrl, anilistUrl, traktUrl].filter(Boolean).join(' • ');
 
   const message = `${username}'s connected accounts: ${links}`;
 
