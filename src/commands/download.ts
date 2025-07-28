@@ -31,6 +31,7 @@ function sanitizeUrl(rawUrl: string): string | null {
 
 async function uploadMedia(filePath: string): Promise<string | undefined> {
   let response;
+  let link;
 
   const form = new FormData();
   form.append("file", fs.createReadStream(filePath));
@@ -41,13 +42,23 @@ async function uploadMedia(filePath: string): Promise<string | undefined> {
       maxContentLength: sizeLimit,
       maxBodyLength: sizeLimit,
     });
+    link = response.data.link;
   } catch (error) {
-    timeLog("Upload failed: " +  error);
-    return;
+    timeLog("segs.lol failed, using fallback: " + error);
+    try {
+      response = await axios.post("https://olrite.lol/api/upload", form, {
+        headers: form.getHeaders(),
+        maxContentLength: sizeLimit,
+        maxBodyLength: sizeLimit,
+      });
+      link = response.data.url;
+    }
+    catch (error) {
+      timeLog("Upload failed: " +  error);
+      return;
+    }
   }
-
-  const ext = path.extname(filePath);
-  return `${response.data.link}${ext}`;
+  return link;
 }
 
 function ytdlpDownload(url: string): Promise<string | null> {

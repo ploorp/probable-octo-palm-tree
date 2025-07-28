@@ -12,6 +12,7 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   // if no arguments try to use the sender's username
   if (!args[1]) {
     username = msg.senderUsername;
+    // you havent ?#
   } else {
     username = args[1].toLowerCase().replace(/^@/, '');
 
