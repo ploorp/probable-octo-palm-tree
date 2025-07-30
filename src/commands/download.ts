@@ -121,10 +121,18 @@ function ytdlpDownload(url: string): Promise<string | null> {
   });
 }
 
+const downloadCache = new Map<string, string>();
+
 export default async function download(msg: PrivmsgMessage, mediaLink: string) {
   const sanitized = sanitizeUrl(mediaLink);
   if (!sanitized) {
     timeLog("Invalid URL for downloader: " + mediaLink);
+    return;
+  }
+
+  if (downloadCache.has(sanitized)) {
+    const cachedLink = downloadCache.get(sanitized)!;
+    await client.say(msg.channelName, `mirror: ${cachedLink}`);
     return;
   }
 
@@ -161,6 +169,7 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     if (!uploadedUrl) {
       await client.say(msg.channelName, `uh upload failed`);
     } else {
+      downloadCache.set(sanitized, uploadedUrl);
       await client.say(msg.channelName, `mirror: ${uploadedUrl}`);
     }
   } finally {
