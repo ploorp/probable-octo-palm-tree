@@ -106,3 +106,27 @@ export async function chatTimeout(userId: string, broadcasterId: string, duratio
     timeLog(`Error timing out user ${userId} in ${broadcasterId}`);
   }
 }
+
+export async function approveAutomodMessage(messageId: string, moderatorId: string) {
+   try {
+    await axios.post(
+      'https://api.twitch.tv/helix/moderation/automod/message',
+      {
+        user_id: moderatorId,
+        msg_id:  messageId,
+        action:  'ALLOW',
+      },
+      {
+        headers: {
+          'Client-ID':     clientId,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type':  'application/json',
+        },
+      }
+    );
+  } catch (err: any) {
+    const status = err.response?.status;
+    const body   = err.response?.data;
+    timeLog(`Error allowing AutoMod message ${messageId}: ${status} ${JSON.stringify(body)}`);
+  }
+}

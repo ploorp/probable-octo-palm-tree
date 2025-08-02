@@ -6,7 +6,7 @@ import {
 } from '@mastondzn/dank-twitch-irc';
 import { sleep, timeLog } from './utils.js';
 
-if (!config.username || !config.access_token) {
+if (!config.username || !config.helix.access_token) {
   throw new Error('Missing username or access_token in config.json');
 }
 
@@ -15,7 +15,7 @@ if (!config.username || !config.access_token) {
  */
 const client = new ChatClient({
   username: config.username.toLowerCase(),
-  password: config.access_token,
+  password: config.helix.access_token,
   ignoreUnhandledPromiseRejections: true,
   rateLimits: 'default', // 'default or 'verifiedBot'
   requestMembershipCapability: true

@@ -11,6 +11,7 @@ import { me, PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
 import download from './src/commands/download.js';
+import { allowAutomod } from './src/eventsub.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -186,3 +187,5 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     }
   }
 });
+
+allowAutomod();
