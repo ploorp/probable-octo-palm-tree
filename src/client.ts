@@ -6,7 +6,7 @@ import {
 } from '@mastondzn/dank-twitch-irc';
 import { sleep, timeLog } from './utils.js';
 
-if (!config.username || !config.helix.access_token) {
+if (!config.username || !config.ttg.access_token) {
   throw new Error('Missing username or access_token in config.json');
 }
 
