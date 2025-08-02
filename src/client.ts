@@ -15,7 +15,7 @@ if (!config.username || !config.helix.access_token) {
  */
 const client = new ChatClient({
   username: config.username.toLowerCase(),
-  password: config.helix.access_token,
+  password: config.ttg.access_token,
   ignoreUnhandledPromiseRejections: true,
   rateLimits: 'default', // 'default or 'verifiedBot'
   requestMembershipCapability: true
