@@ -4,4 +4,3 @@ node_modules/
 .vscode
 service.log
 dist/
-kicknotify.json

@@ -27,6 +27,13 @@ client.connect();
 
 client.on('error', (err) => {
   timeLog(`Dank error: ${err.message}`);
+  if (
+    err.message.toLowerCase().includes('login') ||
+    err.message.toLowerCase().includes('auth')
+  ) {
+    timeLog('Fatal: Twitch authentication failed. Exiting.');
+    process.exit(1);
+  }
 });
 
 /**
