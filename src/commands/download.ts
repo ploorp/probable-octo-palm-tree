@@ -73,9 +73,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
       "--force-ipv4",
       "-S", "vcodec:h264",
       "--max-filesize", "200M",
-      "--restrict-filenames",
-      "--merge-output-format", "mp4",
-      "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
+      "--embed-metadata",
       "--", url
     ];
     const proc = spawn("/usr/local/bin/yt-dlp", args);
