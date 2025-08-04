@@ -33,10 +33,14 @@ async function uploadMedia(filePath: string): Promise<string | undefined> {
   let response;
   let link;
 
-  const form = new FormData();
-  form.append("file", fs.createReadStream(filePath));
+  const createForm = () => {
+    const form = new FormData();
+    form.append("file", fs.createReadStream(filePath));
+    return form;
+  };
 
   try {
+    const form = createForm();
     response = await axios.post("https://segs.lol/api/upload", form, {
       headers: form.getHeaders(),
       maxContentLength: sizeLimit,
@@ -46,6 +50,7 @@ async function uploadMedia(filePath: string): Promise<string | undefined> {
   } catch (error) {
     timeLog("segs.lol failed, using fallback: " + error);
     try {
+      const form = createForm();
       response = await axios.post("https://olrite.lol/api/upload", form, {
         headers: form.getHeaders(),
         maxContentLength: sizeLimit,
