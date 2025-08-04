@@ -13,7 +13,7 @@ export const timeLog = (message: string) => {
 export const ttrim = (str: string | undefined) => {
   if (str === undefined) return '';
   const pattern = /^[\s\u{E0000}]+|[\s\u{E0000}]+$/gu;
-  return str.replace(pattern, '');
+  return str.replace(pattern, '').replace(/\s{2,}/g, ' ');
 }
 
 export async function getUserInfo(username: string) {
