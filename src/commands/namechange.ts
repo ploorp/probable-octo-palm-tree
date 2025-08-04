@@ -1,7 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../client.js';
 import axios from 'axios';
-import { ttrim } from '../utils.js';
+import config from '../../config.json' with { type: 'json' };
 
 export default async function namechange(msg: PrivmsgMessage, args: string[]) {
   let username;
@@ -18,6 +18,10 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
     if (!/^[a-z0-9_]+$/.test(username)) {
       return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
+  }
+
+  if (config.opted_out.includes(username)) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts comamnd`);
   }
 
   try {
