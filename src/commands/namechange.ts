@@ -21,7 +21,7 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (config.opted_out.includes(username)) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts comamnd`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
   }
 
   try {
