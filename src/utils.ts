@@ -9,7 +9,7 @@ export const timeLog = (message: string) => {
   console.error(logMessage);
 }
 
-// trim, but it also removes the reserved character
+// trim, but it also removes the reserved character and double spaces
 export const ttrim = (str: string | undefined) => {
   if (str === undefined) return '';
   const pattern = /^[\s\u{E0000}]+|[\s\u{E0000}]+$/gu;

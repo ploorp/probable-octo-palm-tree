@@ -45,7 +45,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   let msgText = ttrim(msg.messageText);
 
-    // media download stuff
+  // media download stuff
   const downloadLinkPattern = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com)\/\S*/gi;
   const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
 
@@ -60,11 +60,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     msgText = msgArr.join(' ');
   }
 
-  const args = msgText.split(' ');
-  const command = args[0].slice(config.prefix.length);
-
-  // COMMANDS
   if (msgText.startsWith(config.prefix)) {
+    const args = msgText.split(' ');
+    const command = args[0].slice(config.prefix.length);
+
+    // COMMANDS
     switch (command) {
       case 'ping':
         await ping(msg, startTime);
@@ -119,7 +119,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       }
     }
 
-    // Commands only whitelisted users can use
+    // commands only whitelisted users can use
     if (config.whitelist_channels.includes(msg.senderUsername)) {
       switch (command) {
         case 'echo': {
