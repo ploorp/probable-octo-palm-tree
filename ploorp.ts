@@ -12,6 +12,7 @@ import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
 import download from './src/commands/download.js';
 import { allowAutomod } from './src/eventsub.js';
+import rating from './src/commands/rating.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -80,6 +81,13 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'mv':
       case 'film':
         await movie(msg, args);
+        return;
+
+      case 'log':
+      case 'review':
+      case 'rating':
+      case 'rt':
+        await rating(msg, args);
         return;
 
       case 'connections':
@@ -188,4 +196,4 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   }
 });
 
-allowAutomod();
+//allowAutomod();

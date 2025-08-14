@@ -24,9 +24,16 @@ export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
 
   const logs = `https://logs.zonian.dev/channel/${channel}/user/${username}/search?reverse=true&q=${encodeURIComponent(query)}`
   let response;
+  let lineCount = 0;
 
   try {
     response = await axios.get(logs);
+    const lines = response.data.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() !== '') {
+        lineCount++;
+      }
+    }
   } catch (error: any) {
     if (error.response && error.response.status === 404) {
       return client.say(msg.channelName, `@${msg.senderUsername}, no matching logs found smh`);
@@ -38,7 +45,7 @@ export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
     const shortenerResponse = await axios.get(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(logs)}`);
     const shortenedUrl = shortenerResponse.data;
 
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${shortenedUrl}`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, ${lineCount} matches: ${shortenedUrl}`);
   } catch (error: any) {
     timeLog(`Error shortening URL: ${error.message}`);
     return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
