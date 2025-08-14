@@ -13,6 +13,7 @@ import namechange from './src/commands/namechange.js';
 import download from './src/commands/download.js';
 import { allowAutomod } from './src/eventsub.js';
 import rating from './src/commands/rating.js';
+import song from './src/commands/song.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -115,6 +116,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'namechange':
       case 'nc':
         await namechange(msg, args);
+        return;
+
+      case 'song':
+      case 's':
+        await song(msg, args);
         return;
 
       case 'help':
