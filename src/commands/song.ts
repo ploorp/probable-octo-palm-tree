@@ -5,15 +5,29 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 
 export default async function song(msg: PrivmsgMessage, args: string[]) {
   let username: string;
+  const potatUsers = "https://api.potat.app/users/"
+  let response;
 
   if (!args[1]) {
     username = msg.senderUsername;
   } else {
-    username = args[1].toLowerCase();
+    username = args[1].toLowerCase().replace(/^@/, '');
     if (!/^[a-z0-9_]+$/.test(username)) {
       return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
   }
+
+  let tempUsername = username;
+  try {
+    response = await axios.get(potatUsers + username);
+    const connections = response.data.data[0]?.user?.connections ?? [];
+    const lastfmConn = connections.find((conn: { platform: string }) => conn.platform === 'LASTFM');
+    if (lastfmConn?.id) {
+      username = lastfmConn.id;
+    } else {
+      username = tempUsername;
+    }
+  } catch (error) {}
 
   try {
     await axios.get('https://ws.audioscrobbler.com/2.0/', {
@@ -79,7 +93,11 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours}h ago`;
     const days = Math.floor(hours / 24);
-    return `${days}d ago`;
+    if (days < 30) return `${days}d ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    const years = Math.floor(months / 12);
+    return `${years}y ago`;
   }
 
   if (nowPlaying) {
