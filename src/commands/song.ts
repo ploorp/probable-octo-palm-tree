@@ -50,7 +50,7 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
   }
 
   const track = Array.isArray(tracks) ? tracks[0] : tracks;
-  const artist = track.artist['#text'] || 'unknown';
+  const artist = track.artist?.name || track.artist['#text'] || 'unknown';
   const songTitle = track.name || 'unknown';
   const date = track.date;
   const nowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
