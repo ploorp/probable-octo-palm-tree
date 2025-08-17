@@ -2,6 +2,7 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../client.js';
 import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
+import { getUserInfo } from '../utils.js';
 
 export default async function namechange(msg: PrivmsgMessage, args: string[]) {
   let username;
@@ -31,7 +32,7 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (!response.data.length) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, this user does not seem to exist Reacting`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, i dont know anything about this user Reacting`);
   }
 
   const previousNames = [];
