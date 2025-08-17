@@ -17,7 +17,7 @@ import song from './src/commands/song.js';
 import fortune from './src/commands/fortune.js';
 import join from './src/commands/join.js';
 import link from './src/commands/link.js';
-import { addChannel, getPrefix, isWhitelist, setPrefix, whitelistUser } from './src/db/dbManager.js';
+import { addChannel, getPrefix, isWhitelist, setOptOut, setPrefix, whitelistUser } from './src/db/dbManager.js';
 import db from './src/db/db.js';
 
 const startTime = new Date();

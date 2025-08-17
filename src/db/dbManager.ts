@@ -14,6 +14,12 @@ export function isOptedOut(username: string): boolean {
   return row ? !!row.opted_out : false;
 }
 
+export async function setOptOut(username: string, optOut: boolean) {
+  const id = await getUserId(username);
+  ensureUser(id, username);
+  db.prepare("UPDATE users SET opted_out = ? WHERE id = ?").run(optOut ? 1 : 0, id);
+}
+
 // CHANNELS
 export async function addChannel(username: string, prefix: string = "%") {
   const id = await getUserId(username);
