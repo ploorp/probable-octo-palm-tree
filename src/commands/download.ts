@@ -98,16 +98,18 @@ function ytdlpDownload(url: string): Promise<string | null> {
         return resolve(null);
       }
 
-      const match = stderr.match(/Destination:\s(.+)/);
-      if (match) {
-        return resolve(match[1].trim());
-      }
-
+      // Find the actual video file (not .info.json)
       const outDir = path.dirname(outputTemplate);
       const outBase = path.basename(outputTemplate, ".%(ext)s");
       try {
         const files = fs.readdirSync(outDir);
-        const candidate = files.find(f => f.startsWith(outBase));
+        // Find the first file that matches and is not .info.json
+        const candidate = files.find(f =>
+          f.startsWith(outBase) &&
+          !f.endsWith(".info.json") &&
+          !f.endsWith(".part") &&
+          (f.endsWith(".mp4") || f.endsWith(".mov") || f.endsWith(".webm") || f.endsWith(".mkv"))
+        );
         if (candidate) {
           return resolve(path.join(outDir, candidate));
         }
