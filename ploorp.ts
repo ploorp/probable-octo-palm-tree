@@ -25,9 +25,6 @@ const cooldowns = new Map();
 
 timeLog('Bot is starting');
 
-await addChannel("ploorp", config.prefix);
-whitelistUser("502913017");
-
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const roomState = client.roomStateTracker?.getChannelState(msg.channelName);
   const botState = client.userStateTracker?.channelStates?.[msg.channelName];
