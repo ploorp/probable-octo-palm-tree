@@ -38,9 +38,9 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
       }
     } else {
       try {
+        client.say(msg.channelName, 'leaving ' + args[1]);
         await client.part(args[1].toLowerCase());
-        removeChannel(args[1].toLowerCase());
-        return client.say(msg.channelName, 'leaving ' + args[1]);
+        return removeChannel(args[1].toLowerCase());
       } catch (error) {
         return client.say(msg.channelName, 'error Reacting');
       }
