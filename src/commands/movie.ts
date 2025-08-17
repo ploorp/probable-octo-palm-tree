@@ -1,8 +1,8 @@
 import { client } from '../client.js';
 import axios from 'axios';
-import config from '../../config.json' with { type: 'json' };
 import * as cheerio from 'cheerio';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
+import { getPrefix } from '../db/dbManager.js';
 
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -24,7 +24,7 @@ async function searchFilmHtml(query: string): Promise<{ slug: string; title: str
     const title = first.find('h2.headline-2 a').first().clone().children().remove().end().text().trim();
     return slug && title ? { slug, title } : null;
   } catch (err) {
-    console.error('Letterboxd search failed', err);
+    console.error('letterboxd search failed', err);
     return null;
   }
 }
@@ -52,12 +52,14 @@ async function scrapeFilm(slug: string): Promise<{
 }
 
 export default async function movie(msg: PrivmsgMessage, args: string[]) {
+  const prefix = getPrefix(msg.channelID)
+
   const query = args.slice(1).join(' ').trim();
 
   if (!query) {
     return client.say(
       msg.channelName,
-      `@${msg.senderUsername}, usage: ${config.prefix}movie <movie title>`
+      `@${msg.senderUsername}, usage: ${prefix}movie <movie title>`
     );
   }
 

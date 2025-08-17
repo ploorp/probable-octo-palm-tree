@@ -1,7 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../client.js';
 import axios from 'axios';
-import config from '../../config.json' with { type: 'json' };
+import { isOptedOut } from '../db/dbManager.js';
 
 export default async function connections(msg: PrivmsgMessage, args: string[]) {
   let username;
@@ -21,7 +21,7 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
     }
   }
 
-  if (config.opted_out.includes(username)) {
+  if (isOptedOut(username)) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
   }
 

@@ -1,13 +1,15 @@
 import { client } from '../client.js';
 import axios from 'axios';
-import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { timeLog } from '../utils.js';
+import { getPrefix } from '../db/dbManager.js';
 
 export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
+  const prefix = getPrefix(msg.channelID)
+
   // if no arguments try to use the sender's username
   if (args.length < 3) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, format is ${config.prefix}searchlogs <channel> <username> <query>`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, format is ${prefix}searchlogs <channel> <username> <query>`);
   }
 
   const channel = args[1].toLowerCase().replace(/^@/, '');

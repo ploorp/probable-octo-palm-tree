@@ -5,6 +5,7 @@ import {
   SlowModeRateLimiter
 } from '@mastondzn/dank-twitch-irc';
 import { sleep, timeLog } from './utils.js';
+import { getJoinedChannels } from './db/dbManager.js';
 
 if (!config.username || !config.ttg.access_token) {
   throw new Error('Missing username or access_token in config.json');
@@ -61,13 +62,15 @@ client.on('PART', (msg) => {
 });
 
 async function joinChannels() {
-  if (!config.channels?.length) {
-    timeLog('No channels to join in config.json');
+  const channels = getJoinedChannels();
+  if (!channels.length) {
+    timeLog('No channels to join in database');
+    return;
   }
 
-  for (const channel of config.channels) {
+  for (const channel of channels) {
     try {
-      await sleep(500).then(() => client.join(channel.toLowerCase()));
+      await sleep(500).then(() => client.join(channel));
     } catch (err) {
       timeLog(`Error joining ${channel}: ${err}`);
     }

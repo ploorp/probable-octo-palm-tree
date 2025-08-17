@@ -5,7 +5,7 @@ import searchlogs from './src/commands/searchlogs.js';
 import listcmds from './src/commands/listcmd.js';
 import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
-import { timeLog, ttrim, getUserInfo, usernameToID} from './src/utils.js';
+import { timeLog, ttrim} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
 import { me, PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
@@ -15,11 +15,18 @@ import { allowAutomod } from './src/eventsub.js';
 import rating from './src/commands/rating.js';
 import song from './src/commands/song.js';
 import fortune from './src/commands/fortune.js';
+import join from './src/commands/join.js';
+import link from './src/commands/link.js';
+import { addChannel, getPrefix, isWhitelist, setPrefix, whitelistUser } from './src/db/dbManager.js';
+import db from './src/db/db.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
 
 timeLog('Bot is starting');
+
+await addChannel("ploorp", config.prefix);
+whitelistUser("502913017");
 
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const roomState = client.roomStateTracker?.getChannelState(msg.channelName);
@@ -63,14 +70,26 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     msgText = msgArr.join(' ');
   }
 
-  if (msgText.startsWith(config.prefix)) {
+  const prefix = getPrefix(msg.channelID);
+
+  if (msgText.startsWith(prefix)) {
     const args = msgText.split(' ');
-    const command = args[0].slice(config.prefix.length);
+    const command = args[0].slice(prefix.length).toLowerCase();
 
     // COMMANDS
     switch (command) {
       case 'ping':
         await ping(msg, startTime);
+        return;
+
+      case 'part':
+      case 'join':
+        await join(msg, args);
+        return;
+
+      case 'link':
+      case 'unlink':
+        await link(msg, args);
         return;
 
       case 'letterboxd':
@@ -126,12 +145,25 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'fortune':
       case 'f':
+      case 'cookie':
         await fortune(msg, args);
         return;
 
+      case 'setprefix':
+        if (isWhitelist(msg.senderUserID) || msg.channelID === msg.senderUserID) {
+          if (args[1] && args[1].length === 1) {
+            const newPrefix = args[1].toLowerCase();
+            setPrefix(msg.channelID, newPrefix);
+            return client.say(msg.channelName, `prefix set to ${newPrefix}`);
+          } else {
+            return client.say(msg.channelName, `@${msg.senderUsername}, prefix must be 1 character`);
+          }
+        } else {
+          return client.say(msg.channelName, `@${msg.senderUsername}, you must be broadcaster to set prefix`);
+        }
+
       case 'help':
       case 'commands': {
-        const p = config.prefix;
         return client.say(
           msg.channelName,
           `@${msg.senderUsername}, https://ploorp.com/commands`

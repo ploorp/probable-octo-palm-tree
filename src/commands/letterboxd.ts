@@ -1,42 +1,55 @@
 import { client } from '../client.js';
 import axios from 'axios';
-import config from '../../config.json' with { type: 'json' };
+import { getUserId } from '../helix.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
+import { getAccount } from '../db/dbManager.js';
 
 export default async function boxd(msg: PrivmsgMessage, args: string[]) {
-  let username;
-  let rssUrl;
+  let username: string | undefined;
+  let displayName: string | undefined;
+  let rssUrl: string;
   let response;
 
-  // if no arguments try to use the sender's username
   if (!args[1]) {
-    rssUrl = `https://letterboxd.com/${msg.senderUsername}/rss/`;
-    try {
-      response = await axios.get(rssUrl);
-    } catch (error) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, format is ${config.prefix}boxd <username>`);
+    const dbAccount = getAccount(msg.senderUserID, 'letterboxd') as { handle?: string } | undefined;
+    if (dbAccount && dbAccount.handle) {
+      username = dbAccount.handle;
+    } else {
+      username = msg.senderUsername;
     }
-    username = msg.senderUsername;
+    displayName = username;
   } else {
-    username = args[1].toLowerCase();
-    
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+    if (args[1].startsWith("@")) {
+      const twitchName = args[1].replace(/^@/, '').toLowerCase();
+      const twitchId = await getUserId(twitchName);
+      const dbAccount = getAccount(twitchId, 'letterboxd') as { handle?: string } | undefined;
+      if (dbAccount && dbAccount.handle) {
+        username = dbAccount.handle;
+        displayName = twitchName;
+      } else {
+        return client.say(msg.channelName, `@${msg.senderUsername}, they dont have a letterboxd account linked`);
+      }
+    } else {
+      username = args[1].toLowerCase();
+      displayName = username;
+      if (!/^[a-z0-9_]+$/.test(username)) {
+        return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      }
     }
+  }
 
-    rssUrl = `https://letterboxd.com/${username}/rss/`;
-    try {
-      response = await axios.get(rssUrl);
-    } catch (error) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
-    }
+  rssUrl = `https://letterboxd.com/${username}/rss/`;
+  try {
+    response = await axios.get(rssUrl);
+  } catch (error) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
   }
 
   const xmlData = response.data;
   const linkMatch = xmlData.match(/<item>.*?<link>(.*?)<\/link>/s);
 
   if (!linkMatch || !linkMatch[1].includes('/film/')) {
-    return client.say(msg.channelName,`@${msg.senderUsername}, ${username} has not logged any movies smh`);
+    return client.say(msg.channelName,`@${msg.senderUsername}, ${displayName} has not logged any movies smh`);
   }
 
   const jsonUrl = linkMatch[1] + '/json';
@@ -55,7 +68,6 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   const movieUrl = `https://letterboxd.com/film/${jsonData.viewingable.slug}`;
   const profileUrl = `https://letterboxd.com/${username}/`;
   const dateLogged = jsonData.viewingDate;
-  // const dateLogged = jsonData.viewingDateStr;
   const rating = jsonData.rating;
   const rewatch = jsonData.rewatch ? 'rewatched' : 'watched';
   const releaseDate = jsonData.viewingable.releaseYear;
@@ -69,7 +81,7 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   const ratingText = `${rating || like ? 'rating:' + (rating ? ' ' + rating/2 + '/5' : '') + (like ? ' ❤️' : '') : ''}`;
   const reviewText = `${review ? 'review: ' + review : ''}`;
 
-  const message = `${dateLogged} ${username} ${rewatch} ${movieTitle} (${releaseDate}) ${ratingText} ${reviewUrl}`;
+  const message = `${dateLogged} ${displayName} ${rewatch} ${movieTitle} (${releaseDate}) ${ratingText} ${reviewUrl}`;
 
   return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }

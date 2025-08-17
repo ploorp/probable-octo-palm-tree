@@ -2,32 +2,24 @@ import { client } from '../client.js';
 import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
+import { getAccount } from '../db/dbManager.js';
 
 export default async function song(msg: PrivmsgMessage, args: string[]) {
   let username: string;
-  const potatUsers = "https://api.potat.app/users/"
-  let response;
 
   if (!args[1]) {
-    username = msg.senderUsername;
+    const account = getAccount(msg.senderUserID, 'lastfm') as { handle?: string } | null;
+    if (account && account.handle) {
+      username = account.handle;
+    } else {
+      username = msg.senderUsername;
+    }
   } else {
     username = args[1].toLowerCase().replace(/^@/, '');
     if (!/^[a-z0-9_]+$/.test(username)) {
       return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
   }
-
-  let tempUsername = username;
-  try {
-    response = await axios.get(potatUsers + username);
-    const connections = response.data.data[0]?.user?.connections ?? [];
-    const lastfmConn = connections.find((conn: { platform: string }) => conn.platform === 'LASTFM');
-    if (lastfmConn?.id) {
-      username = lastfmConn.id;
-    } else {
-      username = tempUsername;
-    }
-  } catch (error) {}
 
   try {
     await axios.get('https://ws.audioscrobbler.com/2.0/', {
