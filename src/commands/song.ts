@@ -101,12 +101,12 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (nowPlaying) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is currently playing "${songTitle}" by ${artist}`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is currently playing "${songTitle}" by ${artist} kittyJam`);
   } else {
     let ago = 'unknown time ago';
     if (date?.uts) {
       ago = timeAgo(new Date(parseInt(date.uts) * 1000));
     }
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago})`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago}) RobertJam`);
   }
 }

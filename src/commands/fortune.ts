@@ -13,9 +13,12 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
       output += data.toString();
     });
 
+    const emotes = ["Wise", "Wisdom", "facts"];
+    const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
+
     proc.on("close", () => {
-      const cleaned = output.replace(/\s+/g, ' ').trim().slice(0, 400);
-      client.say(msg.channelName, cleaned);
+      const cleaned = output.replace(/\s+/g, ' ').trim();
+      client.say(msg.channelName, `@${msg.senderUsername}, ${cleaned} ${randomEmote}`);
       resolve();
     });
 
