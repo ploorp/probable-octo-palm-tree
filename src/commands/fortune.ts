@@ -17,29 +17,30 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
   return new Promise<void>((resolve) => {
     const streak = setStreak(msg.senderUserID, msg.senderUsername);
     const timeLeft = getTimeLeftToMidnightUTC();
-    let streakMessage = "";
-    
+
     if (!streak?.success) {
-      streakMessage = `you can open another fortune in ${timeLeft}, current streak is ${streak?.streak}`;
-    } else if (streak?.streak === 1) {
-      streakMessage = `current streak is 1 day 🥀`;
-    } else {
-      streakMessage = `current streak is ${streak?.streak} days`;
+      client.say(
+        msg.channelName,
+        `@${msg.senderUsername}, you can open fortune in ${timeLeft}, streak of ${streak?.streak}`
+      );
+      return resolve();
     }
 
-    const proc = spawn("/usr/games/fortune", ["-s"]);
+    let streakMessage = streak?.streak === 1
+      ? "streak of 1 day"
+      : `streak of ${streak?.streak} days`;
 
+    const proc = spawn("/usr/games/fortune", ["-s"]);
     let output = "";
-    proc.stdout.on("data", (data) => {
-      output += data.toString();
-    });
+
+    proc.stdout.on("data", (data) => {output += data.toString();});
 
     const emotes = ["Wise", "Wisdom", "facts", "👀"];
     const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
 
     proc.on("close", () => {
       const cleaned = output.replace(/\s+/g, ' ').trim();
-      client.say(msg.channelName, `@${msg.senderUsername}, ${streakMessage}. ${cleaned} ${randomEmote}`);
+      client.say(msg.channelName,`@${msg.senderUsername}, ${streakMessage}. ${cleaned} ${randomEmote}`);
       resolve();
     });
 
