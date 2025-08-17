@@ -14,6 +14,7 @@ import download from './src/commands/download.js';
 import { allowAutomod } from './src/eventsub.js';
 import rating from './src/commands/rating.js';
 import song from './src/commands/song.js';
+import fortune from './src/commands/fortune.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -121,6 +122,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'song':
       case 's':
         await song(msg, args);
+        return;
+
+      case 'fortune':
+      case 'f':
+        await fortune(msg, args);
         return;
 
       case 'help':
