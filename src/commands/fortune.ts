@@ -6,7 +6,7 @@ import { timeLog } from '../utils.js';
 
 export default async function fortune(msg: PrivmsgMessage, args: string[]) {
   return new Promise<void>((resolve) => {
-    const proc = spawn("fortune", ["-s"]);
+    const proc = spawn("/usr/games/fortune", ["-s"]);
 
     let output = "";
     proc.stdout.on("data", (data) => {
