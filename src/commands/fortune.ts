@@ -45,7 +45,7 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
       ? "streak of 1 day"
       : `streak of ${streak?.streak} days`;
 
-    exec("fortune -s", (err, stdout, stderr) => {
+    exec("/usr/games/fortune -s", (err, stdout, stderr) => {
       if (err) {
         timeLog("fortune error: " + err);
         client.say(msg.channelName, "error Reacting");
