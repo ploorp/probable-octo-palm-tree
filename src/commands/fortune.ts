@@ -36,7 +36,7 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
     if (!streak?.success) {
       client.say(
         msg.channelName,
-        `@${msg.senderUsername}, you can open fortune in ${timeLeft}, streak of ${streak?.streak}`
+        `@${msg.senderUsername}, you can see a new fortune in ${timeLeft}, streak of ${streak?.streak}`
       );
       return resolve();
     }
