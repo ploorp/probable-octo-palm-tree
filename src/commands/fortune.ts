@@ -16,7 +16,7 @@ function getTimeLeftToMidnightUTC() {
 export default async function fortune(msg: PrivmsgMessage, args: string[]) {
   if (isWhitelisted(msg.senderUserID)) {
     if (args[1]) {
-      exec(`fortune ${args.slice(1).join(" ")}`, (err, stdout, stderr) => {
+      exec(`/usr/games/fortune ${args.slice(1).join(" ")}`, (err, stdout, stderr) => {
         if (err) {
           timeLog("fortune error: " + err);
           client.say(msg.channelName, "error Reacting");
