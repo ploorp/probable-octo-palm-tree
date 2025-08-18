@@ -1,6 +1,6 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../client.js';
-import { joinChannel, partChannel, isWhitelisted, addChannel } from '../db/dbManager.js';
+import { partChannel, isWhitelisted, addChannel } from '../db/dbManager.js';
 import { getUserId } from '../helix.js';
 
 export default async function join(msg: PrivmsgMessage, args: string[]) {
@@ -17,16 +17,16 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
       return client.say(msg.channelName, 'joined ' + msg.senderUsername);
     } else {
       try {
-        await client.part(msg.channelName);
-        partChannel(msg.channelID);
-        return client.say(msg.channelName, 'leaving ' + msg.channelName);
+        await client.part(msg.senderUsername);
+        partChannel(msg.senderUserID);
+        return client.say(msg.channelName, 'leaving ' + msg.senderUsername);
       } catch (error) {
         return client.say(msg.channelName, 'error Reacting');
       }
     }
   } else {
     if (args[0] === 'join') {
-      if (isWhitelisted(msg.senderUserID)) {
+      if (isWhitelisted(msg.senderUserID) || args[1].toLowerCase() === msg.senderUserID) {
         try {
           await client.join(args[1].toLowerCase());
           const joinId = await getUserId(args[1].toLowerCase()) as string;
@@ -38,7 +38,7 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
       } else {
         return client.say(msg.channelName, `@${msg.senderUsername}, you can only join your own channel`);
       }
-    } else {
+    } else if (isWhitelisted(msg.senderUserID) || args[1].toLowerCase() === msg.senderUserID) {
       try {
         client.say(msg.channelName, 'leaving ' + args[1]);
         await client.part(args[1].toLowerCase());
@@ -47,6 +47,8 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
       } catch (error) {
         return client.say(msg.channelName, 'error Reacting');
       }
+    } else {
+      return client.say(msg.channelName, `@${msg.senderUsername}, you can only part your own channel`);
     }
   }
 }

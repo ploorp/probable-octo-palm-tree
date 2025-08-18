@@ -54,11 +54,6 @@ export function partChannel(id: string) {
   db.prepare("UPDATE users SET is_joined = 0 WHERE id = ?").run(id);
 }
 
-export function joinChannel(id: string) {
-  ensureUserRow(id);
-  db.prepare("UPDATE users SET is_joined = 1 WHERE id = ?").run(id);
-}
-
 export function getPrefix(id: string): string {
   ensureUserRow(id);
   const row = db.prepare("SELECT prefix FROM users WHERE id = ?").get(id) as { prefix: string } | undefined;
