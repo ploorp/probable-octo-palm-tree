@@ -32,6 +32,7 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
 
     const proc = spawn("/usr/games/fortune", ["-s"]);
     let output = "";
+    let handled = false;
 
     proc.stdout.on("data", (data) => {output += data.toString();});
 
@@ -39,12 +40,16 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
     const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
 
     proc.on("close", () => {
+      if (handled) return;
+      handled = true;
       const cleaned = output.replace(/\s+/g, ' ').trim();
       client.say(msg.channelName,`@${msg.senderUsername}, ${streakMessage}. ${cleaned} ${randomEmote}`);
       resolve();
     });
 
     proc.on("error", (err) => {
+      if (handled) return;
+      handled = true;
       timeLog("fortune error: " + err);
       client.say(msg.channelName, "error Reacting");
       resolve();

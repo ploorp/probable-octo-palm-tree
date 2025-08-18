@@ -17,7 +17,7 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
     } else {
       try {
         await client.part(msg.channelName);
-        removeChannel(msg.channelName);
+        removeChannel(msg.channelID);
         return client.say(msg.channelName, 'leaving ' + msg.channelName);
       } catch (error) {
         return client.say(msg.channelName, 'error Reacting');

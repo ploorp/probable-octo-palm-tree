@@ -79,7 +79,6 @@ function ytdlpDownload(url: string): Promise<string | null> {
       "-S", "vcodec:h264",
       "--max-filesize", "200M",
       "--embed-metadata",
-      "--write-info-json",
       "--", url
     ];
     const proc = spawn("/usr/local/bin/yt-dlp", args);
@@ -98,18 +97,16 @@ function ytdlpDownload(url: string): Promise<string | null> {
         return resolve(null);
       }
 
-      // Find the actual video file (not .info.json)
+      const match = stderr.match(/Destination:\s(.+)/);
+      if (match) {
+        return resolve(match[1].trim());
+      }
+
       const outDir = path.dirname(outputTemplate);
       const outBase = path.basename(outputTemplate, ".%(ext)s");
       try {
         const files = fs.readdirSync(outDir);
-        // Find the first file that matches and is not .info.json
-        const candidate = files.find(f =>
-          f.startsWith(outBase) &&
-          !f.endsWith(".info.json") &&
-          !f.endsWith(".part") &&
-          (f.endsWith(".mp4") || f.endsWith(".mov") || f.endsWith(".webm") || f.endsWith(".mkv"))
-        );
+        const candidate = files.find(f => f.startsWith(outBase));
         if (candidate) {
           return resolve(path.join(outDir, candidate));
         }
@@ -170,29 +167,6 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     return client.say(msg.channelName, `uh file was too big`);
   }
 
-  const infoJsonPath = filePath + ".info.json";
-  let info: any = null;
-  if (fs.existsSync(infoJsonPath)) {
-    try {
-      info = JSON.parse(fs.readFileSync(infoJsonPath, "utf8"));
-    } catch (e) {
-      timeLog("Failed to parse info.json: " + e);
-    }
-  }
-
-  if (info) {
-    if (info.extractor === "instagram" && (info._type === "playlist" || info.title?.toLowerCase().includes("carousel"))) {
-      fs.unlinkSync(filePath);
-      fs.unlinkSync(infoJsonPath);
-      return client.say(msg.channelName, "Instagram slideshows (carousels) are not supported.");
-    }
-    if (info.extractor === "tiktok" && (info.is_ad === true || info.title?.toLowerCase().includes("ad"))) {
-      fs.unlinkSync(filePath);
-      fs.unlinkSync(infoJsonPath);
-      return client.say(msg.channelName, "TikTok ads are not supported.");
-    }
-  }
-
   try {
     const uploadedUrl = await uploadMedia(filePath);
     if (!uploadedUrl) {
@@ -204,9 +178,8 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
   } finally {
     try {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      if (fs.existsSync(infoJsonPath)) fs.unlinkSync(infoJsonPath);
     } catch (error) {
-      timeLog("Error cleaning up files: " + error);
+      timeLog("Error cleaning up file: " + error);
     }
   }
 
