@@ -68,8 +68,8 @@ async function uploadMedia(filePath: string): Promise<string | undefined> {
 }
 
 function ytdlpDownload(url: string): Promise<string | null> {
-  const outputTemplate = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.%(ext)s`);
-  const cookiesPath = "/home/ploorp/cookies.txt"; // cookies for instant gram and tiktok
+  const outputTemplate = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.mp4`);
+  const cookiesPath = "/home/ploorp/cookies.txt";
 
   return new Promise((resolve) => {
     const args = [
@@ -86,9 +86,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
     const proc = spawn("/usr/local/bin/yt-dlp", args);
     let stderr = "";
 
-    proc.stderr.on("data", (data) => {
-      stderr += data.toString();
-    });
+    proc.stderr.on("data", (data) => { stderr += data.toString(); });
 
     proc.on("close", (code) => {
       if (code !== 0) {
@@ -99,21 +97,10 @@ function ytdlpDownload(url: string): Promise<string | null> {
         return resolve(null);
       }
 
-      const match = stderr.match(/Destination:\s(.+\.mp4)/);
-      if (match) {
-        return resolve(match[1].trim());
-      }
-
-      const outDir = path.dirname(outputTemplate);
-      const outBase = path.basename(outputTemplate, ".%(ext)s");
       try {
-        const files = fs.readdirSync(outDir);
-        const candidate = files.find(f => f.startsWith(outBase));
-        if (candidate) {
-          return resolve(path.join(outDir, candidate));
-        }
+        if (fs.existsSync(outputTemplate)) return resolve(outputTemplate);
       } catch (err) {
-        timeLog("error reading temp dir: " + err);
+        timeLog("error checking output file: " + err);
       }
 
       return resolve(null);
