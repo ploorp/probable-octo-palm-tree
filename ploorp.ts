@@ -17,7 +17,7 @@ import song from './src/commands/song.js';
 import fortune from './src/commands/fortune.js';
 import join from './src/commands/join.js';
 import link from './src/commands/link.js';
-import { getPrefix, getWhitelistedUsers, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix, updateStreak } from './src/db/dbManager.js';
+import { getPrefix, getWhitelistedUsers, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix } from './src/db/dbManager.js';
 import db from './src/db/db.js';
 
 const startTime = new Date();
@@ -211,7 +211,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           if (args[1]) {
             const whitelistStatus = isWhitelisted(args[1]);
             setWhitelist(args[1], !whitelistStatus);
-            return client.say(msg.channelName, `@${msg.senderUsername}, ${args[1]} is ${whitelistStatus ? "is now whitelisted" : "no longer whitelisted"}`);
+            return client.say(msg.channelName, `@${msg.senderUsername}, ${args[1]} is ${!whitelistStatus ? "is now whitelisted" : "no longer whitelisted"}`);
           }
         }
 
