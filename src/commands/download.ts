@@ -80,7 +80,6 @@ function ytdlpDownload(url: string): Promise<string | null> {
       "-S", "vcodec:h264",
       "--max-filesize", "200M",
       "--match-filters", "!is_live & !was_live",
-      "--write-info-json",
       "--embed-metadata",
       "--", url
     ];
