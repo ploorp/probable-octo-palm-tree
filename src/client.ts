@@ -5,7 +5,7 @@ import {
   SlowModeRateLimiter
 } from '@mastondzn/dank-twitch-irc';
 import { sleep, timeLog } from './utils.js';
-import { getJoinedChannels } from './db/dbManager.js';
+import { getJoinedChannels, refreshUsername } from './db/dbManager.js';
 
 if (!config.username || !config.ttg.access_token) {
   throw new Error('Missing username or access_token in config.json');
@@ -68,11 +68,37 @@ async function joinChannels() {
     return;
   }
 
-  for (const channel of channels) {
+  for (const ch of channels) {
     try {
-      await sleep(500).then(() => client.join(channel));
+      let username = ch.username;
+      if (!username) {
+        username = (await refreshUsername(ch.id)) ?? undefined;
+      }
+
+      if (!username) {
+        timeLog(`Skipping join for id ${ch.id}: username missing`);
+        continue;
+      }
+
+      try {
+        await sleep(500);
+        await client.join(username);
+      } catch (joinErr) {
+        timeLog(`Join failed for ${username}, attempting refresh for id ${ch.id}: ${joinErr}`);
+        const fresh = await refreshUsername(ch.id);
+        if (!fresh) {
+          timeLog(`Refresh failed for id ${ch.id}, skipping join`);
+          continue;
+        }
+        try {
+          await sleep(500);
+          await client.join(fresh);
+        } catch (secondErr) {
+          timeLog(`Second join attempt failed for ${fresh}: ${secondErr}`);
+        }
+      }
     } catch (err) {
-      timeLog(`Error joining ${channel}: ${err}`);
+      timeLog(`Error joining ${ch.username ?? ch.id}: ${err}`);
     }
   }
 }

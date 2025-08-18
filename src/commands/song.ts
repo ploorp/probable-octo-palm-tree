@@ -61,22 +61,6 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
   const date = track.date;
   const nowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
 
-  // let playCount = null;
-  // try {
-  //   const trackInfoResponse = await axios.get('https://ws.audioscrobbler.com/2.0/', {
-  //     params: {
-  //       method: 'track.getInfo',
-  //       api_key: config.lastfm.client_id,
-  //       artist: artist,
-  //       track: songTitle,
-  //       username: username,
-  //       format: 'json',
-  //       autocorrect: 1,
-  //     },
-  //   });
-  //   playCount = trackInfoResponse.data?.track?.userplaycount ?? null;
-  // } catch (error) {}
-
   function timeAgo(date: Date) {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
     if (seconds < 60) return `${seconds}s ago`;

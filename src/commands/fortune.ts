@@ -1,8 +1,8 @@
 import { client } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { spawn } from "child_process";
+import { exec } from "child_process";
 import { timeLog } from '../utils.js';
-import { setStreak } from '../db/dbManager.js';
+import { isWhitelisted, updateStreak } from '../db/dbManager.js';
 
 function getTimeLeftToMidnightUTC() {
   const now = new Date();
@@ -14,8 +14,23 @@ function getTimeLeftToMidnightUTC() {
 }
 
 export default async function fortune(msg: PrivmsgMessage, args: string[]) {
-  return new Promise<void>((resolve) => {
-    const streak = setStreak(msg.senderUserID, msg.senderUsername);
+  if (isWhitelisted(msg.senderUserID)) {
+    if (args[1]) {
+      exec(`fortune ${args.slice(1).join(" ")}`, (err, stdout, stderr) => {
+        if (err) {
+          timeLog("fortune error: " + err);
+          client.say(msg.channelName, "error Reacting");
+          return;
+        }
+        const output = stdout.replace(/\s+/g, ' ').trim();
+        client.say(msg.channelName, `@${msg.senderUsername}, ${output}`);
+      });
+      return;
+    }
+  }
+
+  return new Promise<void>(async (resolve) => {
+    const streak = updateStreak(msg.senderUserID);
     const timeLeft = getTimeLeftToMidnightUTC();
 
     if (!streak?.success) {
@@ -30,28 +45,16 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
       ? "streak of 1 day"
       : `streak of ${streak?.streak} days`;
 
-    const proc = spawn("/usr/games/fortune", ["-s"]);
-    let output = "";
-    let handled = false;
-
-    proc.stdout.on("data", (data) => {output += data.toString();});
-
-    const emotes = ["Wise", "Wisdom", "facts", "👀"];
-    const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
-
-    proc.on("close", () => {
-      if (handled) return;
-      handled = true;
-      const cleaned = output.replace(/\s+/g, ' ').trim();
+    exec("fortune -s", (err, stdout, stderr) => {
+      if (err) {
+        timeLog("fortune error: " + err);
+        client.say(msg.channelName, "error Reacting");
+        return resolve();
+      }
+      const cleaned = stdout.replace(/\s+/g, ' ').trim();
+      const emotes = ["Wise", "Wisdom", "facts", "👀"];
+      const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
       client.say(msg.channelName,`@${msg.senderUsername}, ${streakMessage}. ${cleaned} ${randomEmote}`);
-      resolve();
-    });
-
-    proc.on("error", (err) => {
-      if (handled) return;
-      handled = true;
-      timeLog("fortune error: " + err);
-      client.say(msg.channelName, "error Reacting");
       resolve();
     });
   });

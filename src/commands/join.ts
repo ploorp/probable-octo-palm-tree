@@ -1,6 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../client.js';
-import { addChannel, removeChannel, isWhitelist } from '../db/dbManager.js';
+import { joinChannel, partChannel, isWhitelisted, addChannel } from '../db/dbManager.js';
+import { getUserId } from '../helix.js';
 
 export default async function join(msg: PrivmsgMessage, args: string[]) {
   args[0] = args[0].slice(1).toLowerCase();
@@ -9,7 +10,7 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
     if (args[0]=== 'join') {
       try {
         await client.join(msg.senderUsername);
-        addChannel(msg.senderUsername);
+        addChannel(msg.senderUserID);
       } catch (error) {
         return client.say(msg.channelName, 'error joining ' + msg.senderUsername);
       }
@@ -17,7 +18,7 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
     } else {
       try {
         await client.part(msg.channelName);
-        removeChannel(msg.channelID);
+        partChannel(msg.channelID);
         return client.say(msg.channelName, 'leaving ' + msg.channelName);
       } catch (error) {
         return client.say(msg.channelName, 'error Reacting');
@@ -25,10 +26,11 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
     }
   } else {
     if (args[0] === 'join') {
-      if (isWhitelist(msg.senderUserID)) {
+      if (isWhitelisted(msg.senderUserID)) {
         try {
           await client.join(args[1].toLowerCase());
-          addChannel(args[1].toLowerCase());
+          const joinId = await getUserId(args[1].toLowerCase()) as string;
+          addChannel(joinId);
         } catch (error) {
           return client.say(msg.channelName, 'error joining ' + args[1]);
         }
@@ -40,7 +42,8 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
       try {
         client.say(msg.channelName, 'leaving ' + args[1]);
         await client.part(args[1].toLowerCase());
-        return removeChannel(args[1].toLowerCase());
+        const partId = await getUserId(args[1].toLowerCase()) as string;
+        return partChannel(partId);
       } catch (error) {
         return client.say(msg.channelName, 'error Reacting');
       }

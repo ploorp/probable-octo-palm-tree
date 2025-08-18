@@ -28,6 +28,4 @@ export default async function unicode(msg: PrivmsgMessage, args: string[]) {
     timeLog(`Error shortening URL: ${error.message}`);
     return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
-
-  return client.say(msg.channelName, `@${msg.senderUsername}, What ${link}`);
 }

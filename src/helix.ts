@@ -131,7 +131,7 @@ export async function approveAutomodMessage(messageId: string, moderatorId: stri
   }
 }
 
-export async function getUserId(username: string): Promise<string> {
+export async function getUserId(username: string): Promise<string | null> {
   const res = await fetch(`https://api.twitch.tv/helix/users?login=${username}`, {
     headers: {
       "Client-ID": clientId,
@@ -140,6 +140,19 @@ export async function getUserId(username: string): Promise<string> {
   });
 
   const data = await res.json();
-  if (!data.data || data.data.length === 0) throw new Error("User not found");
+  if (!data.data || data.data.length === 0) return null;
   return data.data[0].id;
+}
+
+export async function getUsername(userId: string): Promise<string | null> {
+  const res = await fetch(`https://api.twitch.tv/helix/users?id=${userId}`, {
+    headers: {
+      "Client-ID": clientId,
+      "Authorization": `Bearer ${accessToken}`
+    }
+  });
+
+  const data = await res.json();
+  if (!data.data || data.data.length === 0) return null;
+  return data.data[0].login;
 }

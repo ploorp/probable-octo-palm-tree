@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS users (
   letterboxd TEXT,
   is_whitelisted INTEGER DEFAULT 0
 );
-
 `).run();
 
 export default db;

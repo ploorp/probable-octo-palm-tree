@@ -2,10 +2,12 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../client.js';
 import axios from 'axios';
 import { isOptedOut } from '../db/dbManager.js';
+import { getUserId } from '../helix.js';
 
 export default async function namechange(msg: PrivmsgMessage, args: string[]) {
   let username;
   let response;
+  let userId;
 
   const endpoint = "https://logs.zonian.dev/namehistory/login:"
   
@@ -20,7 +22,12 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
     }
   }
 
-  if (isOptedOut(username)) {
+  userId = await getUserId(username);
+  if (!userId) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
+  }
+
+  if (isOptedOut(userId)) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
   }
 

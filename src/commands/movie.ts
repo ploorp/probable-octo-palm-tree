@@ -4,15 +4,7 @@ import * as cheerio from 'cheerio';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getPrefix } from '../db/dbManager.js';
 
-const UA =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
-
-function human(n: number | null): string {
-  if (!n) return '0';
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}m`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return n.toString();
-}
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
 async function searchFilmHtml(query: string): Promise<{ slug: string; title: string } | null> {
   const url = `https://letterboxd.com/s/search/films/${encodeURIComponent(query)}/`;
@@ -51,6 +43,13 @@ async function scrapeFilm(slug: string): Promise<{
   return { title, slug, year, average, ratings, director };
 }
 
+function formatRatings(n: number | null): string {
+  if (!n) return '0';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}m`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return n.toString();
+}
+
 export default async function movie(msg: PrivmsgMessage, args: string[]) {
   const prefix = getPrefix(msg.channelID)
 
@@ -74,7 +73,7 @@ export default async function movie(msg: PrivmsgMessage, args: string[]) {
   }
 
   const ratingText = data.average ? `${data.average.toFixed(2)}/5 avg` : 'no rating';
-  const ratingsText = data.ratings ? `${human(data.ratings)} ratings` : '0 ratings';
+  const ratingsText = data.ratings ? `${formatRatings(data.ratings)} ratings` : '0 ratings';
   const directorText = data.director || 'unknown director';
   const yearText = data.year || 'n.d.';
 

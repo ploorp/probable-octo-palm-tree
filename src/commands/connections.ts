@@ -2,17 +2,17 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client } from '../client.js';
 import axios from 'axios';
 import { isOptedOut } from '../db/dbManager.js';
+import { getUserId } from '../helix.js';
 
 export default async function connections(msg: PrivmsgMessage, args: string[]) {
   let username;
   let response;
+  let userId;
 
   const endpoint = "https://api.potat.app/users/"
 
-  // if no arguments try to use the sender's username
   if (!args[1]) {
     username = msg.senderUsername;
-    // you havent ?#
   } else {
     username = args[1].toLowerCase().replace(/^@/, '');
 
@@ -21,7 +21,12 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
     }
   }
 
-  if (isOptedOut(username)) {
+  userId = await getUserId(username);
+  if (!userId) {
+    return client.say(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
+  }
+
+  if (isOptedOut(userId)) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
   }
 
@@ -32,7 +37,7 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (response.data.statusCode === 404) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
+    return client.say(msg.channelName, `@${msg.senderUsername}, no information about this user Reacting`);
   }
 
   const connections = response.data.data[0].user.connections;
@@ -67,7 +72,7 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
     }
   }
 
-  if (!spotify && !lastfm && !monkeytype && !anilist && !steam) {
+  if (!spotify && !lastfm && !monkeytype && !anilist && !steam && !trakt) {
     return client.say(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
   };
 

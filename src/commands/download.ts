@@ -16,12 +16,13 @@ const sizeLimit = 200 * 1024 * 1024;
 function sanitizeUrl(rawUrl: string): string | null {
   const cleaned = trim(rawUrl).replace(/[<>\s]/g, "");
 
+  const allowedPattern = /\S*tiktok\.com\/\S+|\S*(instagram|facebook)\.com\/(reels?|p|share)\/\S+/i;
+  if (!allowedPattern.test(cleaned)) return null;
+
   if (!isURL(cleaned, { require_protocol: false })) return null;
 
-  const allowedDomains = /(instagram\.com|tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com)/i;
   try {
     const url = new URL(cleaned.startsWith("http") ? cleaned : "https://" + cleaned);
-    if (!allowedDomains.test(url.hostname)) return null;
     return url.href;
   } catch {
     timeLog("Invalid URL for downloader:" + cleaned);
@@ -68,7 +69,7 @@ async function uploadMedia(filePath: string): Promise<string | undefined> {
 
 function ytdlpDownload(url: string): Promise<string | null> {
   const outputTemplate = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.%(ext)s`);
-  const cookiesPath = "/home/ploorp/cookies.txt"; // cookies for instant gram
+  const cookiesPath = "/home/ploorp/cookies.txt"; // cookies for instant gram and tiktok
 
   return new Promise((resolve) => {
     const args = [
@@ -78,6 +79,8 @@ function ytdlpDownload(url: string): Promise<string | null> {
       "--force-ipv4",
       "-S", "vcodec:h264",
       "--max-filesize", "200M",
+      "--match-filters", "!is_live & !was_live",
+      "--write-info-json",
       "--embed-metadata",
       "--", url
     ];
@@ -97,7 +100,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
         return resolve(null);
       }
 
-      const match = stderr.match(/Destination:\s(.+)/);
+      const match = stderr.match(/Destination:\s(.+\.mp4)/);
       if (match) {
         return resolve(match[1].trim());
       }
@@ -135,7 +138,7 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
 
   if (downloadCache.has(sanitized)) {
     const cachedLink = downloadCache.get(sanitized)!;
-    await client.say(msg.channelName, `mirror: ${cachedLink}`);
+    await client.say(msg.channelName, `🪞 ${cachedLink}`);
     return;
   }
 
@@ -173,7 +176,7 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
       await client.say(msg.channelName, `uh upload failed`);
     } else {
       downloadCache.set(sanitized, uploadedUrl);
-      await client.say(msg.channelName, `mirror: ${uploadedUrl}`);
+      await client.say(msg.channelName, `🪞 ${uploadedUrl}`);
     }
   } finally {
     try {

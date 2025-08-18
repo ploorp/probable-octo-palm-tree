@@ -1,45 +1,72 @@
-import { get } from "cheerio/dist/commonjs/api/traversing.js";
 import db from "./db.js";
-import { getUserId } from "../helix.js";
+import { getUsername } from "../helix.js";
 
-export function ensureUser(id: string, username: string) {
+export function ensureUserRow(id: string) {
   db.prepare(`
-    INSERT OR IGNORE INTO users (id, username, fortune_streak, opted_out)
-    VALUES (?, ?, 0, 0)
-  `).run(id, username);
+    INSERT INTO users (id)
+    VALUES (?)
+    ON CONFLICT(id) DO NOTHING
+  `).run(id);
 }
 
-export function isOptedOut(username: string): boolean {
-  const row = db.prepare("SELECT opted_out FROM users WHERE username = ?").get(username) as { opted_out: number } | undefined;
+export async function refreshUsername(id: string): Promise<string | null> {
+  const username = await getUsername(id);
+  if (username) {
+    db.prepare("UPDATE users SET username = ? WHERE id = ?").run(username, id);
+    return username;
+  }
+  return null;
+}
+
+export function getJoinedChannels(): { id: string; username?: string }[] {
+  const rows = db.prepare('SELECT id, username FROM users WHERE is_joined = 1').all() as { id: string; username?: string }[];
+  return rows.map(r => ({ id: r.id, username: r.username }));
+}
+
+// OPT-OUT
+export function isOptedOut(id: string): boolean {
+  ensureUserRow(id);
+  const row = db.prepare("SELECT opted_out FROM users WHERE id = ?").get(id) as { opted_out: number } | undefined;
   return row ? !!row.opted_out : false;
 }
 
-export async function setOptOut(username: string, optOut: boolean) {
-  const id = await getUserId(username);
-  ensureUser(id, username);
+export async function setOptOut(id: string, optOut: boolean) {
+  ensureUserRow(id);
   db.prepare("UPDATE users SET opted_out = ? WHERE id = ?").run(optOut ? 1 : 0, id);
 }
 
 // CHANNELS
-export async function addChannel(username: string, prefix: string = "%") {
-  const id = await getUserId(username);
+export async function addChannel(id: string, prefix: string = "%") {
+  ensureUserRow(id);
+
+  const username = await getUsername(id);
   db.prepare(`
-    INSERT INTO users (id, username, is_joined, prefix)
-    VALUES (?, ?, 1, ?)
-    ON CONFLICT(id) DO UPDATE SET is_joined = 1, prefix = excluded.prefix
-  `).run(id, username, prefix);
+    UPDATE users
+    SET username = COALESCE(?, username),
+        is_joined = 1,
+        prefix = ?
+    WHERE id = ?
+  `).run(username, prefix, id);
 }
 
-export function removeChannel(id: string) {
+export function partChannel(id: string) {
+  ensureUserRow(id);
   db.prepare("UPDATE users SET is_joined = 0 WHERE id = ?").run(id);
 }
 
+export function joinChannel(id: string) {
+  ensureUserRow(id);
+  db.prepare("UPDATE users SET is_joined = 1 WHERE id = ?").run(id);
+}
+
 export function getPrefix(id: string): string {
+  ensureUserRow(id);
   const row = db.prepare("SELECT prefix FROM users WHERE id = ?").get(id) as { prefix: string } | undefined;
   return row ? row.prefix : "%";
 }
 
 export function setPrefix(id: string, prefix: string) {
+  ensureUserRow(id);
   db.prepare(`
     INSERT INTO users (id, prefix)
     VALUES (?, ?)
@@ -48,29 +75,32 @@ export function setPrefix(id: string, prefix: string) {
 }
 
 // WHITELIST
-export function whitelistUser(id: string) {
-  db.prepare("UPDATE users SET is_whitelisted = 1 WHERE id = ?").run(id);
+export function setWhitelist(id: string, whitelist: boolean) {
+  ensureUserRow(id);
+  db.prepare("UPDATE users SET is_whitelisted = ? WHERE id = ?").run(whitelist ? 1 : 0, id);
 }
 
-export function isWhitelist(id: string): boolean {
+export function isWhitelisted(id: string): boolean {
+  ensureUserRow(id);
   const row = db.prepare("SELECT is_whitelisted FROM users WHERE id = ?").get(id) as { is_whitelisted: number } | undefined;
   return row ? !!row.is_whitelisted : false;
 }
 
-export function removeWhitelist(id: string) {
-  db.prepare("UPDATE users SET is_whitelisted = 0 WHERE id = ?").run(id);
+export function getWhitelistedUsers(): string[] {
+  const rows = db.prepare("SELECT id FROM users WHERE is_whitelisted = 1").all() as { id: string }[];
+  return rows.map(row => row.id);
 }
 
 // CONNECTIONS
-export function linkAccount(id: string, username: string, service: string, handle: string) {
-  ensureUser(id, username);
+export function linkAccount(id: string, service: string, handle: string) {
+  ensureUserRow(id);
   if (service === "lastfm" || service === "letterboxd") {
     db.prepare(`UPDATE users SET ${service} = ? WHERE id = ?`).run(handle, id);
   }
 }
 
-export function unlinkAccount(id: string, username: string, service: string) {
-  ensureUser(id, username);
+export function unlinkAccount(id: string, service: string) {
+  ensureUserRow(id);
   if (service === "lastfm" || service === "letterboxd") {
     db.prepare(`UPDATE users SET ${service} = NULL WHERE id = ?`).run(id);
   }
@@ -85,18 +115,10 @@ export function getAccount(id: string, service: string) {
 }
 
 // FORTUNE
-export function setStreak(userId: string, username: string) {
-  ensureUser(userId, username);
+export function updateStreak(userId: string) {
+  ensureUserRow(userId);
   const nowUTC = new Date(Date.now() + new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0];
-  const user = db.prepare("SELECT last_fortune, fortune_streak FROM users WHERE id = ?").get(userId) as { last_fortune: string, fortune_streak: number } | undefined;
-
-  if (!user) {
-    db.prepare(`
-      INSERT INTO users (id, last_fortune, fortune_streak)
-      VALUES (?, ?, 1)
-    `).run(userId, nowUTC);
-    return { success: true, streak: 1 };
-  }
+  const user = db.prepare("SELECT last_fortune, fortune_streak FROM users WHERE id = ?").get(userId) as { last_fortune: string, fortune_streak: number };
 
   if (user.last_fortune === nowUTC) {
     return { success: false, streak: user.fortune_streak };
@@ -117,9 +139,4 @@ export function setStreak(userId: string, username: string) {
   `).run(nowUTC, newStreak, userId);
 
   return { success: true, streak: newStreak };
-}
-
-export function getJoinedChannels(): string[] {
-  const rows = db.prepare('SELECT username FROM users WHERE is_joined = 1').all() as { username: string }[];
-  return rows.map(row => row.username.toLowerCase());
 }

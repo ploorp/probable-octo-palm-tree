@@ -7,7 +7,7 @@ import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
 import { timeLog, ttrim} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
-import { me, PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
+import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
 import download from './src/commands/download.js';
@@ -17,7 +17,7 @@ import song from './src/commands/song.js';
 import fortune from './src/commands/fortune.js';
 import join from './src/commands/join.js';
 import link from './src/commands/link.js';
-import { addChannel, getPrefix, isWhitelist, setOptOut, setPrefix, whitelistUser } from './src/db/dbManager.js';
+import { getPrefix, getWhitelistedUsers, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix, updateStreak } from './src/db/dbManager.js';
 import db from './src/db/db.js';
 
 const startTime = new Date();
@@ -37,7 +37,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const senderID = msg.senderUserID;
 
   // set up coooldowns (except for whitelisted users)
-  if (!config.whitelist_channels.includes(msg.senderUsername)) {
+  const whitelist_channels = getWhitelistedUsers();
+  if (!whitelist_channels.includes(msg.senderUsername)) {
     const now = Date.now();
     if (cooldowns.has(senderID)) {
       const expirationTime = cooldowns.get(senderID) + config.cooldown;
@@ -50,27 +51,35 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     setTimeout(() => cooldowns.delete(senderID), config.cooldown);
   }
 
-  let msgText = ttrim(msg.messageText);
+  const raw = ttrim(msg.messageText);
+  let msgText = raw;
+
+  // handle replies
+  const replyBody = msg.replyParentMessageBody ?? null;
+  if (replyBody && msgText.startsWith('@')) {
+    msgText = msgText.replace(/^@\S+\s+/, '');
+  }
 
   // media download stuff
-  const downloadLinkPattern = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com)\/\S*/gi;
-  const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
+  if (!isOptedOut(msg.channelID)) {
+    const downloadLinkPattern = /\S*tiktok\.com\/\S+|\S*(instagram|facebook)\.com\/(reels?|p|share)\/\S+/gi;
+    const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
 
-  if (mediaLink) {
-    await download(msg, mediaLink);
+    if (mediaLink) {
+      await download(msg, mediaLink);
+    }
   }
-
-  // deal with reply commands
-  if (msg.replyParentMessageBody) {
-    let msgArr = msgText.split(' ').slice(1);
-    msgArr.push(msg.replyParentMessageBody);
-    msgText = msgArr.join(' ');
-  }
-
+  
   const prefix = getPrefix(msg.channelID);
 
   if (msgText.startsWith(prefix)) {
     const args = msgText.split(' ');
+
+    // handle replies
+    if (replyBody && args.length === 1) {
+      args.push(replyBody);
+    }
+
     const command = args[0].slice(prefix.length).toLowerCase();
 
     // COMMANDS
@@ -101,7 +110,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await movie(msg, args);
         return;
 
-      case 'log':
       case 'review':
       case 'rating':
       case 'rt':
@@ -146,77 +154,70 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await fortune(msg, args);
         return;
 
+      case 'optout':
+        if (isWhitelisted(msg.senderUserID)) {
+          if (args[1]) {
+            const optStatus = isOptedOut(args[1])
+            setOptOut(args[1], !optStatus);
+            return client.say(msg.channelName, `@${msg.senderUsername}, ${args[1]} is now ${!optStatus ? "opted out" : "opted in"}`);
+          }
+        }
+
       case 'setprefix':
-        if (isWhitelist(msg.senderUserID) || msg.channelID === msg.senderUserID) {
-          if (args[1] && args[1].length === 1) {
+        if (isWhitelisted(msg.senderUserID) || msg.channelID === msg.senderUserID) {
+          if (args[1]) {
+            if (!/^[a-z0-9_]+$/.test(args[1])) {
+              return client.say(msg.channelName, `@${msg.senderUsername}, invalid prefix`);
+            }
+            if (args[1].length > 5) {
+              return client.say(msg.channelName, `@${msg.senderUsername}, prefix must be fewer than 6 characters`);
+            }
             const newPrefix = args[1].toLowerCase();
             setPrefix(msg.channelID, newPrefix);
             return client.say(msg.channelName, `prefix set to ${newPrefix}`);
-          } else {
-            return client.say(msg.channelName, `@${msg.senderUsername}, prefix must be 1 character`);
           }
         } else {
           return client.say(msg.channelName, `@${msg.senderUsername}, you must be broadcaster to set prefix`);
         }
 
-      case 'help':
-      case 'commands': {
-        return client.say(
-          msg.channelName,
-          `@${msg.senderUsername}, https://ploorp.com/commands`
-        );
-      }
-    }
-
-    // commands only whitelisted users can use
-    if (config.whitelist_channels.includes(msg.senderUsername)) {
-      switch (command) {
-        case 'echo': {
-          let echoChannel = msg.channelName;
-          let echoArgs = args.slice(1);
-
-          const lastArg = echoArgs[echoArgs.length - 1];
-          if (lastArg && lastArg.startsWith('in:')) {
-            echoChannel = lastArg.slice(3).toLowerCase();
-            echoArgs.pop();
-          }
-
-          const echoMsg = echoArgs.join(' ').trim();
-
-          if (echoMsg) {
-            try {
-              await client.say(echoChannel, echoMsg);
-            } catch (error) {
-              return;
-            }
-          }
-          return;
+      case 'echo': {
+        if (!isWhitelisted(msg.senderUserID)) {
+          return client.say(msg.channelName, `@${msg.senderUsername}, you can't use this command bruh`);
         }
 
-        case 'part':
-          if (args[1]?.length) {
-            try {
-              client.say(msg.channelName, 'leaving ' + args[1]);
-              await client.part(args[1].toLowerCase());
-            } catch (error) {
-              client.say(msg.channelName, 'error Reacting');
-            }
-          } else {
-            client.say(msg.channelName, 'leaving ' + msg.channelName);
-            await client.part(msg.channelName);
-          }
-          return;
+        let echoChannel = msg.channelName;
+        let echoArgs = args.slice(1);
 
-        case 'join':
-          if (args[1]?.length) {
-            try {
-              await client.join(args[1].toLowerCase());
-            } catch (error) {
-              return client.say(msg.channelName, 'error joining ' + args[1]);
-            }
-            client.say(msg.channelName, 'joined ' + args[1]);
+        const lastArg = echoArgs[echoArgs.length - 1];
+        if (lastArg && lastArg.startsWith('in:')) {
+          echoChannel = lastArg.slice(3).toLowerCase();
+          echoArgs.pop();
+        }
+
+        const echoMsg = echoArgs.join(' ').trim();
+
+        if (echoMsg) {
+          try {
+            await client.say(echoChannel, echoMsg);
+          } catch (error) {
+            return;
           }
-          return;
+        }
+        return;
+      }
+
+      case 'whitelist':
+        if (msg.senderUserID === "502913017") {
+          if (args[1]) {
+            const whitelistStatus = isWhitelisted(args[1]);
+            setWhitelist(args[1], !whitelistStatus);
+            return client.say(msg.channelName, `@${msg.senderUsername}, ${args[1]} is ${whitelistStatus ? "is now whitelisted" : "no longer whitelisted"}`);
+          }
+        }
+
+      case 'help':
+      case 'commands': {
+        return client.say(msg.channelName,`@${msg.senderUsername}, https://ploorp.com/commands`);
       }
     }
   }
@@ -233,6 +234,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
     if (msgText.toLowerCase() === 'gup') {
       return client.say(msg.channelName, 'gup');
+    }
+
+    if (msgText.toLowerCase() === 'prefix?') {
+      return client.say(msg.channelName, `my prefix is "${getPrefix(msg.channelID)}"`);
     }
   }
 });

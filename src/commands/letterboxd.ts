@@ -11,7 +11,7 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   let response;
 
   if (!args[1]) {
-    const dbAccount = getAccount(msg.senderUserID, 'letterboxd') as { handle?: string } | undefined;
+    const dbAccount = getAccount(msg.senderUserID, 'letterboxd');
     if (dbAccount && dbAccount.handle) {
       username = dbAccount.handle;
     } else {
@@ -21,8 +21,8 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   } else {
     if (args[1].startsWith("@")) {
       const twitchName = args[1].replace(/^@/, '').toLowerCase();
-      const twitchId = await getUserId(twitchName);
-      const dbAccount = getAccount(twitchId, 'letterboxd') as { handle?: string } | undefined;
+      const twitchId = await getUserId(twitchName) as string;
+      const dbAccount = getAccount(twitchId, 'letterboxd');
       if (dbAccount && dbAccount.handle) {
         username = dbAccount.handle;
         displayName = twitchName;
@@ -65,8 +65,8 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
 
   const movieTitle = jsonData.viewingable.name;
   const reviewUrl = `https://letterboxd.com/${username}/film/${jsonData.viewingable.slug}`;
-  const movieUrl = `https://letterboxd.com/film/${jsonData.viewingable.slug}`;
-  const profileUrl = `https://letterboxd.com/${username}/`;
+  //const movieUrl = `https://letterboxd.com/film/${jsonData.viewingable.slug}`;
+  //const profileUrl = `https://letterboxd.com/${username}/`;
   const dateLogged = jsonData.viewingDate;
   const rating = jsonData.rating;
   const rewatch = jsonData.rewatch ? 'rewatched' : 'watched';
