@@ -214,6 +214,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
             return client.say(msg.channelName, `@${msg.senderUsername}, ${args[1]} is ${!whitelistStatus ? "is now whitelisted" : "no longer whitelisted"}`);
           }
         }
+        return;
 
       case 'help':
       case 'commands': {
