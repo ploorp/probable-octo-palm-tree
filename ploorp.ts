@@ -38,7 +38,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   // set up coooldowns (except for whitelisted users)
   const whitelist_channels = getWhitelistedUsers();
-  if (!whitelist_channels.includes(msg.senderUsername)) {
+  if (!whitelist_channels.includes(msg.senderUserID)) {
     const now = Date.now();
     if (cooldowns.has(senderID)) {
       const expirationTime = cooldowns.get(senderID) + config.cooldown;
