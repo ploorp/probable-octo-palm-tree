@@ -14,8 +14,16 @@ async function searchFilmHtml(query: string): Promise<{ slug: string; title: str
     const { data: html } = await axios.get(url, { headers: { 'User-Agent': UA } });
     const $ = cheerio.load(html);
     const first = $('li.search-result.-production').first();
-    const slug = first.find('[data-film-slug]').attr('data-film-slug');
+    if (!first || !first.length) return null;
+
+    const slug =
+      first.find('[data-film-slug]').attr('data-film-slug') ||
+      first.find('[data-item-slug]').attr('data-item-slug') ||
+      (first.find('h2.headline-2 a').attr('href') || '').split('/').filter(Boolean).pop() ||
+      first.find('[data-item-link]').attr('data-item-link');
+
     const title = first.find('h2.headline-2 a').first().clone().children().remove().end().text().trim();
+
     return slug && title ? { slug, title } : null;
   } catch (err) {
     timeLog('letterboxd search failed' + err);

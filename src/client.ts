@@ -108,4 +108,17 @@ client.on('ready', () => {
   return joinChannels();
 });
 
+export async function saySafe(channel: string, text: string) {
+  try {
+    await client.say(channel, text);
+  } catch (err: any) {
+    if (err?.cause?.message?.includes('Timed out after waiting for response') ||
+        String(err?.message || '').toLowerCase().includes('timed out after waiting for response')) {
+      timeLog(`say timeout (likely duplicate blocked) [#${channel}]: ${text}`);
+      return;
+    }
+    timeLog(`Failed to say [#${channel}]: ${text} -> ${err}`);
+  }
+}
+
 export { client };

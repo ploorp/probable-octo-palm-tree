@@ -23,7 +23,9 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
           return;
         }
         const output = stdout.replace(/\s+/g, ' ').trim();
-        client.say(msg.channelName, `@${msg.senderUsername}, ${output}`);
+        let reply = `@${msg.senderUsername}, ${output}`;
+        if (reply.length > 490) reply = reply.slice(0, 487) + '...';
+        client.say(msg.channelName, reply);
       });
       return;
     }
@@ -34,10 +36,9 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
     const timeLeft = getTimeLeftToMidnightUTC();
 
     if (!streak?.success) {
-      client.say(
-        msg.channelName,
-        `@${msg.senderUsername}, you can see a new fortune in ${timeLeft}, streak of ${streak?.streak}`
-      );
+      let reply = `@${msg.senderUsername}, you can see a new fortune in ${timeLeft}, streak of ${streak?.streak}`;
+      if (reply.length > 500) reply = reply.slice(0, 497) + '...';
+      client.say(msg.channelName, reply);
       return resolve();
     }
 
@@ -54,7 +55,9 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
       const cleaned = stdout.replace(/\s+/g, ' ').trim();
       const emotes = ["Wise", "Wisdom", "facts", "👀"];
       const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
-      client.say(msg.channelName,`@${msg.senderUsername}, ${streakMessage}. ${cleaned} ${randomEmote}`);
+      let reply = `@${msg.senderUsername}, ${streakMessage}. ${cleaned} ${randomEmote}`;
+      if (reply.length > 500) reply = reply.slice(0, 497) + '...';
+      client.say(msg.channelName, reply);
       resolve();
     });
   });

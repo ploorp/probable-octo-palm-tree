@@ -29,10 +29,14 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const roomState = client.roomStateTracker?.getChannelState(msg.channelName);
   const botState = client.userStateTracker?.channelStates?.[msg.channelName];
 
-  // ignore if bot is not mod and channel is restricted
-  if (botState && roomState && !botState.isMod && (roomState.emoteOnly || roomState.subscribersOnly || roomState.followersOnlyDuration > -1)) {
+  if (!botState?.isMod) {
     return;
   }
+
+  // ignore if bot is not mod and channel is restricted
+  // if (botState && roomState && !botState.isMod && (roomState.emoteOnly || roomState.subscribersOnly || roomState.followersOnlyDuration > -1)) {
+  //   return;
+  // }
 
   const senderID = msg.senderUserID;
 
