@@ -121,9 +121,11 @@ export async function saySafe(channel: string, text: string) {
     let sendText = baseText;
 
     if (!state || state.last !== baseText) {
+      // New message for this channel -> store and set next to append
       duplicateState.set(chKey, { last: baseText, nextAppend: true });
       sendText = baseText;
     } else {
+      // Same as last message -> alternate appending
       if (state.nextAppend) {
         sendText = `${baseText} \u034F`;
         state.nextAppend = false;
@@ -131,13 +133,17 @@ export async function saySafe(channel: string, text: string) {
         sendText = baseText;
         state.nextAppend = true;
       }
+      // Keep last as baseText
       duplicateState.set(chKey, state);
     }
 
-    await saySafe(channel, sendText);
+    // Call client.say directly to avoid recursion
+    await client.say(channel, sendText);
   } catch (err: any) {
-    if (err?.cause?.message?.includes('Timed out after waiting for response') ||
-        String(err?.message || '').toLowerCase().includes('timed out after waiting for response')) {
+    if (
+      err?.cause?.message?.includes('Timed out after waiting for response') ||
+      String(err?.message || '').toLowerCase().includes('timed out after waiting for response')
+    ) {
       timeLog(`say timeout (likely duplicate blocked) [#${channel}]: ${text}`);
       return;
     }
