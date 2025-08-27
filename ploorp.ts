@@ -1,4 +1,4 @@
-import { client } from './src/client.js';
+import { client, saySafe } from './src/client.js';
 import boxd from './src/commands/letterboxd.js';
 import connections from './src/commands/connections.js';
 import searchlogs from './src/commands/searchlogs.js';
@@ -154,7 +154,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           if (args[1]) {
             const optStatus = isOptedOut(args[1])
             setOptOut(args[1], !optStatus);
-            return client.say(msg.channelName, `@${msg.senderUsername}, ${args[1]} is now ${!optStatus ? "opted out" : "opted in"}`);
+            return saySafe(msg.channelName, `@${msg.senderUsername}, ${args[1]} is now ${!optStatus ? "opted out" : "opted in"}`);
           }
         }
 
@@ -162,22 +162,22 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         if (isWhitelisted(msg.senderUserID) || msg.channelID === msg.senderUserID) {
           if (args[1]) {
             if (!/^[a-zA-Z0-9!@#$%^&*()\-_=+[\]{};:'",.<>?]+$/.test(args[1])) {
-              return client.say(msg.channelName, `@${msg.senderUsername}, invalid prefix`);
+              return saySafe(msg.channelName, `@${msg.senderUsername}, invalid prefix`);
             }
             if (args[1].length > 5) {
-              return client.say(msg.channelName, `@${msg.senderUsername}, prefix must be fewer than 6 characters`);
+              return saySafe(msg.channelName, `@${msg.senderUsername}, prefix must be fewer than 6 characters`);
             }
             const newPrefix = args[1];
             setPrefix(msg.channelID, newPrefix);
-            return client.say(msg.channelName, `prefix set to ${newPrefix}`);
+            return saySafe(msg.channelName, `prefix set to ${newPrefix}`);
           }
         } else {
-          return client.say(msg.channelName, `@${msg.senderUsername}, you must be broadcaster to set prefix`);
+          return saySafe(msg.channelName, `@${msg.senderUsername}, you must be broadcaster to set prefix`);
         }
 
       case 'echo': {
         if (!isWhitelisted(msg.senderUserID)) {
-          return client.say(msg.channelName, `@${msg.senderUsername}, you can't use this command bruh`);
+          return saySafe(msg.channelName, `@${msg.senderUsername}, you can't use this command bruh`);
         }
 
         let echoChannel = msg.channelName;
@@ -193,7 +193,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
         if (echoMsg) {
           try {
-            await client.say(echoChannel, echoMsg);
+            await saySafe(echoChannel, echoMsg);
           } catch (error) {
             return;
           }
@@ -206,14 +206,14 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
           if (args[1]) {
             const whitelistStatus = isWhitelisted(args[1]);
             setWhitelist(args[1], !whitelistStatus);
-            return client.say(msg.channelName, `@${msg.senderUsername}, ${args[1]} is ${!whitelistStatus ? "is now whitelisted" : "no longer whitelisted"}`);
+            return saySafe(msg.channelName, `@${msg.senderUsername}, ${args[1]} is ${!whitelistStatus ? "is now whitelisted" : "no longer whitelisted"}`);
           }
         }
         return;
 
       case 'help':
       case 'commands': {
-        return client.say(msg.channelName,`@${msg.senderUsername}, https://ploorp.com/commands`);
+        return saySafe(msg.channelName,`@${msg.senderUsername}, https://ploorp.com/commands`);
       }
     }
   }
@@ -221,19 +221,19 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   // STUFF THATS NOT REALLY A COMMAND
   if (msg.senderUserID != config.id) {
     if (msgText === 'test') {
-      return client.say(msg.channelName, 'A');
+      return saySafe(msg.channelName, 'A');
     }
 
     if (msgText.includes(config.username)) {
-      return client.say(msg.channelName, msg.senderUsername + ' hi');
+      return saySafe(msg.channelName, msg.senderUsername + ' hi');
     }
 
     if (msgText.toLowerCase() === 'gup') {
-      return client.say(msg.channelName, 'gup');
+      return saySafe(msg.channelName, 'gup');
     }
 
     if (msgText.toLowerCase() === 'prefix?') {
-      return client.say(msg.channelName, `my prefix is "${getPrefix(msg.channelID)}"`);
+      return saySafe(msg.channelName, `my prefix is "${getPrefix(msg.channelID)}"`);
     }
   }
 });

@@ -1,4 +1,4 @@
-import { client } from '../client.js';
+import { client, saySafe } from '../client.js';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
@@ -65,7 +65,7 @@ export default async function movie(msg: PrivmsgMessage, args: string[]) {
   const query = args.slice(1).join(' ').trim();
 
   if (!query) {
-    return client.say(
+    return saySafe(
       msg.channelName,
       `@${msg.senderUsername}, usage: ${prefix}movie <movie title>`
     );
@@ -73,12 +73,12 @@ export default async function movie(msg: PrivmsgMessage, args: string[]) {
 
   const found = await searchFilmHtml(query);
   if (!found) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, no movie found tupid`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, no movie found tupid`);
   }
 
   const data = await scrapeFilm(found.slug);
   if (!data) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
   const ratingText = data.average ? `${data.average.toFixed(2)}/5 avg` : 'no rating';
@@ -88,5 +88,5 @@ export default async function movie(msg: PrivmsgMessage, args: string[]) {
 
   const message = `${data.title} (${yearText}) by ${directorText} - ${ratingText} from ${ratingsText} https://letterboxd.com/film/${data.slug}/`;
 
-  return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
+  return saySafe(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }

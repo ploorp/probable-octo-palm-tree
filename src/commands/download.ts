@@ -1,4 +1,4 @@
-import { client } from '../client.js';
+import { client, saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { spawn } from "child_process";
 import fs from "fs";
@@ -124,14 +124,14 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
 
   if (downloadCache.has(sanitized)) {
     const cachedLink = downloadCache.get(sanitized)!;
-    await client.say(msg.channelName, `🪞 ${cachedLink}`);
+    await saySafe(msg.channelName, `🪞 ${cachedLink}`);
     return;
   }
 
   const filePath = await ytdlpDownload(sanitized);
   if (!filePath) {
     timeLog("Download failed for: " + sanitized);
-    return client.say(msg.channelName, `uh download failed`);
+    return saySafe(msg.channelName, `uh download failed`);
   }
   if (filePath === "not-video") {
     timeLog("Not a video: " + sanitized);
@@ -143,7 +143,7 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     stats = fs.statSync(filePath);
   } catch (error) {
     timeLog("Error getting file stats: " + error);
-    return client.say(msg.channelName, `uh error downloading`);
+    return saySafe(msg.channelName, `uh error downloading`);
   }
 
   if (stats.size > sizeLimit) {
@@ -153,16 +153,16 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
       timeLog("Error deleting file: " + error);
     }
     timeLog(`File too large: ${stats.size} bytes, limit is ${sizeLimit} bytes`);
-    return client.say(msg.channelName, `uh file was too big`);
+    return saySafe(msg.channelName, `uh file was too big`);
   }
 
   try {
     const uploadedUrl = await uploadMedia(filePath);
     if (!uploadedUrl) {
-      await client.say(msg.channelName, `uh upload failed`);
+      await saySafe(msg.channelName, `uh upload failed`);
     } else {
       downloadCache.set(sanitized, uploadedUrl);
-      await client.say(msg.channelName, `🪞 ${uploadedUrl}`);
+      await saySafe(msg.channelName, `🪞 ${uploadedUrl}`);
     }
   } finally {
     try {

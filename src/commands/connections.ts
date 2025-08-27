@@ -1,5 +1,5 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { client } from '../client.js';
+import { client, saySafe } from '../client.js';
 import axios from 'axios';
 import { isOptedOut } from '../db/dbManager.js';
 import { getUserId } from '../helix.js';
@@ -17,27 +17,27 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
     username = args[1].toLowerCase().replace(/^@/, '');
 
     if (!/^[a-z0-9_]+$/.test(username)) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, bad username`);
+      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username`);
     }
   }
 
   userId = await getUserId(username);
   if (!userId) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
   }
 
   if (isOptedOut(userId)) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
   }
 
   try {
     response = await axios.get(endpoint + username);
   } catch (error) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
   if (response.data.statusCode === 404) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, no information about this user Reacting`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, no information about this user Reacting`);
   }
 
   const connections = response.data.data[0].user.connections;
@@ -73,7 +73,7 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (!spotify && !lastfm && !monkeytype && !anilist && !steam && !trakt) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
   };
 
   const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify}` : ''}`;
@@ -87,5 +87,5 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
 
   const message = `${username}'s connected accounts: ${links}`;
 
-  return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
+  return saySafe(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }

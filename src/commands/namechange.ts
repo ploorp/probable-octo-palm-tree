@@ -1,5 +1,5 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { client } from '../client.js';
+import { client, saySafe } from '../client.js';
 import axios from 'axios';
 import { isOptedOut } from '../db/dbManager.js';
 import { getUserId } from '../helix.js';
@@ -18,27 +18,27 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
     username = args[1].toLowerCase().replace(/^@/, '');
 
     if (!/^[a-z0-9_]+$/.test(username)) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
   }
 
   userId = await getUserId(username);
   if (!userId) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
   }
 
   if (isOptedOut(userId)) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
   }
 
   try {
     response = await axios.get(endpoint + username);
   } catch (error) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
   if (!response.data.length) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, i dont know anything about this user Reacting`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, i dont know anything about this user Reacting`);
   }
 
   const previousNames = [];
@@ -48,7 +48,7 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
   }
   
   if (previousNames.length === 0) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} never changed their name wow`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} never changed their name wow`);
   }
   
   // make sure the message isnt too big
@@ -70,5 +70,5 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
     totalLength += addition.length;
   }
   
-  return client.say(msg.channelName, prefix + oldUsernames);
+  return saySafe(msg.channelName, prefix + oldUsernames);
 }

@@ -14,5 +14,5 @@ export default async function ping(msg: PrivmsgMessage, startTime: Date) {
   minutes > 0 ? `${minutes}m ${seconds}s` :
   `${seconds}s`;
 
-  return client.say(msg.channelName, `@${msg.senderUsername}, catHop guptime: ${uptimeStr}`);
+  return saySafe(msg.channelName, `@${msg.senderUsername}, catHop guptime: ${uptimeStr}`);
 }

@@ -1,4 +1,4 @@
-import { client } from '../client.js';
+import { client, saySafe } from '../client.js';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
@@ -54,13 +54,13 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
         username = dbAccount.handle;
         displayName = twitchName;
       } else {
-        return client.say(msg.channelName, `@${msg.senderUsername}, they dont have a letterboxd account linked`);
+        return saySafe(msg.channelName, `@${msg.senderUsername}, they dont have a letterboxd account linked`);
       }
     } else {
       username = args[1].toLowerCase();
       displayName = username;
       if (!/^[a-z0-9_]+$/.test(username)) {
-        return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+        return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
       }
     }
   }
@@ -68,7 +68,7 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
   const query = args.slice(2).join(' ').trim();
 
   if (!query) {
-    return client.say(
+    return saySafe(
       msg.channelName,
       `@${msg.senderUsername}, usage: ${prefix}rating <username> <movie title>`
     );
@@ -76,7 +76,7 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
 
   const found = await searchFilmHtml(query);
   if (!found) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, no movie found tupid`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, no movie found tupid`);
   }
 
   let jsonResponse;
@@ -84,7 +84,7 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
   try {
     jsonResponse = await axios.get(`https://letterboxd.com/${username}/film/${found.slug}/json/`);
   } catch (error) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, no review found sad`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, no review found sad`);
   }
 
   const jsonData = jsonResponse.data;
@@ -101,5 +101,5 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
 
   const message = `${dateLogged} ${displayName} ${rewatch} ${movieTitle} (${releaseDate}) ${ratingText} ${reviewUrl}`;
 
-  return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
+  return saySafe(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }

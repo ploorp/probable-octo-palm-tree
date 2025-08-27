@@ -1,4 +1,4 @@
-import { client } from '../client.js';
+import { client, saySafe } from '../client.js';
 import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
@@ -17,7 +17,7 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
   } else {
     username = args[1].toLowerCase().replace(/^@/, '');
     if (!/^[a-z0-9_]+$/.test(username)) {
-      return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
   }
 
@@ -31,7 +31,7 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
       },
     });
   } catch (error) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, user not found smh`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, user not found smh`);
   }
 
   let recents;
@@ -47,12 +47,12 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
       },
     });
   } catch (error) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
   const tracks = recents.data?.recenttracks?.track;
   if (!tracks || tracks.length === 0) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, no recent tracks found smh`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, no recent tracks found smh`);
   }
 
   const track = Array.isArray(tracks) ? tracks[0] : tracks;
@@ -77,12 +77,12 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (nowPlaying) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} is currently playing "${songTitle}" by ${artist} kittyJam`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} is currently playing "${songTitle}" by ${artist} kittyJam`);
   } else {
     let ago = 'unknown time ago';
     if (date?.uts) {
       ago = timeAgo(new Date(parseInt(date.uts) * 1000));
     }
-    return client.say(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago}) RobertJam`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago}) RobertJam`);
   }
 }

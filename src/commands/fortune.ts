@@ -1,4 +1,4 @@
-import { client } from '../client.js';
+import { client, saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { exec } from "child_process";
 import { timeLog } from '../utils.js';
@@ -19,13 +19,13 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
       exec(`/usr/games/fortune ${args.slice(1).join(" ")}`, (err, stdout, stderr) => {
         if (err) {
           timeLog("fortune error: " + err);
-          client.say(msg.channelName, "error Reacting");
+          saySafe(msg.channelName, "error Reacting");
           return;
         }
         const output = stdout.replace(/\s+/g, ' ').trim();
         let reply = `@${msg.senderUsername}, ${output}`;
         if (reply.length > 490) reply = reply.slice(0, 487) + '...';
-        client.say(msg.channelName, reply);
+        saySafe(msg.channelName, reply);
       });
       return;
     }
@@ -38,7 +38,7 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
     if (!streak?.success) {
       let reply = `@${msg.senderUsername}, you can see a new fortune in ${timeLeft}, streak of ${streak?.streak}`;
       if (reply.length > 500) reply = reply.slice(0, 497) + '...';
-      client.say(msg.channelName, reply);
+      saySafe(msg.channelName, reply);
       return resolve();
     }
 
@@ -49,7 +49,7 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
     exec("/usr/games/fortune -s", (err, stdout, stderr) => {
       if (err) {
         timeLog("fortune error: " + err);
-        client.say(msg.channelName, "error Reacting");
+        saySafe(msg.channelName, "error Reacting");
         return resolve();
       }
       const cleaned = stdout.replace(/\s+/g, ' ').trim();
@@ -57,7 +57,7 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
       const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
       let reply = `@${msg.senderUsername}, ${streakMessage}. ${cleaned} ${randomEmote}`;
       if (reply.length > 500) reply = reply.slice(0, 497) + '...';
-      client.say(msg.channelName, reply);
+      saySafe(msg.channelName, reply);
       resolve();
     });
   });

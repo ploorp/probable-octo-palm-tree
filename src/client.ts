@@ -108,9 +108,33 @@ client.on('ready', () => {
   return joinChannels();
 });
 
+// appending U+034F for duplicate messages
+const duplicateState = new Map<string, { last: string; nextAppend: boolean }>();
+
 export async function saySafe(channel: string, text: string) {
   try {
-    await client.say(channel, text);
+    const chKey = channel.toLowerCase();
+
+    const baseText = text;
+    const state = duplicateState.get(chKey);
+
+    let sendText = baseText;
+
+    if (!state || state.last !== baseText) {
+      duplicateState.set(chKey, { last: baseText, nextAppend: true });
+      sendText = baseText;
+    } else {
+      if (state.nextAppend) {
+        sendText = `${baseText} \u034F`;
+        state.nextAppend = false;
+      } else {
+        sendText = baseText;
+        state.nextAppend = true;
+      }
+      duplicateState.set(chKey, state);
+    }
+
+    await saySafe(channel, sendText);
   } catch (err: any) {
     if (err?.cause?.message?.includes('Timed out after waiting for response') ||
         String(err?.message || '').toLowerCase().includes('timed out after waiting for response')) {

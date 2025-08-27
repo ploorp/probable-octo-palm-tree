@@ -1,4 +1,4 @@
-import { client } from '../client.js';
+import { client, saySafe } from '../client.js';
 import axios from 'axios';
 import { getUserId } from '../helix.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
@@ -27,13 +27,13 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
         username = dbAccount.handle;
         displayName = twitchName;
       } else {
-        return client.say(msg.channelName, `@${msg.senderUsername}, they dont have a letterboxd account linked`);
+        return saySafe(msg.channelName, `@${msg.senderUsername}, they dont have a letterboxd account linked`);
       }
     } else {
       username = args[1].toLowerCase();
       displayName = username;
       if (!/^[a-z0-9_]+$/.test(username)) {
-        return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+        return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
       }
     }
   }
@@ -42,14 +42,14 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   try {
     response = await axios.get(rssUrl);
   } catch (error) {
-    return client.say(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
   }
 
   const xmlData = response.data;
   const linkMatch = xmlData.match(/<item>.*?<link>(.*?)<\/link>/s);
 
   if (!linkMatch || !linkMatch[1].includes('/film/')) {
-    return client.say(msg.channelName,`@${msg.senderUsername}, ${displayName} has not logged any movies smh`);
+    return saySafe(msg.channelName,`@${msg.senderUsername}, ${displayName} has not logged any movies smh`);
   }
 
   const jsonUrl = linkMatch[1] + '/json';
@@ -58,7 +58,7 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   try {
     jsonResponse = await axios.get(jsonUrl);
   } catch (error) {
-    return client.say(msg.channelName,`@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName,`@${msg.senderUsername}, error Reacting`);
   }
 
   const jsonData = jsonResponse.data;
@@ -83,5 +83,5 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
 
   const message = `${dateLogged} ${displayName} ${rewatch} ${movieTitle} (${releaseDate}) ${ratingText} ${reviewUrl}`;
 
-  return client.say(msg.channelName, `@${msg.senderUsername}, ${message}`);
+  return saySafe(msg.channelName, `@${msg.senderUsername}, ${message}`);
 }
