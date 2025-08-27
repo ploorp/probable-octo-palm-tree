@@ -29,14 +29,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const roomState = client.roomStateTracker?.getChannelState(msg.channelName);
   const botState = client.userStateTracker?.channelStates?.[msg.channelName];
 
-  if (!botState?.isMod) {
+  // ignore if bot is not mod and channel is restricted
+  if (botState && roomState && !botState.isMod && (roomState.emoteOnly || roomState.subscribersOnly || roomState.followersOnlyDuration > -1)) {
     return;
   }
-
-  // ignore if bot is not mod and channel is restricted
-  // if (botState && roomState && !botState.isMod && (roomState.emoteOnly || roomState.subscribersOnly || roomState.followersOnlyDuration > -1)) {
-  //   return;
-  // }
 
   const senderID = msg.senderUserID;
 
@@ -165,13 +161,13 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'setprefix':
         if (isWhitelisted(msg.senderUserID) || msg.channelID === msg.senderUserID) {
           if (args[1]) {
-            if (!/^[a-z0-9_]+$/.test(args[1])) {
+            if (!/^[a-zA-Z0-9!@#$%^&*()\-_=+[\]{};:'",.<>?]+$/.test(args[1])) {
               return client.say(msg.channelName, `@${msg.senderUsername}, invalid prefix`);
             }
             if (args[1].length > 5) {
               return client.say(msg.channelName, `@${msg.senderUsername}, prefix must be fewer than 6 characters`);
             }
-            const newPrefix = args[1].toLowerCase();
+            const newPrefix = args[1];
             setPrefix(msg.channelID, newPrefix);
             return client.say(msg.channelName, `prefix set to ${newPrefix}`);
           }
