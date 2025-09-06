@@ -16,7 +16,7 @@ const sizeLimit = 200 * 1024 * 1024;
 function sanitizeUrl(rawUrl: string): string | null {
   const cleaned = trim(rawUrl).replace(/[<>\s]/g, "");
 
-  const allowedPattern = /\S*tiktok\.com\/\S+|\S*(instagram|facebook)\.com\/(reels?|p|share)\/\S+/i;
+  const allowedPattern = /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+)/i;
   if (!allowedPattern.test(cleaned)) return null;
 
   if (!isURL(cleaned, { require_protocol: false })) return null;
@@ -90,7 +90,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
 
     proc.on("close", (code) => {
       if (code !== 0) {
-        if (stderr.includes("No video formats found") || stderr.includes("Unsupported URL")) {
+        if (stderr.includes("No video formats found") || stderr.includes("Unsupported URL") || stderr.includes("There is no video")) {
           return resolve("not-video");
         }
         timeLog("yt-dlp failed: " + stderr);

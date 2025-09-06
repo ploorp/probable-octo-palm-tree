@@ -11,7 +11,7 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
 import download from './src/commands/download.js';
-import { allowAutomod } from './src/eventsub.js';
+//import { allowAutomod } from './src/eventsub.js';
 import rating from './src/commands/rating.js';
 import song from './src/commands/song.js';
 import fortune from './src/commands/fortune.js';
