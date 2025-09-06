@@ -90,7 +90,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
 
     proc.on("close", (code) => {
       if (code !== 0) {
-        if (stderr.includes("No video formats found") || stderr.includes("Unsupported URL") || stderr.includes("There is no video")) {
+        if (stderr.includes("No video formats found") || stderr.includes("Unsupported URL") || stderr.includes("There is no video") || stderr.includes("No video could be found")) {
           return resolve("not-video");
         }
         if (stderr.includes("File is larger than max-filesize")) {
