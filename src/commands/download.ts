@@ -96,6 +96,12 @@ function ytdlpDownload(url: string): Promise<string | null> {
         if (stderr.includes("File is larger than max-filesize")) {
           return resolve("too-large");
         }
+        if (stderr.includes("Restricted Photo")) {
+          return resolve("over-18");
+        }
+        if (stderr.includes("users who follow this account")) {
+          return resolve("private");
+        }
         timeLog("yt-dlp failed: " + stderr);
         return resolve(null);
       }
@@ -143,6 +149,14 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
   if (filePath === "too-large") {
     timeLog("File too large (yt-dlp): " + sanitized);
     return saySafe(msg.channelName, `ts video too big to download`);
+  }
+  if (filePath === "over-18") {
+    timeLog("18+ video update cookies: " + sanitized);
+    return saySafe(msg.channelName, `cant download 18+ video`);
+  }
+  if (filePath === "private") {
+    timeLog("private video: " + sanitized);
+    return saySafe(msg.channelName, `cant download private video`);
   }
 
   let stats;
