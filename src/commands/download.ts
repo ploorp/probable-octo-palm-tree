@@ -96,7 +96,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
         if (stderr.includes("File is larger than max-filesize")) {
           return resolve("too-large");
         }
-        if (stderr.includes("Restricted Photo")) {
+        if (stderr.includes("Restricted Video") || stderr.includes("Restricted Photo")) {
           return resolve("over-18");
         }
         if (stderr.includes("users who follow this account")) {
