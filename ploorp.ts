@@ -57,7 +57,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   // media download stuff
   if (!isOptedOut(msg.channelID)) {
-    const downloadLinkPattern = /\S*tiktok\.com\/\S+|\S*(instagram|facebook)\.com\/(reels?|p|share)\/\S+/gi;
+    const downloadLinkPattern =
+      /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
     const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
 
     if (mediaLink) {

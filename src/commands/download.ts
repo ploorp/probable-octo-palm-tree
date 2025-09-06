@@ -78,7 +78,7 @@ function ytdlpDownload(url: string): Promise<string | null> {
       "--cookies", cookiesPath,
       "--force-ipv4",
       "-S", "vcodec:h264",
-      "--max-filesize", "200M",
+      "--max-filesize", "99M",
       "--match-filters", "!is_live & !was_live",
       "--embed-metadata",
       "--", url
@@ -92,6 +92,9 @@ function ytdlpDownload(url: string): Promise<string | null> {
       if (code !== 0) {
         if (stderr.includes("No video formats found") || stderr.includes("Unsupported URL") || stderr.includes("There is no video")) {
           return resolve("not-video");
+        }
+        if (stderr.includes("File is larger than max-filesize")) {
+          return resolve("too-large");
         }
         timeLog("yt-dlp failed: " + stderr);
         return resolve(null);
@@ -136,6 +139,10 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
   if (filePath === "not-video") {
     timeLog("Not a video: " + sanitized);
     return;
+  }
+  if (filePath === "too-large") {
+    timeLog("File too large (yt-dlp): " + sanitized);
+    return saySafe(msg.channelName, `ts video too big to download`);
   }
 
   let stats;
