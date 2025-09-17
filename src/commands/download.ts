@@ -11,7 +11,7 @@ import { timeLog } from '../utils.js';
 import validator from "validator";
 const { isURL, trim } = validator;
 
-const sizeLimit = 200 * 1024 * 1024;
+const sizeLimit = 100 * 1024 * 1024;
 
 function sanitizeUrl(rawUrl: string): string | null {
   const cleaned = trim(rawUrl).replace(/[<>\s]/g, "");
@@ -159,23 +159,23 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     return saySafe(msg.channelName, `cant download private video`);
   }
 
-  let stats;
-  try {
-    stats = fs.statSync(filePath);
-  } catch (error) {
-    timeLog("Error getting file stats: " + error);
-    return saySafe(msg.channelName, `uh error downloading`);
-  }
+  // let stats;
+  // try {
+  //   stats = fs.statSync(filePath);
+  // } catch (error) {
+  //   timeLog("Error getting file stats: " + error);
+  //   return saySafe(msg.channelName, `uh error downloading`);
+  // }
 
-  if (stats.size > sizeLimit) {
-    try {
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    } catch (error) {
-      timeLog("Error deleting file: " + error);
-    }
-    timeLog(`File too large: ${stats.size} bytes, limit is ${sizeLimit} bytes`);
-    return saySafe(msg.channelName, `uh file was too big`);
-  }
+  // if (stats.size > sizeLimit) {
+  //   try {
+  //     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  //   } catch (error) {
+  //     timeLog("Error deleting file: " + error);
+  //   }
+  //   timeLog(`File too large: ${stats.size} bytes, limit is ${sizeLimit} bytes`);
+  //   return saySafe(msg.channelName, `uh file was too big`);
+  // }
 
   try {
     const uploadedUrl = await uploadMedia(filePath);
