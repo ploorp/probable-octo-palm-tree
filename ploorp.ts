@@ -158,6 +158,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
             return saySafe(msg.channelName, `@${msg.senderUsername}, ${args[1]} is now ${!optStatus ? "opted out" : "opted in"}`);
           }
         }
+        return;
 
       case 'setprefix':
         if (isWhitelisted(msg.senderUserID) || msg.channelID === msg.senderUserID) {
