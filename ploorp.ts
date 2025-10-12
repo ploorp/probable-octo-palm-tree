@@ -19,6 +19,7 @@ import join from './src/commands/join.js';
 import link from './src/commands/link.js';
 import { getPrefix, getWhitelistedUsers, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix } from './src/db/dbManager.js';
 import db from './src/db/db.js';
+import { getUserId } from './src/helix.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -206,8 +207,13 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'whitelist':
         if (msg.senderUserID === "502913017") {
           if (args[1]) {
-            const whitelistStatus = isWhitelisted(args[1]);
-            setWhitelist(args[1], !whitelistStatus);
+            const userID = await getUserId(args[1]);
+            if (!userID) {
+              return saySafe(msg.channelName, `@${msg.senderUsername}, invalid user`);
+            }
+
+            const whitelistStatus = isWhitelisted(userID);
+            setWhitelist(userID, !whitelistStatus);
             return saySafe(msg.channelName, `@${msg.senderUsername}, ${args[1]} is ${!whitelistStatus ? "is now whitelisted" : "no longer whitelisted"}`);
           }
         }
