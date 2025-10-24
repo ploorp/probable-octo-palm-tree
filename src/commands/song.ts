@@ -3,6 +3,7 @@ import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount } from '../db/dbManager.js';
+import { getUserId } from '../helix.js';
 
 export default async function song(msg: PrivmsgMessage, args: string[]) {
   let username: string;
@@ -15,9 +16,23 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
       username = msg.senderUsername;
     }
   } else {
-    username = args[1].toLowerCase().replace(/^@/, '');
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+    if (args[1].startsWith('@')) {
+      const twitchLogin = args[1].replace(/^@+/, '').toLowerCase();
+      if (!/^[a-z0-9_]+$/.test(twitchLogin)) {
+        return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      }
+      const userId = await getUserId(twitchLogin);
+      if (!userId) return saySafe(msg.channelName, `@${msg.senderUsername}, twitch user not found`);
+      const account = getAccount(userId, 'lastfm') as { handle?: string } | null;
+      if (!account || !account.handle) {
+        return saySafe(msg.channelName, `@${msg.senderUsername}, ${twitchLogin} has no linked lastfm`);
+      }
+      username = account.handle;
+    } else {
+      username = args[1].toLowerCase().replace(/^@/, '');
+      if (!/^[a-z0-9_]+$/.test(username)) {
+        return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      }
     }
   }
 
