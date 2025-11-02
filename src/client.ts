@@ -209,8 +209,10 @@ export async function saySafe(channel: string, text: string) {
       duplicateState.set(chKey, state);
     }
 
-    // Call client.say directly to avoid recursion
-    await client.say(channel, sendText);
+  // sanitize control chars that would break IRC commands
+  sendText = sendText.replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
+  // Call client.say directly to avoid recursion
+  await client.say(channel, sendText);
   } catch (err: any) {
     if (
       err?.cause?.message?.includes('Timed out after waiting for response') ||

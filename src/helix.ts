@@ -156,3 +156,26 @@ export async function getUsername(userId: string): Promise<string | null> {
   if (!data.data || data.data.length === 0) return null;
   return data.data[0].login;
 }
+
+export async function whisperUser(userId: string, message: string): Promise<[boolean, number, any]> {
+  try {
+    const url = `https://api.twitch.tv/helix/whispers?from_user_id=${encodeURIComponent(config.id)}&to_user_id=${encodeURIComponent(userId)}`;
+    const payload = { message: String(message).replace(/\n|\r/g, ' ') };
+
+    const res = await axios.post(url, payload, {
+      headers: {
+        'Client-ID':     clientId,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type':  'application/json',
+      },
+    });
+
+    timeLog(`Sent whisper to user ${userId} (status ${res.status})`);
+    return [res.status === 204, res.status, res.data];
+  } catch (err: any) {
+    const status = err.response?.status ?? 0;
+    const body = err.response?.data ?? err.message;
+    timeLog(`Error sending whisper to ${userId}: status=${status} body=${JSON.stringify(body)}`);
+    return [false, status, body];
+  }
+}

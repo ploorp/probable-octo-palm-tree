@@ -17,9 +17,13 @@ import song from './src/commands/song.js';
 import fortune from './src/commands/fortune.js';
 import join from './src/commands/join.js';
 import link from './src/commands/link.js';
+import supibot from './src/commands/supibot.js';
+import newname from './src/commands/newname.js';
 import { getPrefix, getWhitelistedUsers, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix } from './src/db/dbManager.js';
 import db from './src/db/db.js';
 import { getUserId } from './src/helix.js';
+import randomline from './src/commands/randomline.js';
+import { is } from 'cheerio/dist/commonjs/api/traversing.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -78,6 +82,14 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     }
 
     const command = args[0].slice(prefix.length).toLowerCase();
+
+    // supibot command
+    if (command.startsWith('$') && isWhitelisted(msg.senderUserID)) {
+      const preserved = args[0].slice(prefix.length);
+      const supArgs = [prefix + 'supibot', preserved, ...args.slice(1)];
+      await supibot(msg, supArgs);
+      return;
+    }
 
     // COMMANDS
     switch (command) {
@@ -145,21 +157,34 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await song(msg, args);
         return;
 
+      case 'newname':
+      case 'nn':
+        await newname(msg, args);
+        return;
+
+      case 'supibot':
+        if (!isWhitelisted(msg.senderUserID)) return;
+        await supibot(msg, args);
+        return;
+
       case 'fortune':
       case 'f':
       case 'cookie':
         await fortune(msg, args);
         return;
 
-      case 'optout':
-        if (isWhitelisted(msg.senderUserID)) {
-          if (args[1]) {
-            const optStatus = isOptedOut(args[1])
-            setOptOut(args[1], !optStatus);
-            return saySafe(msg.channelName, `@${msg.senderUsername}, ${args[1]} is now ${!optStatus ? "opted out" : "opted in"}`);
-          }
-        }
+      case 'randomline':
+      case 'rl':
+        await randomline(msg, args);
         return;
+
+      case 'optout':
+        if (!isWhitelisted(msg.senderUserID)) return;
+        if (args[1]) {
+          const optStatus = isOptedOut(args[1])
+          setOptOut(args[1], !optStatus);
+          return saySafe(msg.channelName, `@${msg.senderUsername}, ${args[1]} is now ${!optStatus ? "opted out" : "opted in"}`);
+        }
 
       case 'setprefix':
         if (isWhitelisted(msg.senderUserID) || msg.channelID === msg.senderUserID) {
@@ -246,4 +271,4 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   }
 });
 
-allowAutomod();
+//allowAutomod();
