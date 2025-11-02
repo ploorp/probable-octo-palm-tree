@@ -24,7 +24,7 @@ export default async function newname(msg: PrivmsgMessage, args: string[]) {
       const twitchid = response[response.length - 1];
       const current = await getUsername(twitchid);
       if (!current) {
-        return await saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+        return await saySafe(msg.channelName, `@${msg.senderUsername}, channel is banned or something`);
       }
       return await saySafe(msg.channelName, `@${msg.senderUsername}, their current username is ${current}`);
     }
