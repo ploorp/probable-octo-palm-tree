@@ -5,7 +5,7 @@ import {
   SlowModeRateLimiter
 } from '@mastondzn/dank-twitch-irc';
 import { sleep, timeLog } from './utils.js';
-import { getJoinedChannels, refreshUsername } from './db/dbManager.js';
+import { getJoinedChannels, refreshUsername, addChannel } from './db/dbManager.js';
 
 // Backoff + readiness state
 let isReady = false;
@@ -89,10 +89,22 @@ client.on('close', () => {
   scheduleReconnect('connection closed');
 });
 
-client.on('ready', () => {
+client.on('ready', async () => {
   isReady = true;
   clearReconnectBackoff();
   timeLog('Connected to Twitch');
+
+  try {
+    // Ensure the bot's own account is marked as joined in the DB so it will
+    // always be included in getJoinedChannels() on reconnects.
+    if (config.id) {
+      await addChannel(config.id);
+      timeLog(`Ensured bot's channel (id ${config.id}) is in DB join list`);
+    }
+  } catch (err: any) {
+    timeLog(`Error ensuring bot join in DB: ${err}`);
+  }
+
   return joinChannels();
 });
 
