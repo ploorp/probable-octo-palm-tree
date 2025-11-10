@@ -23,22 +23,26 @@ export default async function newname(msg: PrivmsgMessage, args: string[]) {
     const txt = whisperMsg.messageText?.trim() ?? '';
 
     if (txt.startsWith('No data')) {
-      return await saySafe(msg.channelName, `@${msg.senderUsername}, failed to find user`);
+      await saySafe(msg.channelName, `@${msg.senderUsername}, failed to find user`);
+      return;
     }
 
     const twitchid = txt.match(/twitch\s*id[:\s]*([0-9]+)/i)?.[1];
 
     if (!twitchid) {
-      return await saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+      await saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+      return;
     }
     
     const current = await getUsername(twitchid);
     
     if (!current) {
-      return await saySafe(msg.channelName, `@${msg.senderUsername}, error getting username for ${twitchid}`);
+      await saySafe(msg.channelName, `@${msg.senderUsername}, error getting username for ${twitchid}`);
+      return;
     }
 
-    return await saySafe(msg.channelName, `@${msg.senderUsername}, their current username is ${current}`);
+    await saySafe(msg.channelName, `@${msg.senderUsername}, their current username is ${current}`);
+    return; 
   });
 
   whisperUser("68136884", `$uid ${username}`);
