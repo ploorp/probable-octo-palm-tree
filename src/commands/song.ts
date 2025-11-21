@@ -66,8 +66,6 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
     return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
-  let scrobbleCount = '';
-
   const tracks = recents.data?.recenttracks?.track;
   if (!tracks || (Array.isArray(tracks) && tracks.length === 0)) {
     return saySafe(msg.channelName, `@${msg.senderUsername}, no recent tracks found smh`);
@@ -79,6 +77,7 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
   const date = track.date;
   const nowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
 
+  let scrobbleCount = '';
   if (playcount) {
     let trackInfo;
     try {
@@ -92,6 +91,9 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
           format: 'json',
         },
       });
+      if (trackInfo?.data?.track?.userplaycount != null) {
+        scrobbleCount = ` (${trackInfo.data.track.userplaycount} plays)`;
+      }
     }
     catch (error) {
       return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
