@@ -83,7 +83,7 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
     return;
   } else {
-    if (isNaN(+args[1])) {
+    if (isNaN(parseInt(args[1]))) {
       await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
       return;
     }
