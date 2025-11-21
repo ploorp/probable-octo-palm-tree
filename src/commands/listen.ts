@@ -82,11 +82,6 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   if (!args[1]) {
     await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
     return;
-  } else {
-    if (isNaN(parseInt(args[1]))) {
-      await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
-      return;
-    }
   }
 
   {
@@ -109,6 +104,10 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   listeners.set(key, firehoseClient);
 
   if (args[2]) {
+    if (isNaN(+args[2])) {
+      await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
+      return;
+    }
     if (args[2] === "0") {
       await saySafe(msg.channelName, `started listening 👂 indefinitely`);
       return;
