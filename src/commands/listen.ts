@@ -16,6 +16,8 @@ type FirehoseClient = Promise<{ close: () => void; raw: any }>;
 
 // active listeners keyed by the chat channel where the command was invoked
 const listeners = new Map<string, FirehoseClient>();
+// map of timeout ids for scheduled stops so we can cancel them when replacing listeners
+const listenerTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 
 export async function connectFirehose(
@@ -75,6 +77,11 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
       // ignore
     }
     listeners.delete(key);
+    const t = listenerTimers.get(key);
+    if (t) {
+      clearTimeout(t as any);
+      listenerTimers.delete(key);
+    }
     await saySafe(msg.channelName, `stopped listening`);
     return;
   }
@@ -89,6 +96,11 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     if (prev) {
       try { (await prev).close(); } catch {}
       listeners.delete(key);
+      const t = listenerTimers.get(key);
+      if (t) {
+        clearTimeout(t as any);
+        listenerTimers.delete(key);
+      }
     }
   }
 
@@ -113,26 +125,30 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
       return;
     }
     const ms = parseInt(args[2], 10) * 1000;
-    setTimeout(async () => {
+    const id = setTimeout(async () => {
       const c = listeners.get(key);
       if (c) {
         try { (await c).close(); } catch {}
         listeners.delete(key);
       }
+      listenerTimers.delete(key);
       await saySafe(msg.channelName, `stopped listening`);
     }, ms);
+    listenerTimers.set(key, id);
     await saySafe(msg.channelName, `started listening 👂 for ${args[2]} seconds`);
     return;
   }
 
-  setTimeout(async () => {
+  const id = setTimeout(async () => {
     const c = listeners.get(key);
     if (c) {
       try { (await c).close(); } catch {}
       listeners.delete(key);
     }
+    listenerTimers.delete(key);
     await saySafe(msg.channelName, `stopped listening`);
   }, 30_000);
+  listenerTimers.set(key, id);
   await saySafe(msg.channelName, `started listening 👂 for 30 seconds`);
   return;
 }
