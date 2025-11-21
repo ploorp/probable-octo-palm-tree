@@ -66,13 +66,23 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   };
 
   const available = Object.values(urls).filter(Boolean) as string[];
-  if (available.length === 0) return saySafe(msg.channelName, `@${sender}, ${username} hasn't connected any interesting accounts`);
+  const isSelf = username === sender;
+  const possessive = isSelf ? 'your' : `${username}'s`;
+  const subject = isSelf ? 'you' : username;
+
+  if (available.length === 0) {
+    const verb = isSelf ? "haven't" : "hasn't";
+    return saySafe(msg.channelName, `@${sender}, ${subject} ${verb} connected any interesting accounts`);
+  }
 
   if (platform) {
     const url = urls[platform];
-    if (!url) return saySafe(msg.channelName, `@${sender}, ${username} hasn't connected a ${platform} account`);
-    return saySafe(msg.channelName, `@${sender}, ${username}'s ${platform}: ${url}`);
+    if (!url) {
+      const verb = isSelf ? "haven't" : "hasn't";
+      return saySafe(msg.channelName, `@${sender}, ${subject} ${verb} connected a ${platform} account`);
+    }
+    return saySafe(msg.channelName, `@${sender}, ${possessive} ${platform}: ${url}`);
   }
 
-  return saySafe(msg.channelName, `@${sender}, ${username}'s connected accounts: ${available.join(' • ')}`);
+  return saySafe(msg.channelName, `@${sender}, ${possessive} connected accounts: ${available.join(' • ')}`);
 }
