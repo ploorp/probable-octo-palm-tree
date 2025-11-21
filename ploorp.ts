@@ -154,7 +154,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'song':
       case 's':
-        await song(msg, args);
+        await song(msg, false, args);
+        return;
+      
+      case 'sc':
+        await song(msg, true, args);
         return;
 
       case 'newname':

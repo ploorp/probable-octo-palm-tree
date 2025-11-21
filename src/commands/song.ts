@@ -5,7 +5,7 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount } from '../db/dbManager.js';
 import { getUserId } from '../helix.js';
 
-export default async function song(msg: PrivmsgMessage, args: string[]) {
+export default async function song(msg: PrivmsgMessage, count: boolean, args: string[]) {
   let username: string;
 
   if (!args[1]) {
@@ -36,8 +36,9 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
     }
   }
 
+  let userInfo;
   try {
-    await axios.get('https://ws.audioscrobbler.com/2.0/', {
+    userInfo = await axios.get('https://ws.audioscrobbler.com/2.0/', {
       params: {
         method: 'user.getinfo',
         user: username,
@@ -76,6 +77,16 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
   const date = track.date;
   const nowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
 
+  let scrobbleCount = '';
+  try {
+    if (count && userInfo?.data?.user?.playcount) {
+      const pc = userInfo.data.user.playcount;
+      scrobbleCount = `( play ${pc})`;
+    }
+  } catch (e) {
+    scrobbleCount = '';
+  }
+
   function timeAgo(date: Date) {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
     if (seconds < 60) return `${seconds}s ago`;
@@ -92,12 +103,12 @@ export default async function song(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (nowPlaying) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} is currently playing "${songTitle}" by ${artist} kittyJam`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} is currently playing "${songTitle}" by ${artist}${scrobbleCount} kittyJam`);
   } else {
     let ago = 'unknown time ago';
     if (date?.uts) {
       ago = timeAgo(new Date(parseInt(date.uts) * 1000));
     }
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago}) RobertJam`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} RobertJam`);
   }
 }
