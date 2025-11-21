@@ -126,6 +126,6 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
     if (date?.uts) {
       ago = timeAgo(new Date(parseInt(date.uts) * 1000));
     }
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} RobertJam`);
+    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} kittyJam`);
   }
 }

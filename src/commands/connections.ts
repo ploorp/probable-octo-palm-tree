@@ -5,87 +5,65 @@ import { isOptedOut } from '../db/dbManager.js';
 import { getUserId } from '../helix.js';
 
 export default async function connections(msg: PrivmsgMessage, args: string[]) {
-  let username;
-  let response;
-  let userId;
+  const endpoint = 'https://api.potat.app/users/';
 
-  const endpoint = "https://api.potat.app/users/"
+  const PLATFORMS = ['spotify', 'lastfm', 'monkeytype', 'anilist', 'steam', 'trakt'] as const;
+  type Platform = (typeof PLATFORMS)[number];
 
-  if (!args[1]) {
-    username = msg.senderUsername;
-  } else {
-    username = args[1].toLowerCase().replace(/^@/, '');
+  const sender = msg.senderUsername;
+  let username: string = sender;
+  let platform: Platform | undefined;
 
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username`);
+  // parse up to two args (order-insensitive): platform and/or username
+  const raw1 = args[1]?.toLowerCase();
+  const raw2 = args[2]?.toLowerCase();
+  for (const raw of [raw1, raw2]) {
+    if (!raw) continue;
+    if ((PLATFORMS as readonly string[]).includes(raw)) {
+      platform = raw as Platform;
+      continue;
     }
+    username = raw.replace(/^@/, '');
   }
 
-  userId = await getUserId(username);
-  if (!userId) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
-  }
+  if (!/^[a-z0-9_]+$/.test(username)) return saySafe(msg.channelName, `@${sender}, bad username`);
 
-  if (isOptedOut(userId)) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
-  }
+  const userId = await getUserId(username);
+  if (!userId) return saySafe(msg.channelName, `@${sender}, this user does not exist Reacting`);
+  if (isOptedOut(userId)) return saySafe(msg.channelName, `@${sender}, ${username} is opted out of ts`);
 
+  let response;
   try {
     response = await axios.get(endpoint + username);
-  } catch (error) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+  } catch (err) {
+    return saySafe(msg.channelName, `@${sender}, error Reacting`);
   }
+  if (response.data.statusCode === 404) return saySafe(msg.channelName, `@${sender}, no information about this user Reacting`);
 
-  if (response.data.statusCode === 404) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, no information about this user Reacting`);
-  }
+  const connections: any[] = response.data.data[0].user.connections || [];
+  const map: Record<string, any> = {};
+  for (const c of connections) map[c.platform] = c;
 
-  const connections = response.data.data[0].user.connections;
-  
-  let spotify;
-  let lastfm;
-  let monkeytype;
-  let anilist;
-  let steam;
-  let trakt;
+  const steamId = map.STEAM ? (BigInt(76561197960265728) + BigInt(map.STEAM.id)).toString() : undefined;
 
-  for (const connection of connections) {
-    switch (connection.platform) {
-      case "SPOTIFY":
-        spotify = connection.id;
-        break;
-      case "LASTFM":
-        lastfm = connection.id;
-        break;
-      case "MONKEYTYPE":
-        monkeytype = connection.username;
-        break;
-      case "ANILIST":
-        anilist = connection.username;
-        break;
-      case "STEAM":
-        steam = BigInt(76561197960265728) + BigInt(connection.id);
-        break;
-      case "TRAKT":
-        trakt = connection.username;
-        break;
-    }
-  }
-
-  if (!spotify && !lastfm && !monkeytype && !anilist && !steam && !trakt) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} hasn't connected any interesting accounts`);
+  const urls: Record<Platform, string | undefined> = {
+    spotify: map.SPOTIFY ? `https://open.spotify.com/user/${map.SPOTIFY.id}` : undefined,
+    lastfm: map.LASTFM ? `https://www.last.fm/user/${map.LASTFM.id}` : undefined,
+    monkeytype: map.MONKEYTYPE ? `https://monkeytype.com/profile/${map.MONKEYTYPE.username}` : undefined,
+    anilist: map.ANILIST ? `https://anilist.co/user/${map.ANILIST.username}` : undefined,
+    steam: steamId ? `https://steamcommunity.com/profiles/${steamId}` : undefined,
+    trakt: map.TRAKT ? `https://trakt.tv/users/${map.TRAKT.username}` : undefined,
   };
 
-  const spotifyUrl = `${spotify ? `https://open.spotify.com/user/${spotify}` : ''}`;
-  const lastfmUrl = `${lastfm ? `https://www.last.fm/user/${lastfm}` : ''}`;
-  const steamUrl = `${steam ? `https://steamcommunity.com/profiles/${steam.toString()}` : ''}`;
-  const monkeytypeUrl = `${monkeytype ? `https://monkeytype.com/profile/${monkeytype}` : ''}`;
-  const anilistUrl = `${anilist ? `https://anilist.co/user/${anilist}` : ''}`;
-  const traktUrl = `${trakt ? `https://trakt.tv/users/${trakt}` : ''}`;
+  const available = Object.values(urls).filter(Boolean) as string[];
+  if (available.length === 0) return saySafe(msg.channelName, `@${sender}, ${username} hasn't connected any interesting accounts`);
 
-  const links = [spotifyUrl, lastfmUrl, steamUrl, monkeytypeUrl, anilistUrl, traktUrl].filter(Boolean).join(' • ');
+  if (platform) {
+    const url = urls[platform];
+    if (!url) return saySafe(msg.channelName, `@${sender}, ${username} hasn't connected a ${platform} account`);
+    const label = platform[0].toUpperCase() + platform.slice(1);
+    return saySafe(msg.channelName, `@${sender}, ${username}'s ${label}: ${url}`);
+  }
 
-  const message = `${username}'s connected accounts: ${links}`;
-
-  return saySafe(msg.channelName, `@${msg.senderUsername}, ${message}`);
+  return saySafe(msg.channelName, `@${sender}, ${username}'s connected accounts: ${available.join(' • ')}`);
 }
