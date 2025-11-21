@@ -61,7 +61,7 @@ export async function connectFirehose(
 
 
 export default async function listen(msg: PrivmsgMessage, args: string[], action: boolean | null) {
-  if (!args[1]) {
+  if (action != null && !args[1]) {
     return await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds|null>");
   }
 
