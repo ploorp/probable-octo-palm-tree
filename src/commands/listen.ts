@@ -19,6 +19,19 @@ const listeners = new Map<string, FirehoseClient>();
 // map of timeout ids for scheduled stops so we can cancel them when replacing listeners
 const listenerTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+async function stopListening(channel: string) {
+  const active = listeners.get(channel);
+  if (active) {
+    try { (await active).close(); } catch {}
+    listeners.delete(channel);
+  }
+  const t = listenerTimers.get(channel);
+  if (t) {
+    clearTimeout(t);
+    listenerTimers.delete(channel);
+  }
+}
+
 
 export async function connectFirehose(
   instance = "logs.supa.codes",
@@ -66,22 +79,11 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   const key = msg.channelName;
 
   if (action === null) {
-    const active = listeners.get(key);
-    if (!active) {
+    if (!listeners.has(key)) {
       await saySafe(msg.channelName, `not currently listening`);
       return;
     }
-    try {
-      (await active).close();
-    } catch (e) {
-      // ignore
-    }
-    listeners.delete(key);
-    const t = listenerTimers.get(key);
-    if (t) {
-      clearTimeout(t as any);
-      listenerTimers.delete(key);
-    }
+    await stopListening(key);
     await saySafe(msg.channelName, `stopped listening`);
     return;
   }
@@ -91,18 +93,20 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     return;
   }
 
-  {
-    const prev = listeners.get(key);
-    if (prev) {
-      try { (await prev).close(); } catch {}
-      listeners.delete(key);
-      const t = listenerTimers.get(key);
-      if (t) {
-        clearTimeout(t as any);
-        listenerTimers.delete(key);
-      }
+  let duration = 30000;
+  if (args[2]) {
+    if (isNaN(+args[2])) {
+      await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
+      return;
+    }
+    if (args[2] === "0") {
+      duration = 0;
+    } else {
+      duration = parseInt(args[2], 10) * 1000;
     }
   }
+
+  await stopListening(key);
 
   const firehoseClient = connectFirehose("bigears.supa.codes", args[1], async (fhmsg) => {
     const payload = `#${fhmsg.channel} @${fhmsg.displayName}: ${fhmsg.text}`;
@@ -115,40 +119,14 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
 
   listeners.set(key, firehoseClient);
 
-  if (args[2]) {
-    if (isNaN(+args[2])) {
-      await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
-      return;
-    }
-    if (args[2] === "0") {
-      await saySafe(msg.channelName, `started listening 👂 indefinitely`);
-      return;
-    }
-    const ms = parseInt(args[2], 10) * 1000;
+  if (duration > 0) {
     const id = setTimeout(async () => {
-      const c = listeners.get(key);
-      if (c) {
-        try { (await c).close(); } catch {}
-        listeners.delete(key);
-      }
-      listenerTimers.delete(key);
+      await stopListening(key);
       await saySafe(msg.channelName, `stopped listening`);
-    }, ms);
+    }, duration);
     listenerTimers.set(key, id);
-    await saySafe(msg.channelName, `started listening 👂 for ${args[2]} seconds`);
-    return;
+    await saySafe(msg.channelName, `started listening 👂 for ${duration / 1000} seconds`);
+  } else {
+    await saySafe(msg.channelName, `started listening 👂 indefinitely`);
   }
-
-  const id = setTimeout(async () => {
-    const c = listeners.get(key);
-    if (c) {
-      try { (await c).close(); } catch {}
-      listeners.delete(key);
-    }
-    listenerTimers.delete(key);
-    await saySafe(msg.channelName, `stopped listening`);
-  }, 30_000);
-  listenerTimers.set(key, id);
-  await saySafe(msg.channelName, `started listening 👂 for 30 seconds`);
-  return;
 }
