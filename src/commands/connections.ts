@@ -31,7 +31,7 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
     if ((PLATFORMS as readonly string[]).includes(rawPlatform)) {
       platform = rawPlatform as Platform;
     } else {
-      return saySafe(msg.channelName, `@${sender}, format is %connections [username] [platform]`);
+      return saySafe(msg.channelName, `@${sender}, format is %connections <username> <platform>`);
     }
   }
 
