@@ -71,8 +71,7 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   if (platform) {
     const url = urls[platform];
     if (!url) return saySafe(msg.channelName, `@${sender}, ${username} hasn't connected a ${platform} account`);
-    const label = platform[0].toUpperCase() + platform.slice(1);
-    return saySafe(msg.channelName, `@${sender}, ${username}'s ${label}: ${url}`);
+    return saySafe(msg.channelName, `@${sender}, ${username}'s ${platform}: ${url}`);
   }
 
   return saySafe(msg.channelName, `@${sender}, ${username}'s connected accounts: ${available.join(' • ')}`);
