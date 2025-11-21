@@ -20,15 +20,15 @@ import link from './src/commands/link.js';
 import supibot from './src/commands/supibot.js';
 import newname from './src/commands/newname.js';
 import { getPrefix, getWhitelistedUsers, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix } from './src/db/dbManager.js';
-import db from './src/db/db.js';
 import { getUserId } from './src/helix.js';
 import randomline from './src/commands/randomline.js';
-import { is } from 'cheerio/dist/commonjs/api/traversing.js';
+import listen from './src/commands/listen.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
 
 timeLog('Bot is starting');
+
 
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const roomState = client.roomStateTracker?.getChannelState(msg.channelName);
@@ -180,6 +180,14 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'randomline':
       case 'rl':
         await randomline(msg, args);
+        return;
+
+      case 'listen':
+        await listen(msg, args, false);
+        return;
+
+      case 'lw':
+        await listen(msg, args, true);
         return;
 
       case 'optout':

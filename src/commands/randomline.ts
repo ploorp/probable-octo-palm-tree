@@ -10,16 +10,22 @@ export default async function randomline(msg: PrivmsgMessage, args: string[]) {
   if (!args[1]) {
   } else if (!args[2]) {
     user = args[1].replace(/^@/, '');
-    if (!/^[A-Za-z0-9_]+$/.test(user)) {
+    if (user === '*') {
+      user = null;
+    } else if (!/^[A-Za-z0-9_]+$/.test(user)) {
       return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
   } else {
     channel = args[1].replace(/^@/, '');
     user = args[2].replace(/^@/, '');
-    if (!/^[A-Za-z0-9_]+$/.test(channel)) {
+    if (channel === '*') {
+      channel = msg.channelName;
+    } else if (!/^[A-Za-z0-9_]+$/.test(channel)) {
       return saySafe(msg.channelName, `@${msg.senderUsername}, bad channel name tupid`);
     }
-    if (!/^[A-Za-z0-9_]+$/.test(user)) {
+    if (user === '*') {
+      user = null;
+    } else if (!/^[A-Za-z0-9_]+$/.test(user)) {
       return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
     }
   }
