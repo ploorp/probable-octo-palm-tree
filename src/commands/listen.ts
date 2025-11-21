@@ -79,7 +79,7 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   }, WebSocket);
 
   if (args[2]) {
-    if (args[2] === "null") {
+    if (args[2] === "0") {
       await saySafe(msg.channelName, `started listening 👂 indefinitely`);
       return;
     }
