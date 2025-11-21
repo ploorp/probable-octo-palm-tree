@@ -77,14 +77,12 @@ export default async function song(msg: PrivmsgMessage, count: boolean, args: st
   const date = track.date;
   const nowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
 
+  const rawPlaycount = userInfo?.data?.user?.playcount ?? null;
   let scrobbleCount = '';
-  try {
-    if (count && userInfo?.data?.user?.playcount) {
-      const pc = userInfo.data.user.playcount;
-      scrobbleCount = `( play ${pc})`;
-    }
-  } catch (e) {
-    scrobbleCount = '';
+  if (count && rawPlaycount) {
+    const pcNum = Number(String(rawPlaycount).replace(/[^\d]/g, '')) || 0;
+    const formatted = new Intl.NumberFormat().format(pcNum);
+    scrobbleCount = ` (${formatted} plays)`;
   }
 
   function timeAgo(date: Date) {
