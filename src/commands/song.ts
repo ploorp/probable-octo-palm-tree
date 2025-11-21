@@ -92,7 +92,7 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
         },
       });
       if (trackInfo?.data?.track?.userplaycount != null) {
-        scrobbleCount = ` (${trackInfo.data.track.userplaycount} plays)`;
+        scrobbleCount = ` (play ${trackInfo.data.track.userplaycount})`;
       }
     }
     catch (error) {
