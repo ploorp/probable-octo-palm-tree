@@ -5,7 +5,7 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount } from '../db/dbManager.js';
 import { getUserId } from '../helix.js';
 
-export default async function song(msg: PrivmsgMessage, count: boolean, args: string[]) {
+export default async function song(msg: PrivmsgMessage, playcount: boolean, args: string[]) {
   let username: string;
 
   if (!args[1]) {
@@ -66,8 +66,10 @@ export default async function song(msg: PrivmsgMessage, count: boolean, args: st
     return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
+  let scrobbleCount = '';
+
   const tracks = recents.data?.recenttracks?.track;
-  if (!tracks || tracks.length === 0) {
+  if (!tracks || (Array.isArray(tracks) && tracks.length === 0)) {
     return saySafe(msg.channelName, `@${msg.senderUsername}, no recent tracks found smh`);
   }
 
@@ -77,12 +79,27 @@ export default async function song(msg: PrivmsgMessage, count: boolean, args: st
   const date = track.date;
   const nowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
 
-  const rawPlaycount = userInfo?.data?.user?.playcount ?? null;
-  let scrobbleCount = '';
-  if (count && rawPlaycount) {
-    const pcNum = Number(String(rawPlaycount).replace(/[^\d]/g, '')) || 0;
-    const formatted = new Intl.NumberFormat().format(pcNum);
-    scrobbleCount = ` (${formatted} plays)`;
+  if (playcount) {
+    let trackInfo;
+    try {
+      trackInfo = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+        params: {
+          method: 'track.getinfo',
+          artist,
+          track: songTitle,
+          user: username,
+          api_key: config.lastfm.client_id,
+          format: 'json',
+        },
+      });
+    }
+    catch (error) {
+      return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    }
+  }
+
+  if (!tracks || tracks.length === 0) {
+    return saySafe(msg.channelName, `@${msg.senderUsername}, no recent tracks found smh`);
   }
 
   function timeAgo(date: Date) {
