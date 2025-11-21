@@ -14,21 +14,32 @@ export type FirehoseMsg = {
 
 type FirehoseClient = Promise<{ close: () => void; raw: any }>;
 
-// active listeners keyed by the chat channel where the command was invoked
-const listeners = new Map<string, FirehoseClient>();
-// map of timeout ids for scheduled stops so we can cancel them when replacing listeners
-const listenerTimers = new Map<string, ReturnType<typeof setTimeout>>();
+interface ListenerState {
+  client: FirehoseClient;
+  timer?: ReturnType<typeof setTimeout>;
+}
 
-async function stopListening(channel: string) {
-  const active = listeners.get(channel);
-  if (active) {
-    try { (await active).close(); } catch {}
+const listeners = new Map<string, Map<string, ListenerState>>();
+
+async function stopListening(channel: string, query?: string) {
+  const channelMap = listeners.get(channel);
+  if (!channelMap) return;
+
+  if (query) {
+    const qKey = query.toLowerCase();
+    const state = channelMap.get(qKey);
+    if (state) {
+      try { (await state.client).close(); } catch {}
+      if (state.timer) clearTimeout(state.timer);
+      channelMap.delete(qKey);
+    }
+    if (channelMap.size === 0) listeners.delete(channel);
+  } else {
+    for (const state of channelMap.values()) {
+      try { (await state.client).close(); } catch {}
+      if (state.timer) clearTimeout(state.timer);
+    }
     listeners.delete(channel);
-  }
-  const t = listenerTimers.get(channel);
-  if (t) {
-    clearTimeout(t);
-    listenerTimers.delete(channel);
   }
 }
 
@@ -61,7 +72,6 @@ export async function connectFirehose(
     }
   };
 
-  // wire events for browser and node 'ws'
   if (typeof ws.addEventListener === "function") {
     ws.addEventListener("message", (ev: any) => handle(ev.data ?? ev));
   } else {
@@ -79,12 +89,19 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   const key = msg.channelName;
 
   if (action === null) {
+    const query = args[1];
     if (!listeners.has(key)) {
-      await saySafe(msg.channelName, `not currently listening`);
+      await saySafe(msg.channelName, `not currently listening to anything`);
       return;
     }
-    await stopListening(key);
-    await saySafe(msg.channelName, `stopped listening`);
+    
+    await stopListening(key, query);
+    
+    if (query) {
+      await saySafe(msg.channelName, `stopped listening to that`);
+    } else {
+      await saySafe(msg.channelName, `stopped listening to everything`);
+    }
     return;
   }
 
@@ -92,6 +109,9 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
     return;
   }
+
+  const query = args[1];
+  const qKey = query.toLowerCase();
 
   let duration = 30000;
   if (args[2]) {
@@ -106,9 +126,9 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     }
   }
 
-  await stopListening(key);
+  await stopListening(key, query);
 
-  const firehoseClient = connectFirehose("bigears.supa.codes", args[1], async (fhmsg) => {
+  const firehoseClient = connectFirehose("bigears.supa.codes", query, async (fhmsg) => {
     const payload = `#${fhmsg.channel} @${fhmsg.displayName}: ${fhmsg.text}`;
     if (action) {
       await whisperUser(msg.senderUserID, payload);
@@ -117,14 +137,19 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     }
   });
 
-  listeners.set(key, firehoseClient);
+  if (!listeners.has(key)) {
+    listeners.set(key, new Map());
+  }
+  
+  const state: ListenerState = { client: firehoseClient };
+  listeners.get(key)!.set(qKey, state);
 
   if (duration > 0) {
     const id = setTimeout(async () => {
-      await stopListening(key);
-      await saySafe(msg.channelName, `stopped listening`);
+      await stopListening(key, query);
+      await saySafe(msg.channelName, `stopped listening to that`);
     }, duration);
-    listenerTimers.set(key, id);
+    state.timer = id;
     await saySafe(msg.channelName, `started listening 👂 for ${duration / 1000} seconds`);
   } else {
     await saySafe(msg.channelName, `started listening 👂 indefinitely`);
