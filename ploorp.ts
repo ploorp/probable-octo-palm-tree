@@ -190,6 +190,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await listen(msg, args, true);
         return;
 
+      case 'unlisten':
+        await listen(msg, args, null);
+        return;
+
       case 'optout':
         if (!isWhitelisted(msg.senderUserID)) return;
         if (args[1]) {

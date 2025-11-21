@@ -60,20 +60,43 @@ export async function connectFirehose(
 }
 
 
-export default async function listen(msg: PrivmsgMessage, args: string[], whisper: boolean) {
+export default async function listen(msg: PrivmsgMessage, args: string[], action: boolean | null) {
   if (!args[1]) {
-    return await saySafe(msg.channelName, "provide a term to filter");
+    return await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds|null>");
   }
 
   const firehoseClient = connectFirehose("bigears.supa.codes", args[1], async (fhmsg) => {
-    if (whisper) {
-      await whisperUser(msg.senderUserID, `${fhmsg.timestamp} ${fhmsg.channel} ${fhmsg.displayName} ${fhmsg.text}`);
+    if (action === null) {
+      (await firehoseClient).close();
+      await saySafe(msg.channelName, `stopped listening`);
+      return;
+    }
+    if (action) {
+      await whisperUser(msg.senderUserID, `#${fhmsg.channel} @${fhmsg.displayName}: ${fhmsg.text}`);
     } else {
-      await saySafe(msg.channelName, `${fhmsg.timestamp} ${fhmsg.channel} ${fhmsg.displayName} ${fhmsg.text}`);
+      await saySafe(msg.channelName, `#${fhmsg.channel} @${fhmsg.displayName}: ${fhmsg.text}`);
     }
   }, WebSocket);
 
+  if (args[2]) {
+    if (args[2] === "null") {
+      await saySafe(msg.channelName, `started listening 👂 indefinitely`);
+      return;
+    }
+    setTimeout(async () => {
+      (await firehoseClient).close();
+      await saySafe(msg.channelName, `stopped listening`);
+      return;
+    }, parseInt(args[2], 10) * 1000);
+    await saySafe(msg.channelName, `started listening 👂 for ${args[2]} seconds`);
+  }
+
   // close after 30s:
-  setTimeout(async () => (await firehoseClient).close(), 30_000);
+  setTimeout(async () => {
+    (await firehoseClient).close();
+    await saySafe(msg.channelName, `stopped listening`);
+    return;
+  }, 30_000);
+  await saySafe(msg.channelName, `started listening 👂 for 30 seconds`);
   return;
 }
