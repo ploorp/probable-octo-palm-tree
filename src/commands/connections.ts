@@ -14,16 +14,25 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   let username: string = sender;
   let platform: Platform | undefined;
 
-  // parse up to two args (order-insensitive): platform and/or username
-  const raw1 = args[1]?.toLowerCase();
-  const raw2 = args[2]?.toLowerCase();
-  for (const raw of [raw1, raw2]) {
-    if (!raw) continue;
-    if ((PLATFORMS as readonly string[]).includes(raw)) {
-      platform = raw as Platform;
-      continue;
+  const rawUser = args[1]?.toLowerCase();
+  const rawPlatform = args[2]?.toLowerCase();
+
+  if (!rawUser) {
+    username = sender;
+  } else if (!rawPlatform) {
+    if ((PLATFORMS as readonly string[]).includes(rawUser)) {
+      platform = rawUser as Platform;
+      username = sender;
+    } else {
+      username = rawUser.replace(/^@/, '');
     }
-    username = raw.replace(/^@/, '');
+  } else {
+    username = rawUser.replace(/^@/, '');
+    if ((PLATFORMS as readonly string[]).includes(rawPlatform)) {
+      platform = rawPlatform as Platform;
+    } else {
+      return saySafe(msg.channelName, `@${sender}, that doesnt exist`);
+    }
   }
 
   if (!/^[a-z0-9_]+$/.test(username)) return saySafe(msg.channelName, `@${sender}, bad username`);
@@ -40,7 +49,8 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   }
   if (response.data.statusCode === 404) return saySafe(msg.channelName, `@${sender}, no information about this user Reacting`);
 
-  const connections: any[] = response.data.data[0].user.connections || [];
+  const profile = response.data.data[0].user || {};
+  const connections: any[] = profile.connections || [];
   const map: Record<string, any> = {};
   for (const c of connections) map[c.platform] = c;
 
@@ -61,7 +71,8 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   if (platform) {
     const url = urls[platform];
     if (!url) return saySafe(msg.channelName, `@${sender}, ${username} hasn't connected a ${platform} account`);
-    return saySafe(msg.channelName, `@${sender}, ${username}'s ${platform}: ${url}`);
+    const label = platform[0].toUpperCase() + platform.slice(1);
+    return saySafe(msg.channelName, `@${sender}, ${username}'s ${label}: ${url}`);
   }
 
   return saySafe(msg.channelName, `@${sender}, ${username}'s connected accounts: ${available.join(' • ')}`);
