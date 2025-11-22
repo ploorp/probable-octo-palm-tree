@@ -133,6 +133,9 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   const WINDOW_SIZE = 30000;
   const MAX_MESSAGES = 20;
 
+  const state = {} as ListenerState;
+  let chain = Promise.resolve();
+
   const firehoseClient = connectFirehose("bigears.supa.codes", query, async (fhmsg) => {
     const now = Date.now();
     if (now - windowStart > WINDOW_SIZE) {
@@ -147,18 +150,24 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     messageCount++;
 
     const payload = `#${fhmsg.channel} @${fhmsg.displayName}: ${fhmsg.text}`;
-    if (action) {
-      await whisperUser(msg.senderUserID, payload);
-    } else {
-      await saySafe(msg.channelName, payload);
-    }
+    
+    chain = chain.then(async () => {
+      if (listeners.get(key)?.get(qKey) !== state) return;
+      
+      if (action) {
+        await whisperUser(msg.senderUserID, payload);
+      } else {
+        await saySafe(msg.channelName, payload);
+      }
+    }).catch(() => {});
   });
+
+  state.client = firehoseClient;
 
   if (!listeners.has(key)) {
     listeners.set(key, new Map());
   }
   
-  const state: ListenerState = { client: firehoseClient };
   listeners.get(key)!.set(qKey, state);
 
   if (duration > 0) {
