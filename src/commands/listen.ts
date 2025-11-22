@@ -1,7 +1,7 @@
 import { saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { whisperUser } from '../helix.js';
-
+import config from '../../config.json' with { type: 'json' };
 
 export type FirehoseMsg = {
   text: string;
@@ -153,6 +153,10 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     
     chain = chain.then(async () => {
       if (listeners.get(key)?.get(qKey) !== state) return;
+
+      if (fhmsg.displayName?.toLowerCase() === config.username && fhmsg.channel?.toLowerCase() === msg.channelName) {
+        return;
+      }
       
       if (action) {
         await whisperUser(msg.senderUserID, payload);
