@@ -154,7 +154,7 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     chain = chain.then(async () => {
       if (listeners.get(key)?.get(qKey) !== state) return;
 
-      if (fhmsg.displayName?.toLowerCase() === config.username && fhmsg.channel?.toLowerCase() === msg.channelName) {
+      if (fhmsg.displayName?.toLowerCase() === config.username) {
         return;
       }
       
