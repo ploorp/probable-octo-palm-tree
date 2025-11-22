@@ -183,14 +183,17 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         return;
 
       case 'listen':
+        if (!isWhitelisted(msg.senderUserID)) return;
         await listen(msg, args, false);
         return;
 
       case 'lw':
+        if (!isWhitelisted(msg.senderUserID)) return;
         await listen(msg, args, true);
         return;
 
       case 'unlisten':
+        if (!isWhitelisted(msg.senderUserID)) return;
         await listen(msg, args, null);
         return;
 

@@ -128,7 +128,24 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
 
   await stopListening(key, query);
 
+  let messageCount = 0;
+  let windowStart = Date.now();
+  const WINDOW_SIZE = 30000;
+  const MAX_MESSAGES = 20;
+
   const firehoseClient = connectFirehose("bigears.supa.codes", query, async (fhmsg) => {
+    const now = Date.now();
+    if (now - windowStart > WINDOW_SIZE) {
+      messageCount = 0;
+      windowStart = now;
+    }
+
+    if (messageCount >= MAX_MESSAGES) {
+      return;
+    }
+
+    messageCount++;
+
     const payload = `#${fhmsg.channel} @${fhmsg.displayName}: ${fhmsg.text}`;
     if (action) {
       await whisperUser(msg.senderUserID, payload);
