@@ -2,7 +2,10 @@ import config from '../config.json' with { type: 'json' };
 import {
   ChatClient,
   AlternateMessageModifier,
-  SlowModeRateLimiter
+  SlowModeRateLimiter,
+  RateLimits,
+  RateLimitsConfig,
+  CustomRateLimitsConfig
 } from '@mastondzn/dank-twitch-irc';
 import { sleep, timeLog } from './utils.js';
 import { getJoinedChannels, refreshUsername, addChannel } from './db/dbManager.js';
@@ -36,14 +39,21 @@ function clearReconnectBackoff() {
   }
 }
 
+const customRL: CustomRateLimitsConfig = {
+  highPrivmsgLimits: 100,
+  lowPrivmsgLimits: 20,
+  privmsgInMs: 35 * 1000,
+  joinLimits: 20,
+};
+
 /**
  * @typedef {import('@mastondzn/dank-twitch-irc').ChatClient} ChatClient
  */
 const client = new ChatClient({
   username: config.username.toLowerCase(),
-  password: config.ttg.access_token, // ensure this is "oauth:XXXXXXXX"
+  password: config.helix.access_token, // ensure this is "oauth:XXXXXXXX"
   ignoreUnhandledPromiseRejections: true,
-  rateLimits: 'default', // 'default or 'verifiedBot'
+  rateLimits: customRL, // 'default or 'verifiedBot'
   requestMembershipCapability: true
 });
 

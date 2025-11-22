@@ -184,17 +184,17 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'listen':
         if (!isWhitelisted(msg.senderUserID)) return;
-        await listen(msg, args, false);
+        await listen(msg, args, false, "logs.spanix.team");
         return;
 
       case 'lw':
         if (!isWhitelisted(msg.senderUserID)) return;
-        await listen(msg, args, true);
+        await listen(msg, args, true, "logs.spanix.team");
         return;
 
       case 'unlisten':
         if (!isWhitelisted(msg.senderUserID)) return;
-        await listen(msg, args, null);
+        await listen(msg, args, null, "logs.spanix.team");
         return;
 
       case 'optout':

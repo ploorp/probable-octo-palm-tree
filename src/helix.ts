@@ -3,8 +3,8 @@ import axios from 'axios';
 import { timeLog } from './utils.js';
 
 const BAN_API = 'https://api.twitch.tv/helix/moderation/bans';
-const clientId = config.ttg.helix_id;
-const accessToken = config.ttg.access_token;
+const clientId = config.helix.helix_id;
+const accessToken = config.helix.access_token;
 
 export async function chatBan(userId: string, broadcasterId: string, reason: string) {
   if (!userId || !broadcasterId || !config.id) {

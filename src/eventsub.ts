@@ -5,8 +5,8 @@ import { timeLog } from './utils.js';
 import config from '../config.json' with { type: 'json' };
 
 export function allowAutomod() {
-  const accessToken   = config.ttg.access_token;
-  const clientId      = config.ttg.helix_id;
+  const accessToken   = config.helix.access_token;
+  const clientId      = config.helix.helix_id;
   const moderatorId   = '918666764';
   const broadcasterId = '410551170';
 

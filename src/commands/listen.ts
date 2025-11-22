@@ -85,7 +85,7 @@ export async function connectFirehose(
 }
 
 
-export default async function listen(msg: PrivmsgMessage, args: string[], action: boolean | null) {
+export default async function listen(msg: PrivmsgMessage, args: string[], action: boolean | null, hose: string) {
   const key = msg.channelName;
 
   if (action === null) {
@@ -136,7 +136,7 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   const state = {} as ListenerState;
   let chain = Promise.resolve();
 
-  const firehoseClient = connectFirehose("bigears.supa.codes", query, async (fhmsg) => {
+  const firehoseClient = connectFirehose(hose, query, async (fhmsg) => {
     const now = Date.now();
     if (now - windowStart > WINDOW_SIZE) {
       messageCount = 0;
