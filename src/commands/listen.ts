@@ -113,6 +113,16 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   const query = args[1];
   const qKey = query.toLowerCase();
 
+  let actualQuery: string | RegExp = query;
+  const regexMatch = query.match(/^\/(.+)\/([a-z]*)$/);
+  if (regexMatch) {
+    try {
+      actualQuery = new RegExp(regexMatch[1], regexMatch[2]);
+    } catch (e) {
+      return;
+    }
+  }
+
   let duration = 30000;
   if (args[2]) {
     if (isNaN(+args[2])) {
@@ -135,7 +145,7 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
 
   const state = {} as ListenerState;
 
-  const firehoseClient = connectFirehose(hose, query, async (fhmsg) => {
+  const firehoseClient = connectFirehose(hose, actualQuery, async (fhmsg) => {
     if (listeners.get(key)?.get(qKey) !== state) return;
 
     const now = Date.now();
