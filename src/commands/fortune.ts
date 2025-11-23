@@ -15,7 +15,16 @@ function getTimeLeftToMidnightUTC() {
 
 export default async function fortune(msg: PrivmsgMessage, args: string[]) {
   if (isWhitelisted(msg.senderUserID)) {
+    let f_args = "";
     if (args[1]) {
+      for (const char of args[1]) {
+        if (" -asbcfhnlroptw".includes(char)) {
+          f_args += char;
+        }
+      }
+      if (f_args.includes(";") || f_args.includes("&") || f_args.includes("|") || f_args.includes("$")) {
+        await saySafe(msg.channelName, "b");
+      }
       exec(`/usr/games/fortune ${args.slice(1).join(" ")}`, (err, stdout, stderr) => {
         if (err) {
           timeLog("fortune error: " + err);

@@ -3,9 +3,10 @@ import {
   ChatClient,
   AlternateMessageModifier,
   SlowModeRateLimiter,
-  RateLimits,
-  RateLimitsConfig,
-  CustomRateLimitsConfig
+  PrivmsgMessageRateLimiter,
+  UserStateTracker,
+  JoinRateLimiter,
+  ConnectionRateLimiter
 } from '@mastondzn/dank-twitch-irc';
 import { sleep, timeLog } from './utils.js';
 import { getJoinedChannels, refreshUsername, addChannel } from './db/dbManager.js';
@@ -39,13 +40,6 @@ function clearReconnectBackoff() {
   }
 }
 
-const customRL: CustomRateLimitsConfig = {
-  highPrivmsgLimits: 100,
-  lowPrivmsgLimits: 20,
-  privmsgInMs: 35 * 1000,
-  joinLimits: 20,
-};
-
 /**
  * @typedef {import('@mastondzn/dank-twitch-irc').ChatClient} ChatClient
  */
@@ -53,12 +47,18 @@ const client = new ChatClient({
   username: config.username.toLowerCase(),
   password: config.helix.access_token, // ensure this is "oauth:XXXXXXXX"
   ignoreUnhandledPromiseRejections: true,
-  rateLimits: customRL, // 'default or 'verifiedBot'
-  requestMembershipCapability: true
+  rateLimits: 'default', 
+  requestMembershipCapability: true,
+  installDefaultMixins: false
 });
 
-client.use(new AlternateMessageModifier(client));
+const privmsgRL = new PrivmsgMessageRateLimiter(client);
+privmsgRL.applyToClient(client);
+//client.use(new AlternateMessageModifier(client)); // BROKEN I GUESS
 client.use(new SlowModeRateLimiter(client, 10));
+client.use(new UserStateTracker(client));
+client.use(new ConnectionRateLimiter(client));
+client.use(new JoinRateLimiter(client));
 client.connect();
 
 client.on('error', (err) => {
@@ -73,7 +73,6 @@ client.on('error', (err) => {
       timeLog('Fatal: Twitch authentication failed repeatedly. Exiting.');
       process.exit(1);
     }
-    // Likely invalid/expired token or temporary auth failure
     isReady = false;
     scheduleReconnect('auth/login error');
     return;
@@ -109,7 +108,6 @@ client.on('ready', async () => {
     // always be included in getJoinedChannels() on reconnects.
     if (config.id) {
       await addChannel(config.id);
-      timeLog(`Ensured bot's channel (id ${config.id}) is in DB join list`);
     }
   } catch (err: any) {
     timeLog(`Error ensuring bot join in DB: ${err}`);

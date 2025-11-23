@@ -45,7 +45,7 @@ async function stopListening(channel: string, query?: string) {
 
 
 export async function connectFirehose(
-  instance = "logs.supa.codes",
+  instance: string,
   query: string | RegExp | ((m: FirehoseMsg) => boolean) | undefined,
   onMsg: (m: FirehoseMsg) => void,
   WebSocketCtor?: any
@@ -131,12 +131,13 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   let messageCount = 0;
   let windowStart = Date.now();
   const WINDOW_SIZE = 30000;
-  const MAX_MESSAGES = 20;
+  const MAX_MESSAGES = 19;
 
   const state = {} as ListenerState;
-  let chain = Promise.resolve();
 
   const firehoseClient = connectFirehose(hose, query, async (fhmsg) => {
+    if (listeners.get(key)?.get(qKey) !== state) return;
+
     const now = Date.now();
     if (now - windowStart > WINDOW_SIZE) {
       messageCount = 0;
@@ -144,6 +145,7 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     }
 
     if (messageCount >= MAX_MESSAGES) {
+      await saySafe(msg.channelName, `rate limit`);
       return;
     }
 
@@ -151,19 +153,15 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
 
     const payload = `#${fhmsg.channel} @${fhmsg.displayName}: ${fhmsg.text}`;
     
-    chain = chain.then(async () => {
-      if (listeners.get(key)?.get(qKey) !== state) return;
-
-      if (fhmsg.displayName?.toLowerCase() === config.username) {
-        return;
-      }
-      
-      if (action) {
-        await whisperUser(msg.senderUserID, payload);
-      } else {
-        await saySafe(msg.channelName, payload);
-      }
-    }).catch(() => {});
+    if (fhmsg.displayName?.toLowerCase() === config.username) {
+      return;
+    }
+    
+    if (action) {
+      await whisperUser(msg.senderUserID, payload);
+    } else {
+      await saySafe(msg.channelName, payload);
+    }
   });
 
   state.client = firehoseClient;
