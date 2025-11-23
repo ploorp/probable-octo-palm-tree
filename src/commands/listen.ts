@@ -145,7 +145,6 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
     }
 
     if (messageCount >= MAX_MESSAGES) {
-      await saySafe(msg.channelName, `rate limit`);
       return;
     }
 
