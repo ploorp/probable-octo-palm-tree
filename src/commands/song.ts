@@ -36,20 +36,6 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
     }
   }
 
-  let userInfo;
-  try {
-    userInfo = await axios.get('https://ws.audioscrobbler.com/2.0/', {
-      params: {
-        method: 'user.getinfo',
-        user: username,
-        api_key: config.lastfm.client_id,
-        format: 'json',
-      },
-    });
-  } catch (error) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, user not found smh`);
-  }
-
   let recents;
   try {
     recents = await axios.get('https://ws.audioscrobbler.com/2.0/', {
@@ -63,6 +49,9 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
       },
     });
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.error === 6) {
+      return saySafe(msg.channelName, `@${msg.senderUsername}, user not found smh`);
+    }
     return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
   }
 
