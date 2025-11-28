@@ -24,6 +24,7 @@ import { getPrefix, getWhitelistedUsers, isOptedOut, isWhitelisted, setWhitelist
 import { getUserId } from './src/helix.js';
 import randomline from './src/commands/randomline.js';
 import listen from './src/commands/listen.js';
+import { editLastfm } from './src/db/dbManager.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -162,6 +163,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'wk':
         await whoKnows(msg, args);
         return;
+
+      case 'lu':
+        if (!isWhitelisted(msg.senderUserID)) return;
+        await editLastfm(args[1], args[2]);
       
       case 'sc':
         await song(msg, true, args);

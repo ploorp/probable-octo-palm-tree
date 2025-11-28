@@ -19,6 +19,11 @@ export async function refreshUsername(id: string): Promise<string | null> {
   return null;
 }
 
+export async function editLastfm(id: string, username: string) {
+  ensureUserRow(id);
+  db.prepare("UPDATE users SET lastfm = ? WHERE id = ?").run(username, id);
+}
+
 export function getJoinedChannels(): { id: string; username?: string }[] {
   const rows = db.prepare('SELECT id, username FROM users WHERE is_joined = 1').all() as { id: string; username?: string }[];
   return rows.map(r => ({ id: r.id, username: r.username }));
