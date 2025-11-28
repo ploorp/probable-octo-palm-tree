@@ -2,8 +2,7 @@ import { client, saySafe } from '../client.js';
 import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { getAccount, getAllLastFmUsers } from '../db/dbManager.js';
-import { getUsername } from '../helix.js';
+import { getAccount, getAllLastFmUsers, refreshUsername } from '../db/dbManager.js';
 
 export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
@@ -75,7 +74,7 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
           let displayName;
           if (count > 0) {
             if (!user.username) {
-              displayName = await getUsername(user.id) || 'unknown';
+              displayName = await refreshUsername(user.id) || 'unknown';
             } else {
               displayName = user.username;
             }
