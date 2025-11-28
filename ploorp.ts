@@ -167,6 +167,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'lu':
         if (!isWhitelisted(msg.senderUserID)) return;
         await editLastfm(args[1], args[2]);
+        return;
       
       case 'sc':
         await song(msg, true, args);
