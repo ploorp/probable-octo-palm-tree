@@ -79,7 +79,7 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
             } else {
               displayName = user.username;
             }
-            plays.push({ username: displayName, playcount: count });
+            plays.push({ username: `@${displayName}`, playcount: count });
           }
         }
       } catch (error) {}
