@@ -1,9 +1,10 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client, saySafe } from '../client.js';
 import { linkAccount, unlinkAccount } from '../db/dbManager.js';
+import config from '../../config.json' with { type: 'json' };
 
 export default async function link(msg: PrivmsgMessage, args: string[]) {
-  args[0] = args[0].slice(1);
+  args[0] = args[0].slice(config.prefix.length).toLowerCase();
 
   if (args[0].toLowerCase() === 'link') {
     if (!args[2]) {

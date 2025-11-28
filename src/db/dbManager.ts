@@ -1,12 +1,13 @@
 import db from "./db.js";
 import { getUsername } from "../helix.js";
+import config from "../../config.json" with { type: "json" };
 
 export function ensureUserRow(id: string) {
   db.prepare(`
-    INSERT INTO users (id)
-    VALUES (?)
+    INSERT INTO users (id, prefix)
+    VALUES (?, ?)
     ON CONFLICT(id) DO NOTHING
-  `).run(id);
+  `).run(id, config.prefix);
 }
 
 export async function refreshUsername(id: string): Promise<string | null> {
@@ -36,7 +37,7 @@ export async function setOptOut(id: string, optOut: boolean) {
 }
 
 // CHANNELS
-export async function addChannel(id: string, prefix: string = "%") {
+export async function addChannel(id: string, prefix: string = config.prefix) {
   ensureUserRow(id);
 
   const username = await getUsername(id);
@@ -57,7 +58,7 @@ export function partChannel(id: string) {
 export function getPrefix(id: string): string {
   ensureUserRow(id);
   const row = db.prepare("SELECT prefix FROM users WHERE id = ?").get(id) as { prefix: string } | undefined;
-  return row ? row.prefix : "%";
+  return row ? row.prefix : config.prefix;
 }
 
 export function setPrefix(id: string, prefix: string) {
@@ -107,6 +108,11 @@ export function getAccount(id: string, service: string) {
     return row && row[service] ? { handle: row[service] } : null;
   }
   return null;
+}
+
+export function getAllLastFmUsers(): { id: string; username?: string; lastfm: string }[] {
+  const rows = db.prepare('SELECT id, username, lastfm FROM users WHERE lastfm IS NOT NULL').all() as { id: string; username?: string; lastfm: string }[];
+  return rows;
 }
 
 // FORTUNE
