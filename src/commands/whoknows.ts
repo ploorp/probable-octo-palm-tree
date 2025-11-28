@@ -3,6 +3,7 @@ import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount, getAllLastFmUsers } from '../db/dbManager.js';
+import { getUsername } from '../helix.js';
 
 export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
@@ -71,9 +72,14 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
         const userPlaycount = response.data?.artist?.stats?.userplaycount;
         if (userPlaycount) {
           const count = parseInt(userPlaycount, 10);
+          let displayName;
           if (count > 0) {
-              const displayName = user.username || user.lastfm;
-              plays.push({ username: displayName, playcount: count });
+            if (!user.username) {
+              displayName = await getUsername(user.id) || 'unknown';
+            } else {
+              displayName = user.username;
+            }
+            plays.push({ username: displayName, playcount: count });
           }
         }
       } catch (error) {}
