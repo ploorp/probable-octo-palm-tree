@@ -10,11 +10,6 @@
     "client_id": ""
   },
   "cooldown": 2000,
-  "channels": [
-      "your_channel",
-      "forsen",
-      "xqc"
-  ],
   "whitelist_channels": [
       "your_channel"
   ]
