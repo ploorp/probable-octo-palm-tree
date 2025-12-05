@@ -91,22 +91,22 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   if (action === null) {
     const query = args[1];
     if (!listeners.has(key)) {
-      await saySafe(msg.channelName, `not currently listening to anything`);
+      await saySafe(msg.channelName, `not currently listening to anything`, msg.messageID);
       return;
     }
     
     await stopListening(key, query);
     
     if (query) {
-      await saySafe(msg.channelName, `stopped listening to that`);
+      await saySafe(msg.channelName, `stopped listening to that`, msg.messageID);
     } else {
-      await saySafe(msg.channelName, `stopped listening to everything`);
+      await saySafe(msg.channelName, `stopped listening to everything`, msg.messageID);
     }
     return;
   }
 
   if (!args[1]) {
-    await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
+    await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>", msg.messageID);
     return;
   }
 
@@ -126,7 +126,7 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   let duration = 30000;
   if (args[2]) {
     if (isNaN(+args[2])) {
-      await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>");
+      await saySafe(msg.channelName, "usage: %listen <channel> <timeout in seconds>", msg.messageID);
       return;
     }
     if (args[2] === "0") {
@@ -184,11 +184,11 @@ export default async function listen(msg: PrivmsgMessage, args: string[], action
   if (duration > 0) {
     const id = setTimeout(async () => {
       await stopListening(key, query);
-      await saySafe(msg.channelName, `stopped listening to that`);
+      await saySafe(msg.channelName, `stopped listening to that`, msg.messageID);
     }, duration);
     state.timer = id;
-    await saySafe(msg.channelName, `started listening 👂 for ${duration / 1000} seconds`);
+    await saySafe(msg.channelName, `started listening 👂 for ${duration / 1000} seconds`, msg.messageID);
   } else {
-    await saySafe(msg.channelName, `started listening 👂 indefinitely`);
+    await saySafe(msg.channelName, `started listening 👂 indefinitely`, msg.messageID);
   }
 }

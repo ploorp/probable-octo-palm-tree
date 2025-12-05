@@ -9,23 +9,23 @@ export default async function unicode(msg: PrivmsgMessage, args: string[]) {
   const message = args.join(' ').trim();
 
   if (message.length < 1) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, uuh include some characters`);
+    return saySafe(msg.channelName, `uuh include some characters`, msg.messageID);
   }
 
   const link = `https://www.babelstone.co.uk/Unicode/whatisit.html?string=${encodeURIComponent(message)}`;
 
   // Check if the message is too long
   if (link.length > 500) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, keep the message short pls`);
+    return saySafe(msg.channelName, `keep the message short pls`, msg.messageID);
   }
 
   try {
     const shortenerResponse = await axios.get(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(link)}`);
     const shortenedUrl = shortenerResponse.data;
 
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${shortenedUrl}`);
+    return saySafe(msg.channelName, `${shortenedUrl}`, msg.messageID);
   } catch (error: any) {
     timeLog(`Error shortening URL: ${error.message}`);
-    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `error Reacting`, msg.messageID);
   }
 }

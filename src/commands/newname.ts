@@ -6,12 +6,12 @@ import { getPrefix } from '../db/dbManager.js';
 
 export default async function newname(msg: PrivmsgMessage, args: string[]) {
   if (!args[1]) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, usage: ${getPrefix(msg.channelID)} newname <username>`);
+    return saySafe(msg.channelName, `usage: ${getPrefix(msg.channelID)} newname <username>`, msg.messageID);
   }
 
   const username = args[1].toLowerCase().replace(/^@/, '');
   if (!/^[a-z0-9_]+$/.test(username)) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+    return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
   }
 
   client.removeAllListeners('WHISPER');
@@ -23,25 +23,25 @@ export default async function newname(msg: PrivmsgMessage, args: string[]) {
     const txt = whisperMsg.messageText?.trim() ?? '';
 
     if (txt.startsWith('No data')) {
-      await saySafe(msg.channelName, `@${msg.senderUsername}, failed to find user`);
+      await saySafe(msg.channelName, `failed to find user`, msg.messageID);
       return;
     }
 
     const twitchid = txt.match(/twitch\s*id[:\s]*([0-9]+)/i)?.[1];
 
     if (!twitchid) {
-      await saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+      await saySafe(msg.channelName, `error Reacting`, msg.messageID);
       return;
     }
     
     const current = await getUsername(twitchid);
     
     if (!current) {
-      await saySafe(msg.channelName, `@${msg.senderUsername}, error getting username for ${twitchid}`);
+      await saySafe(msg.channelName, `error getting username for ${twitchid}`, msg.messageID);
       return;
     }
 
-    await saySafe(msg.channelName, `@${msg.senderUsername}, their current username is ${current}`);
+    await saySafe(msg.channelName, `their current username is ${current}`, msg.messageID);
     return; 
   });
 

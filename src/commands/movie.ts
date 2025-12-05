@@ -65,20 +65,17 @@ export default async function movie(msg: PrivmsgMessage, args: string[]) {
   const query = args.slice(1).join(' ').trim();
 
   if (!query) {
-    return saySafe(
-      msg.channelName,
-      `@${msg.senderUsername}, usage: ${prefix}movie <movie title>`
-    );
+    return saySafe(msg.channelName, `usage: ${prefix}movie <movie title>`, msg.messageID);
   }
 
   const found = await searchFilmHtml(query);
   if (!found) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, no movie found tupid`);
+    return saySafe(msg.channelName, `no movie found tupid`, msg.messageID);
   }
 
   const data = await scrapeFilm(found.slug);
   if (!data) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `error Reacting`, msg.messageID);
   }
 
   const ratingText = data.average ? `${data.average.toFixed(2)}/5 avg` : 'no rating';
@@ -88,5 +85,5 @@ export default async function movie(msg: PrivmsgMessage, args: string[]) {
 
   const message = `${data.title} (${yearText}) by ${directorText} - ${ratingText} from ${ratingsText} https://letterboxd.com/film/${data.slug}/`;
 
-  return saySafe(msg.channelName, `@${msg.senderUsername}, ${message}`);
+  return saySafe(msg.channelName, `${message}`, msg.messageID);
 }

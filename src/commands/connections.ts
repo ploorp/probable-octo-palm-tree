@@ -31,23 +31,23 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
     if ((PLATFORMS as readonly string[]).includes(rawPlatform)) {
       platform = rawPlatform as Platform;
     } else {
-      return saySafe(msg.channelName, `@${sender}, format is %connections <username> <platform>`);
+      return saySafe(msg.channelName, `format is %connections <username> <platform>`, msg.messageID);
     }
   }
 
-  if (!/^[a-z0-9_]+$/.test(username)) return saySafe(msg.channelName, `@${sender}, bad username`);
+  if (!/^[a-z0-9_]+$/.test(username)) return saySafe(msg.channelName, `bad username`, msg.messageID);
 
   const userId = await getUserId(username);
-  if (!userId) return saySafe(msg.channelName, `@${sender}, this user does not exist Reacting`);
-  if (isOptedOut(userId)) return saySafe(msg.channelName, `@${sender}, ${username} is opted out of ts`);
+  if (!userId) return saySafe(msg.channelName, `this user does not exist Reacting`, msg.messageID);
+  if (isOptedOut(userId)) return saySafe(msg.channelName, `${username} is opted out of ts`, msg.messageID);
 
   let response;
   try {
     response = await axios.get(endpoint + username);
   } catch (err) {
-    return saySafe(msg.channelName, `@${sender}, error Reacting`);
+    return saySafe(msg.channelName, `error Reacting`, msg.messageID);
   }
-  if (response.data.statusCode === 404) return saySafe(msg.channelName, `@${sender}, no information about this user Reacting`);
+  if (response.data.statusCode === 404) return saySafe(msg.channelName, `no information about this user Reacting`, msg.messageID);
 
   const profile = response.data.data[0].user || {};
   const connections: any[] = profile.connections || [];
@@ -72,17 +72,17 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
 
   if (available.length === 0) {
     const verb = isSelf ? "haven't" : "hasn't";
-    return saySafe(msg.channelName, `@${sender}, ${subject} ${verb} connected any interesting accounts`);
+    return saySafe(msg.channelName, `${subject} ${verb} connected any interesting accounts`, msg.messageID);
   }
 
   if (platform) {
     const url = urls[platform];
     if (!url) {
       const verb = isSelf ? "haven't" : "hasn't";
-      return saySafe(msg.channelName, `@${sender}, ${subject} ${verb} connected a ${platform} account`);
+      return saySafe(msg.channelName, `${subject} ${verb} connected a ${platform} account`, msg.messageID);
     }
-    return saySafe(msg.channelName, `@${sender}, ${possessive} ${platform}: ${url}`);
+    return saySafe(msg.channelName, `${possessive} ${platform}: ${url}`, msg.messageID);
   }
 
-  return saySafe(msg.channelName, `@${sender}, ${possessive} connected accounts: ${available.join(' • ')}`);
+  return saySafe(msg.channelName, `${possessive} connected accounts: ${available.join(' • ')}`, msg.messageID);
 }

@@ -110,7 +110,7 @@ export function unlinkAccount(id: string, service: string) {
 export function getAccount(id: string, service: string) {
   if (service === "lastfm" || service === "letterboxd") {
     const row = db.prepare(`SELECT ${service} FROM users WHERE id = ?`).get(id) as { [key: string]: string } | undefined;
-    return row && row[service] ? { handle: row[service] } : null;
+    return row && row[service] ? row[service] : null;
   }
   return null;
 }

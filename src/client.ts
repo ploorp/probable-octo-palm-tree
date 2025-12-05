@@ -203,7 +203,7 @@ async function joinChannels() {
 // appending U+034F for duplicate messages
 const duplicateState = new Map<string, { last: string; nextAppend: boolean }>();
 
-export async function saySafe(channel: string, text: string) {
+export async function saySafe(channel: string, text: string, replyMsgId?: string) {
   try {
     const chKey = channel.toLowerCase();
 
@@ -229,10 +229,15 @@ export async function saySafe(channel: string, text: string) {
       duplicateState.set(chKey, state);
     }
 
-  // sanitize control chars that would break IRC commands
-  sendText = sendText.replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
-  // Call client.say directly to avoid recursion
-  await client.say(channel, sendText);
+    // sanitize control chars that would break IRC commands
+    sendText = sendText.replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    if (replyMsgId) {
+      await client.reply(channel, replyMsgId, sendText); 
+    } else {
+      await client.say(channel, sendText);
+    }
+    return;
   } catch (err: any) {
     if (
       err?.cause?.message?.includes('Timed out after waiting for response') ||

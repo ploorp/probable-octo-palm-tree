@@ -18,27 +18,27 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
     username = args[1].toLowerCase().replace(/^@/, '');
 
     if (!/^[a-z0-9_]+$/.test(username)) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
     }
   }
 
   userId = await getUserId(username);
   if (!userId) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
+    return saySafe(msg.channelName, `this user does not exist Reacting`, msg.messageID);
   }
 
   if (isOptedOut(userId)) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} is opted out of ts`);
+    return saySafe(msg.channelName, `${username} is opted out of ts`, msg.messageID);
   }
 
   try {
     response = await axios.get(endpoint + username);
   } catch (error) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `error Reacting`, msg.messageID);
   }
 
   if (!response.data.length) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, i dont know anything about this user Reacting`);
+    return saySafe(msg.channelName, `i dont know anything about this user Reacting`, msg.messageID);
   }
 
   const previousNames = [];
@@ -48,11 +48,10 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
   }
   
   if (previousNames.length === 0) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} never changed their name wow`);
+    return saySafe(msg.channelName, `${username} never changed their name wow`, msg.messageID);
   }
   
-  // make sure the message isnt too big
-  const prefix = `@${msg.senderUsername}, previous names of ${username}: `;
+  const prefix = `previous names of ${username}: `;
   let oldUsernames = '';
   let totalLength = prefix.length;
   
@@ -70,5 +69,5 @@ export default async function namechange(msg: PrivmsgMessage, args: string[]) {
     totalLength += addition.length;
   }
   
-  return saySafe(msg.channelName, prefix + oldUsernames);
+  return saySafe(msg.channelName, prefix + oldUsernames, msg.messageID);
 }

@@ -3,23 +3,28 @@ import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount, getAllLastFmUsers, refreshUsername } from '../db/dbManager.js';
+import { usernameToID } from '../utils.js';
 
 export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
+  let account: string | null = null;
 
   if (args.length > 1) {
-    artistName = args.slice(1).join(' ');
-  } else {
-    const account = getAccount(msg.senderUserID, 'lastfm') as { handle?: string } | null;
-    if (!account || !account.handle) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, usage: %whoknows <artist> or link your account`);
+    if (args[1].startsWith('@')) {
+      account = getAccount(await usernameToID(args[1].replace(/^@/, '')), 'lastfm');
+    } else {
+      artistName = args.slice(1).join(' ');
     }
+  } else {
+    account = getAccount(msg.senderUserID, 'lastfm');
+  }
 
+  if (account) {
     try {
       const recents = await axios.get('https://ws.audioscrobbler.com/2.0/', {
         params: {
           method: 'user.getrecenttracks',
-          user: account.handle,
+          user: account,
           api_key: config.lastfm.client_id,
           format: 'json',
           limit: 1,
@@ -31,17 +36,17 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
         artistName = track.artist?.name || track.artist['#text'];
       }
     } catch (error) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+      return saySafe(msg.channelName, 'error Reacting', msg.messageID);
     }
   }
 
   if (!artistName) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, cant find artist`);
+    return saySafe(msg.channelName, `cant find artist`, msg.messageID);
   }
 
   const users = getAllLastFmUsers();
   if (users.length === 0) {
-    return saySafe(msg.channelName, `no lastfm users lol`);
+    return saySafe(msg.channelName, `no lastfm users lol`, msg.messageID);
   }
 
   const plays: { username: string, playcount: number }[] = [];
@@ -88,7 +93,7 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (plays.length === 0) {
-    return saySafe(msg.channelName, `ts artist is niche`);
+    return saySafe(msg.channelName, `ts artist is niche`, msg.messageID);
   }
 
   plays.sort((a, b) => b.playcount - a.playcount);
@@ -96,5 +101,5 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   const parts = plays.map((p, i) => `${i + 1}. ${p.username} (${p.playcount})`);
   const message = `${correctArtistName}: ${parts.join(', ')}`;
 
-  return saySafe(msg.channelName, message);
+  return saySafe(msg.channelName, message, msg.messageID);
 }

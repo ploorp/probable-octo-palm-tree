@@ -133,14 +133,14 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
 
   if (downloadCache.has(sanitized)) {
     const cachedLink = downloadCache.get(sanitized)!;
-    await saySafe(msg.channelName, `🪞 ${cachedLink}`);
+    await saySafe(msg.channelName, `🪞 ${cachedLink}`, msg.messageID);
     return;
   }
 
   const filePath = await ytdlpDownload(sanitized);
   if (!filePath) {
     timeLog("Download failed for: " + sanitized);
-    return saySafe(msg.channelName, `uh download failed`);
+    return saySafe(msg.channelName, `uh download failed`, msg.messageID);
   }
   if (filePath === "not-video") {
     timeLog("Not a video: " + sanitized);
@@ -148,42 +148,24 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
   }
   if (filePath === "too-large") {
     timeLog("File too large (yt-dlp): " + sanitized);
-    return saySafe(msg.channelName, `ts video too big to download`);
+    return saySafe(msg.channelName, `ts video too big to download`, msg.messageID);
   }
   if (filePath === "over-18") {
     timeLog("18+ video update cookies: " + sanitized);
-    return saySafe(msg.channelName, `cant download 18+ video`);
+    return saySafe(msg.channelName, `cant download 18+ video`, msg.messageID);
   }
   if (filePath === "private") {
     timeLog("private video: " + sanitized);
-    return saySafe(msg.channelName, `cant download private video`);
+    return saySafe(msg.channelName, `cant download private video`, msg.messageID);
   }
-
-  // let stats;
-  // try {
-  //   stats = fs.statSync(filePath);
-  // } catch (error) {
-  //   timeLog("Error getting file stats: " + error);
-  //   return saySafe(msg.channelName, `uh error downloading`);
-  // }
-
-  // if (stats.size > sizeLimit) {
-  //   try {
-  //     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-  //   } catch (error) {
-  //     timeLog("Error deleting file: " + error);
-  //   }
-  //   timeLog(`File too large: ${stats.size} bytes, limit is ${sizeLimit} bytes`);
-  //   return saySafe(msg.channelName, `uh file was too big`);
-  // }
 
   try {
     const uploadedUrl = await uploadMedia(filePath);
     if (!uploadedUrl) {
-      await saySafe(msg.channelName, `uh upload failed`);
+      await saySafe(msg.channelName, `uh upload failed`, msg.messageID);
     } else {
       downloadCache.set(sanitized, uploadedUrl);
-      await saySafe(msg.channelName, `🪞 ${uploadedUrl}`);
+      await saySafe(msg.channelName, `🪞 ${uploadedUrl}`, msg.messageID);
     }
   } finally {
     try {

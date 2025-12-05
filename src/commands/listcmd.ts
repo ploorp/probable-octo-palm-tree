@@ -16,30 +16,30 @@ export default async function listcmds(msg: PrivmsgMessage, args: string[]) {
     username = args[1].toLowerCase().replace(/^@/, '');
 
     if (!/^[a-z0-9_]+$/.test(username)) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
     }
   }
 
   try {
     response = await axios.get(endpoint + username);
   } catch (error) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `error Reacting`, msg.messageID);
   }
 
   if (response.data.statusCode === 404) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, this user does not exist Reacting`);
+    return saySafe(msg.channelName, `this user does not exist Reacting`, msg.messageID);
   }
 
   try {
     userID = response.data.data[0].channel.channel_id;
   }
   catch (error) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, this user has never been seen Reacting`);
+    return saySafe(msg.channelName, `this user has never been seen Reacting`, msg.messageID);
   }
 
   if (response.data.data[0].channel.commands.length === 0) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, this user has no commands wtf`);
+    return saySafe(msg.channelName, `this user has no commands wtf`, msg.messageID);
   }
 
-  return saySafe(msg.channelName, `@${msg.senderUsername}, https://api.potat.app/channel/commands?id=${userID}`);
+  return saySafe(msg.channelName, `https://api.potat.app/channel/commands?id=${userID}`, msg.messageID);
 }

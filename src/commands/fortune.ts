@@ -25,13 +25,12 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
       exec(`/usr/games/fortune ${f_args}`, (err, stdout, stderr) => {
         if (err) {
           timeLog("fortune error: " + err);
-          saySafe(msg.channelName, "error Reacting");
+          saySafe(msg.channelName, "error Reacting", msg.messageID);
           return;
         }
-        const output = stdout.replace(/\s+/g, ' ').trim();
-        let reply = `@${msg.senderUsername}, ${output}`;
-        if (reply.length > 490) reply = reply.slice(0, 487) + '...';
-        saySafe(msg.channelName, reply);
+        let output = stdout.replace(/\s+/g, ' ').trim();
+        if (output.length > 490) output = output.slice(0, 487) + '...';
+        saySafe(msg.channelName, output, msg.messageID);
       });
       return;
     }
@@ -42,9 +41,9 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
     const timeLeft = getTimeLeftToMidnightUTC();
 
     if (!streak?.success) {
-      let reply = `@${msg.senderUsername}, you can see a new fortune in ${timeLeft}, streak of ${streak?.streak}`;
+      let reply = `you can see a new fortune in ${timeLeft}, streak of ${streak?.streak}`;
       if (reply.length > 500) reply = reply.slice(0, 497) + '...';
-      saySafe(msg.channelName, reply);
+      saySafe(msg.channelName, reply, msg.messageID);
       return resolve();
     }
 
@@ -55,15 +54,15 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
     exec("/usr/games/fortune -s", (err, stdout, stderr) => {
       if (err) {
         timeLog("fortune error: " + err);
-        saySafe(msg.channelName, "error Reacting");
+        saySafe(msg.channelName, "error Reacting", msg.messageID);
         return resolve();
       }
       const cleaned = stdout.replace(/\s+/g, ' ').trim();
       const emotes = ["Wise", "Wisdom", "facts", "👀"];
       const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
-      let reply = `@${msg.senderUsername}, ${streakMessage}. ${cleaned} ${randomEmote}`;
+      let reply = `${streakMessage}. ${cleaned} ${randomEmote}`;
       if (reply.length > 500) reply = reply.slice(0, 497) + '...';
-      saySafe(msg.channelName, reply);
+      saySafe(msg.channelName, reply, msg.messageID);
       resolve();
     });
   });

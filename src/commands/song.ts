@@ -19,19 +19,19 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
     if (args[1].startsWith('@')) {
       const twitchLogin = args[1].replace(/^@+/, '').toLowerCase();
       if (!/^[a-z0-9_]+$/.test(twitchLogin)) {
-        return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+        return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
       }
       const userId = await getUserId(twitchLogin);
-      if (!userId) return saySafe(msg.channelName, `@${msg.senderUsername}, twitch user not found`);
+      if (!userId) return saySafe(msg.channelName, `twitch user not found`, msg.messageID);
       const account = getAccount(userId, 'lastfm') as { handle?: string } | null;
       if (!account || !account.handle) {
-        return saySafe(msg.channelName, `@${msg.senderUsername}, ${twitchLogin} has no linked lastfm`);
+        return saySafe(msg.channelName, `${twitchLogin} has no linked lastfm`, msg.messageID);
       }
       username = account.handle;
     } else {
       username = args[1].toLowerCase().replace(/^@/, '');
       if (!/^[a-z0-9_]+$/.test(username)) {
-        return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+        return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
       }
     }
   }
@@ -50,14 +50,14 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
     });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error === 6) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, user not found smh`);
+      return saySafe(msg.channelName, `user not found smh`, msg.messageID);
     }
-    return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+    return saySafe(msg.channelName, `error Reacting`, msg.messageID);
   }
 
   const tracks = recents.data?.recenttracks?.track;
   if (!tracks || (Array.isArray(tracks) && tracks.length === 0)) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, no recent tracks found smh`);
+    return saySafe(msg.channelName, `no recent tracks found smh`, msg.messageID);
   }
 
   const track = Array.isArray(tracks) ? tracks[0] : tracks;
@@ -85,12 +85,12 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
       }
     }
     catch (error) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+      return saySafe(msg.channelName, `error Reacting`, msg.messageID);
     }
   }
 
   if (!tracks || tracks.length === 0) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, no recent tracks found smh`);
+    return saySafe(msg.channelName, `no recent tracks found smh`, msg.messageID);
   }
 
   function timeAgo(date: Date) {
@@ -109,12 +109,12 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
   }
 
   if (nowPlaying) {
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} is currently playing "${songTitle}" by ${artist}${scrobbleCount} kittyJam`);
+    return saySafe(msg.channelName, `${username} is currently playing "${songTitle}" by ${artist}${scrobbleCount} kittyJam`, msg.messageID);
   } else {
     let ago = 'unknown time ago';
     if (date?.uts) {
       ago = timeAgo(new Date(parseInt(date.uts) * 1000));
     }
-    return saySafe(msg.channelName, `@${msg.senderUsername}, ${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} kittyJam`);
+    return saySafe(msg.channelName, `${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} kittyJam`, msg.messageID);
   }
 }

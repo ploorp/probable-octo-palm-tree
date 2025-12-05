@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import config from '../../config.json' with { type: 'json' };
 
 const db = new Database("bot.db");
 
@@ -8,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   username TEXT,
   is_joined INTEGER DEFAULT 0,
-  prefix TEXT DEFAULT '%',
+  prefix TEXT DEFAULT '${config.prefix}',
   last_seen TEXT,
   last_fortune TEXT,
   fortune_streak INTEGER DEFAULT 0,

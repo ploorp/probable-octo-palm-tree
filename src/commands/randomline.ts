@@ -13,7 +13,7 @@ export default async function randomline(msg: PrivmsgMessage, args: string[]) {
     if (user === '*') {
       user = null;
     } else if (!/^[A-Za-z0-9_]+$/.test(user)) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
     }
   } else {
     channel = args[1].replace(/^@/, '');
@@ -21,12 +21,12 @@ export default async function randomline(msg: PrivmsgMessage, args: string[]) {
     if (channel === '*') {
       channel = msg.channelName;
     } else if (!/^[A-Za-z0-9_]+$/.test(channel)) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, bad channel name tupid`);
+      return saySafe(msg.channelName, `bad channel name tupid`, msg.messageID);
     }
     if (user === '*') {
       user = null;
     } else if (!/^[A-Za-z0-9_]+$/.test(user)) {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, bad username tupid`);
+      return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
     }
   }
 
@@ -38,25 +38,25 @@ export default async function randomline(msg: PrivmsgMessage, args: string[]) {
 
     if (res.status === 404) {
       console.log(body);
-      if (!body) return saySafe(msg.channelName, `@${msg.senderUsername}, no lines found ohno`);
+      if (!body) return saySafe(msg.channelName, `no lines found ohno`, msg.messageID);
       if (body.includes('The user does not exist')) {
-        return saySafe(msg.channelName, `@${msg.senderUsername}, user not found ohno`);
+        return saySafe(msg.channelName, `user not found ohno`, msg.messageID);
       }
       if (body.includes('The channel does not exist')) {
-        return saySafe(msg.channelName, `@${msg.senderUsername}, channel not found ohno`);
+        return saySafe(msg.channelName, `channel not found ohno`, msg.messageID);
       }
       if (body.includes('No user logs found')) {
-        return saySafe(msg.channelName, `@${msg.senderUsername}, no logs found ohno`);
+        return saySafe(msg.channelName, `no logs found ohno`, msg.messageID);
       }
     }
 
     const line = res.data.split(' ');
     const datetime = line[0].replace('[', '')
 
-		const reply = `@${msg.senderUsername}, ${datetime} ${line.slice(3).join(' ')}`;
+		const reply = `${datetime} ${line.slice(3).join(' ')}`;
 		return saySafe(msg.channelName, reply.length > 490 ? reply.slice(0, 487) + '...' : reply);
 	} catch (err: any) {
 		timeLog(`randomline error for ${user}: ${err?.message ?? err}`);
-		return saySafe(msg.channelName, `@${msg.senderUsername}, error Reacting`);
+		return saySafe(msg.channelName, `error Reacting`, msg.messageID);
 	}
 }

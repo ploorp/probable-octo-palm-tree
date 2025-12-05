@@ -13,16 +13,16 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
         await client.join(msg.senderUsername);
         addChannel(msg.senderUserID);
       } catch (error) {
-        return saySafe(msg.channelName, 'error joining ' + msg.senderUsername);
+        return saySafe(msg.channelName, 'error joining ' + msg.senderUsername, msg.messageID);
       }
-      return saySafe(msg.channelName, 'joined ' + msg.senderUsername);
+      return saySafe(msg.channelName, 'joined ' + msg.senderUsername, msg.messageID);
     } else {
       try {
         await client.part(msg.senderUsername);
         partChannel(msg.senderUserID);
-        return saySafe(msg.channelName, 'leaving ' + msg.senderUsername);
+        return saySafe(msg.channelName, 'leaving ' + msg.senderUsername, msg.messageID);
       } catch (error) {
-        return saySafe(msg.channelName, 'error Reacting');
+        return saySafe(msg.channelName, 'error Reacting', msg.messageID);
       }
     }
   } else {
@@ -33,23 +33,23 @@ export default async function join(msg: PrivmsgMessage, args: string[]) {
           const joinId = await getUserId(args[1].toLowerCase()) as string;
           addChannel(joinId);
         } catch (error) {
-          return saySafe(msg.channelName, 'error joining ' + args[1]);
+          return saySafe(msg.channelName, 'error joining ' + args[1], msg.messageID);
         }
-        return saySafe(msg.channelName, 'joined ' + args[1]);
+        return saySafe(msg.channelName, 'joined ' + args[1], msg.messageID);
       } else {
-        return saySafe(msg.channelName, `@${msg.senderUsername}, you can only join your own channel`);
+        return saySafe(msg.channelName, `you can only join your own channel`, msg.messageID);
       }
     } else if (isWhitelisted(msg.senderUserID) || args[1].toLowerCase() === msg.senderUserID) {
       try {
-        saySafe(msg.channelName, 'leaving ' + args[1]);
+        saySafe(msg.channelName, 'leaving ' + args[1], msg.messageID);
         await client.part(args[1].toLowerCase());
         const partId = await getUserId(args[1].toLowerCase()) as string;
         return partChannel(partId);
       } catch (error) {
-        return saySafe(msg.channelName, 'error Reacting');
+        return saySafe(msg.channelName, 'error Reacting', msg.messageID);
       }
     } else {
-      return saySafe(msg.channelName, `@${msg.senderUsername}, you can only part your own channel`);
+      return saySafe(msg.channelName, `you can only part your own channel`, msg.messageID);
     }
   }
 }

@@ -8,7 +8,7 @@ export default async function supibot(msg: PrivmsgMessage, args: string[]) {
   client.once('WHISPER', async (whisperMsg) => {
     timeLog(`Whisper from ${whisperMsg.senderUsername} ${whisperMsg.messageText}`);
     if (whisperMsg.senderUserID === "68136884") {
-      return await saySafe(msg.channelName, whisperMsg.messageText);
+      return await saySafe(msg.channelName, whisperMsg.messageText, msg.messageID);
     }
   });
 
