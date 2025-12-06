@@ -15,6 +15,7 @@ import { getJoinedChannels, refreshUsername, addChannel } from './db/dbManager.j
 let isReady = false;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let reconnectAttempts = 0;
+let authAttempts = 0;
 
 function scheduleReconnect(reason: string) {
   if (reconnectTimer) return; // already scheduled
@@ -34,6 +35,7 @@ function scheduleReconnect(reason: string) {
 
 function clearReconnectBackoff() {
   reconnectAttempts = 0;
+  authAttempts = 0;
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
     reconnectTimer = null;
@@ -69,7 +71,8 @@ client.on('error', (err) => {
 
   // Handle auth/login errors with limited retries
   if (lower.includes('login') || lower.includes('auth')) {
-    if (reconnectAttempts >= 3) {
+    authAttempts++;
+    if (authAttempts >= 6) {
       timeLog('Fatal: Twitch authentication failed repeatedly. Exiting.');
       process.exit(1);
     }
