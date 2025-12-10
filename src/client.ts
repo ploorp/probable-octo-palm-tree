@@ -57,7 +57,7 @@ const client = new ChatClient({
 const privmsgRL = new PrivmsgMessageRateLimiter(client);
 privmsgRL.applyToClient(client);
 //client.use(new AlternateMessageModifier(client)); // BROKEN I GUESS
-client.use(new SlowModeRateLimiter(client, 10));
+client.use(new SlowModeRateLimiter(client, 3));
 client.use(new UserStateTracker(client));
 client.use(new ConnectionRateLimiter(client));
 client.use(new JoinRateLimiter(client));
