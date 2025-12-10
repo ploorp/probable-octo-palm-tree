@@ -205,10 +205,22 @@ async function joinChannels() {
 
 // appending U+034F for duplicate messages
 const duplicateState = new Map<string, { last: string; nextAppend: boolean }>();
+const channelCooldowns = new Map<string, number>();
 
 export async function saySafe(channel: string, text: string, replyMsgId?: string) {
   try {
     const chKey = channel.toLowerCase();
+
+    const botState = client.userStateTracker?.channelStates?.[chKey];
+    if (botState && !botState.isMod) {
+      const now = Date.now();
+      const last = channelCooldowns.get(chKey) ?? 0;
+      if (now < last + config.cooldown) {
+        return;
+      }
+      channelCooldowns.set(chKey, now);
+      setTimeout(() => channelCooldowns.delete(chKey), config.cooldown);
+    }
 
     const baseText = text;
     const state = duplicateState.get(chKey);
