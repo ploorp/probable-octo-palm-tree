@@ -6,7 +6,7 @@ import { getPrefix } from '../db/dbManager.js';
 
 export default async function newname(msg: PrivmsgMessage, args: string[]) {
   if (!args[1]) {
-    return saySafe(msg.channelName, `usage: ${getPrefix(msg.channelID)} newname <username>`, msg.messageID);
+    return saySafe(msg.channelName, `usage: ${getPrefix(msg.channelID)}newname <username>`, msg.messageID);
   }
 
   const username = args[1].toLowerCase().replace(/^@/, '');

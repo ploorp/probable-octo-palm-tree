@@ -7,8 +7,7 @@ import { getPrefix } from '../db/dbManager.js';
 export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
   const prefix = getPrefix(msg.channelID)
 
-  // if no arguments try to use the sender's username
-  if (args.length < 3) {
+  if (args.length < 2) {
     return saySafe(msg.channelName, `format is ${prefix}searchlogs <channel> <username> <query>`, msg.messageID);
   }
 
@@ -21,7 +20,7 @@ export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (query.length > 100) {
-    return saySafe(msg.channelName, `long ass query Reacting`, msg.messageID);
+    return saySafe(msg.channelName, `long ah query ☠️`, msg.messageID);
   }
 
   const logs = `https://logs.zonian.dev/channel/${channel}/user/${username}/search?reverse=true&q=${encodeURIComponent(query)}`
