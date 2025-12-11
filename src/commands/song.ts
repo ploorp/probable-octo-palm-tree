@@ -9,9 +9,9 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
   let username: string;
 
   if (!args[1]) {
-    const account = getAccount(msg.senderUserID, 'lastfm') as { handle?: string } | null;
-    if (account && account.handle) {
-      username = account.handle;
+    const account = getAccount(msg.senderUserID, 'lastfm');
+    if (account) {
+      username = account;
     } else {
       username = msg.senderUsername;
     }
@@ -23,11 +23,11 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
       }
       const userId = await getUserId(twitchLogin);
       if (!userId) return saySafe(msg.channelName, `twitch user not found`, msg.messageID);
-      const account = getAccount(userId, 'lastfm') as { handle?: string } | null;
-      if (!account || !account.handle) {
+      const account = getAccount(userId, 'lastfm');
+      if (!account) {
         return saySafe(msg.channelName, `${twitchLogin} has no linked lastfm`, msg.messageID);
       }
-      username = account.handle;
+      username = account;
     } else {
       username = args[1].toLowerCase().replace(/^@/, '');
       if (!/^[a-z0-9_]+$/.test(username)) {
