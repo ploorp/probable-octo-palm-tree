@@ -7,7 +7,9 @@ import { getPrefix } from '../db/dbManager.js';
 export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
   const prefix = getPrefix(msg.channelID)
 
-  if (args.length < 3) {
+  console.log(args);
+
+  if (args.length < 4) {
     return saySafe(msg.channelName, `format is ${prefix}searchlogs <channel> <username> <query>`, msg.messageID);
   }
 
