@@ -83,3 +83,22 @@ export async function getBestPlays(userId: number) {
         return null;
     }
 }
+
+export async function getBeatmap(beatmapId: number) {
+    const token = await getToken();
+    if (!token) return null;
+
+    try {
+        const response = await axios.get(`https://osu.ppy.sh/api/v2/beatmaps/${beatmapId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        timeLog(`Error getting beatmap ${beatmapId}: ${error.message}`);
+        return null;
+    }
+}

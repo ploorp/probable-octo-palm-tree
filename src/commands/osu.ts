@@ -1,7 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { saySafe } from '../client.js';
 import { getAccount, linkAccount } from '../db/dbManager.js';
-import { getUser, getRecentPlays, getBestPlays } from '../osu.js';
+import { getUser, getRecentPlays, getBestPlays, getBeatmap } from '../osu.js';
 import config from '../../config.json' with { type: 'json' };
 import { getFlagEmoji } from '../utils.js';
 
@@ -60,8 +60,13 @@ export default async function osu(msg: PrivmsgMessage, args: string[]) {
             return saySafe(msg.channelName, `@${msg.senderUsername}, no recent plays found for ${user.username}`, msg.messageID);
         }
         const play = recents[0];
-        const map = play.beatmap;
+        let map = play.beatmap;
         const set = play.beatmapset;
+
+        if (!map.max_combo) {
+            const fullMap = await getBeatmap(map.id);
+            if (fullMap) map = fullMap;
+        }
         
         const rank = play.rank;
         const pp = play.pp ? `${Math.round(play.pp)}PP` : '0PP';
@@ -81,8 +86,13 @@ export default async function osu(msg: PrivmsgMessage, args: string[]) {
             return saySafe(msg.channelName, `@${msg.senderUsername}, no top plays found for ${user.username}`, msg.messageID);
         }
         const play = best[0];
-        const map = play.beatmap;
+        let map = play.beatmap;
         const set = play.beatmapset;
+
+        if (!map.max_combo) {
+            const fullMap = await getBeatmap(map.id);
+            if (fullMap) map = fullMap;
+        }
         
         const rank = play.rank;
         const pp = `${Math.round(play.pp)}PP`;
