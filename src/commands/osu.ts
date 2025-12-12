@@ -3,6 +3,7 @@ import { saySafe } from '../client.js';
 import { getAccount, linkAccount } from '../db/dbManager.js';
 import { getUser, getRecentPlays, getBestPlays } from '../osu.js';
 import config from '../../config.json' with { type: 'json' };
+import { getFlagEmoji } from '../utils.js';
 
 export default async function osu(msg: PrivmsgMessage, args: string[]) {
     const subcommand = args[1] ? args[1].toLowerCase() : '';
@@ -38,7 +39,7 @@ export default async function osu(msg: PrivmsgMessage, args: string[]) {
 
     if (mode === 'profile') {
         const globalRank = user.statistics.global_rank ? `🌐#${user.statistics.global_rank}` : 'Unranked';
-        const countryRank = user.statistics.country_rank ? `${user.country_code}#${user.statistics.country_rank}` : '';
+        const countryRank = user.statistics.country_rank ? `${getFlagEmoji(user.country_code)}#${user.statistics.country_rank}` : '';
         const pp = Math.round(user.statistics.pp);
         const acc = user.statistics.hit_accuracy.toFixed(2);
         const playtime = Math.round(user.statistics.play_time / 3600);
