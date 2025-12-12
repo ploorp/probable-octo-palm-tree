@@ -25,6 +25,7 @@ import { getUserId } from './src/helix.js';
 import randomline from './src/commands/randomline.js';
 import listen from './src/commands/listen.js';
 import { editLastfm } from './src/db/dbManager.js';
+import osu from './src/commands/osu.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -192,6 +193,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'randomline':
       case 'rl':
         await randomline(msg, args);
+        return;
+      
+      case 'osu':
+        await osu(msg, args);
         return;
 
       case 'listen':

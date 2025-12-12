@@ -9,6 +9,10 @@
   "lastfm": {
     "client_id": ""
   },
+  "osu": {
+    "client_id": "",
+    "client_secret": ""
+  },
   "cooldown": 2000,
   "whitelist_channels": [
       "your_channel"

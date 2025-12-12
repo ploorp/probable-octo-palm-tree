@@ -95,20 +95,20 @@ export function getWhitelistedUsers(): string[] {
 // CONNECTIONS
 export function linkAccount(id: string, service: string, handle: string) {
   ensureUserRow(id);
-  if (service === "lastfm" || service === "letterboxd") {
+  if (service === "lastfm" || service === "letterboxd" || service === "osu") {
     db.prepare(`UPDATE users SET ${service} = ? WHERE id = ?`).run(handle, id);
   }
 }
 
 export function unlinkAccount(id: string, service: string) {
   ensureUserRow(id);
-  if (service === "lastfm" || service === "letterboxd") {
+  if (service === "lastfm" || service === "letterboxd" || service === "osu") {
     db.prepare(`UPDATE users SET ${service} = NULL WHERE id = ?`).run(id);
   }
 }
 
 export function getAccount(id: string, service: string) {
-  if (service === "lastfm" || service === "letterboxd") {
+  if (service === "lastfm" || service === "letterboxd" || service === "osu") {
     const row = db.prepare(`SELECT ${service} FROM users WHERE id = ?`).get(id) as { [key: string]: string } | undefined;
     return row && row[service] ? row[service] : null;
   }

@@ -16,8 +16,15 @@ CREATE TABLE IF NOT EXISTS users (
   opted_out INTEGER DEFAULT 0,
   lastfm TEXT,
   letterboxd TEXT,
+  osu TEXT,
   is_whitelisted INTEGER DEFAULT 0
 );
 `).run();
+
+try {
+  db.prepare("ALTER TABLE users ADD COLUMN osu TEXT").run();
+} catch (error) {
+  // Column likely already exists
+}
 
 export default db;

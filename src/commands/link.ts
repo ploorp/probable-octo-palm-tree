@@ -8,23 +8,23 @@ export default async function link(msg: PrivmsgMessage, args: string[]) {
 
   if (args[0].toLowerCase() === 'link') {
     if (!args[2]) {
-      return saySafe(msg.channelName, `format is %link <lastfm|letterboxd> <username>`, msg.messageID);
+      return saySafe(msg.channelName, `format is %link <lastfm|letterboxd|osu> <username>`, msg.messageID);
     }
-    if (args[1].toLowerCase() === 'lastfm' || args[1].toLowerCase() === 'letterboxd') {
+    if (args[1].toLowerCase() === 'lastfm' || args[1].toLowerCase() === 'letterboxd' || args[1].toLowerCase() === 'osu') {
       linkAccount(msg.senderUserID, args[1].toLowerCase(), args[2].toLowerCase());
       return saySafe(msg.channelName, `successfully linked ${args[1].toLowerCase()} account pog`, msg.messageID);
     } else {
-      return saySafe(msg.channelName, `format is %link <lastfm|letterboxd> <username>`, msg.messageID);
+      return saySafe(msg.channelName, `format is %link <lastfm|letterboxd|osu> <username>`, msg.messageID);
     }
   } else {
     if (!args[1]) {
-      return saySafe(msg.channelName, `format is %unlink <lastfm|letterboxd>`, msg.messageID);
+      return saySafe(msg.channelName, `format is %unlink <lastfm|letterboxd|osu>`, msg.messageID);
     }
-    if (args[1].toLowerCase() === 'lastfm' || args[1].toLowerCase() === 'letterboxd') {
+    if (args[1].toLowerCase() === 'lastfm' || args[1].toLowerCase() === 'letterboxd' || args[1].toLowerCase() === 'osu') {
       unlinkAccount(msg.senderUserID, args[1].toLowerCase());
       return saySafe(msg.channelName, `successfully unlinked ${args[1].toLowerCase()} account`, msg.messageID);
     } else {
-      return saySafe(msg.channelName, `format is %unlink <lastfm|letterboxd>`, msg.messageID);
+      return saySafe(msg.channelName, `format is %unlink <lastfm|letterboxd|osu>`, msg.messageID);
     }
   }
 }
