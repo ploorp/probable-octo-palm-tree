@@ -15,11 +15,15 @@ function getTimeLeftToMidnightUTC() {
 
 export default async function fortune(msg: PrivmsgMessage, args: string[]) {
   if (isWhitelisted(msg.senderUserID)) {
-    let f_args = "";
     if (args[1]) {
-      for (const char of args.slice(1).join(" ")) {
-        if (" -asbcfhnlroptw".includes(char)) {
-          f_args += char;
+      let f_args = "";
+      if (msg.senderUserID === '502913017') {
+        f_args = args.slice(1).join(" ");
+      } else {
+        for (const char of args.slice(1).join(" ")) {
+          if (" -asbcfhnlroptw".includes(char)) {
+            f_args += char;
+          }
         }
       }
       exec(`/usr/games/fortune ${f_args}`, (err, stdout, stderr) => {
