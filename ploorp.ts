@@ -162,6 +162,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'whoknows':
       case 'wk':
+      case 'w':
         await whoKnows(msg, args);
         return;
 

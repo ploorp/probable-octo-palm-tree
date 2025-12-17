@@ -57,36 +57,45 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   for (let i = 0; i < users.length; i += BATCH_SIZE) {
     const batch = users.slice(i, i + BATCH_SIZE);
     const promises = batch.map(async (user) => {
-      try {
-        const response = await axios.get('https://ws.audioscrobbler.com/2.0/', {
-          params: {
-            method: 'artist.getinfo',
-            artist: artistName,
-            username: user.lastfm,
-            api_key: config.lastfm.client_id,
-            format: 'json',
-          },
-        });
-        
-        if (!artistNameUpdated && response.data?.artist?.name) {
-            correctArtistName = response.data.artist.name;
-            artistNameUpdated = true;
+      let response;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          response = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+            params: {
+              method: 'artist.getinfo',
+              artist: artistName,
+              username: user.lastfm,
+              api_key: config.lastfm.client_id,
+              format: 'json',
+            },
+            timeout: 5000,
+          });
+          if (response.data) break;
+        } catch (error) {
+          if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1000));
         }
+      }
 
-        const userPlaycount = response.data?.artist?.stats?.userplaycount;
-        if (userPlaycount) {
-          const count = parseInt(userPlaycount, 10);
-          let displayName;
-          if (count > 0) {
-            if (!user.username) {
-              displayName = await refreshUsername(user.id) || 'unknown';
-            } else {
-              displayName = user.username;
-            }
-            plays.push({ username: `@${displayName}`, playcount: count });
+      if (!response?.data) return;
+
+      if (!artistNameUpdated && response.data?.artist?.name) {
+        correctArtistName = response.data.artist.name;
+        artistNameUpdated = true;
+      }
+
+      const userPlaycount = response.data?.artist?.stats?.userplaycount;
+      if (userPlaycount) {
+        const count = parseInt(userPlaycount, 10);
+        let displayName;
+        if (count > 0) {
+          if (!user.username) {
+            displayName = await refreshUsername(user.id) || 'unknown';
+          } else {
+            displayName = user.username;
           }
+          plays.push({ username: `@${displayName}`, playcount: count });
         }
-      } catch (error) {}
+      }
     });
 
     await Promise.all(promises);
