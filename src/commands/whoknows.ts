@@ -67,6 +67,7 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
               username: user.lastfm,
               api_key: config.lastfm.client_id,
               format: 'json',
+              autocorrect: 1,
             },
             timeout: 5000,
           });

@@ -46,6 +46,7 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
         format: 'json',
         limit: 1,
         extended: 1,
+        autocorrect: 1,
       },
     });
   } catch (error) {
