@@ -2,6 +2,10 @@ import { client, saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from "axios";
 import FormData from "form-data";
+import fs from "fs";
+import os from "os";
+import path from "path";
+import crypto from "crypto";
 import { timeLog } from '../utils.js';
 import validator from "validator";
 import config from '../../config.json' with { type: 'json' };
@@ -142,7 +146,39 @@ async function uploadGoFile(stream: any, length: number | undefined, filename: s
   }
 }
 
+async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Promise<string | undefined> {
+  timeLog("Downloading to temp file for GoFile upload...");
+  const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
+  
+  try {
+    const response = await axios.get(sourceUrl, { responseType: 'stream' });
+    const writer = fs.createWriteStream(tempFile);
+    
+    response.data.pipe(writer);
+    
+    await new Promise<void>((resolve, reject) => {
+      writer.on('finish', () => resolve());
+      writer.on('error', reject);
+    });
 
+    const stat = fs.statSync(tempFile);
+    timeLog(`Temp file created: ${tempFile} (${stat.size} bytes)`);
+
+    if (stat.size === 0) {
+      timeLog("Temp file is empty, aborting upload.");
+      return undefined;
+    }
+    
+    const fileStream = fs.createReadStream(tempFile);
+    return await uploadGoFile(fileStream, stat.size, filename);
+
+  } catch (err: any) {
+    timeLog("Error in downloadAndUploadGoFile: " + err);
+    return undefined;
+  } finally {
+    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+  }
+}
 
 async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile: boolean = false): Promise<string | "too-large" | undefined> {
   timeLog(`Fetching source stream: ${sourceUrl}`);
@@ -177,7 +213,12 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
 
   // If length is unknown (0) or larger than SEGS_LIMIT, use GoFile
   if (forceGoFile || length === 0 || length > SEGS_LIMIT) {
-    return await uploadGoFile(source.data, length || undefined, filename);
+    if (length > 0) {
+      return await uploadGoFile(source.data, length, filename);
+    }
+    timeLog("Length unknown, falling back to temp file download.");
+    source.data.destroy();
+    return await downloadAndUploadGoFile(sourceUrl, filename);
   }
 
   // Use Segs/Olrite
