@@ -63,16 +63,16 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
     msgText = msgText.replace(/^@\S+\s+/, '');
   }
 
+  const prefix = getPrefix(msg.channelID);
+
   // media download stuff
-  if (!isOptedOut(msg.channelID)) {
+  if (!isOptedOut(msg.channelID) && !msgText.startsWith(prefix)) {
     const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
 
     if (mediaLink) {
       await download(msg, mediaLink);
     }
   }
-  
-  const prefix = getPrefix(msg.channelID);
 
   if (msgText.startsWith(prefix)) {
     const args = msgText.split(' ');
@@ -160,7 +160,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'dl':
       case 'download':
-        await download(msg, true, args);
+        await download(msg, true, args.slice(1));
         return;
 
       case 'whoknows':

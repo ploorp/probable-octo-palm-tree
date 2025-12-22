@@ -30,7 +30,12 @@ function sanitizeUrl(rawUrl: string): string | null {
   }
 }
 
-async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<string | null> {
+interface CobaltResult {
+  url: string;
+  filename: string;
+}
+
+async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<CobaltResult | null> {
   try {
     const response = await axios.post(cobaltUrl, {
       url: url,
@@ -48,21 +53,25 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<strin
 
     const data = response.data;
     let downloadUrl: string | null = null;
+    let filename = 'video.mp4';
 
     if (data.status === 'redirect' || data.status === 'tunnel') {
       downloadUrl = data.url;
+      if (data.filename) filename = data.filename;
     } else if (data.status === 'picker' && data.picker && data.picker.length > 0) {
+      let item;
       if (slideIndex) {
-        const item = data.picker[slideIndex - 1];
-        if (item) {
-          downloadUrl = item.url;
-        } else {
+        item = data.picker[slideIndex - 1];
+        if (!item) {
           timeLog(`Slide ${slideIndex} not found.`);
           return null;
         }
       } else {
-        downloadUrl = data.picker[0].url;
+        item = data.picker[0];
       }
+      downloadUrl = item.url;
+      if (item.type === 'photo') filename = 'image.jpg';
+      if (item.type === 'gif') filename = 'image.gif';
     }
 
     if (!downloadUrl) {
@@ -70,7 +79,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<strin
       return null;
     }
 
-    return downloadUrl;
+    return { url: downloadUrl, filename };
 
   } catch (error: any) {
     timeLog("Cobalt error: " + (error.response?.data ? JSON.stringify(error.response.data) : error.message));
@@ -78,10 +87,10 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<strin
   }
 }
 
-async function uploadGoFile(stream: any, length: number): Promise<string | undefined> {
+async function uploadGoFile(stream: any, length: number, filename: string): Promise<string | undefined> {
   try {
     const form = new FormData();
-    form.append("file", stream, { filename: 'video.mp4', knownLength: length });
+    form.append("file", stream, { filename: filename, knownLength: length });
 
     const uploadRes = await axios.post("https://upload.gofile.io/uploadfile", form, {
       headers: { 
@@ -120,7 +129,7 @@ async function uploadGoFile(stream: any, length: number): Promise<string | undef
   }
 }
 
-async function uploadFromStream(sourceUrl: string): Promise<string | "too-large" | undefined> {
+async function uploadFromStream(sourceUrl: string, filename: string): Promise<string | "too-large" | undefined> {
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
   const length = parseInt(source.headers['content-length'] || '0');
 
@@ -131,13 +140,13 @@ async function uploadFromStream(sourceUrl: string): Promise<string | "too-large"
 
   if (length > SEGS_LIMIT) {
     // Use GoFile
-    return await uploadGoFile(source.data, length);
+    return await uploadGoFile(source.data, length, filename);
   }
 
   // Use Segs/Olrite
   const attemptUpload = async (targetUrl: string) => {
     const form = new FormData();
-    form.append("file", source.data, { filename: 'video.mp4', knownLength: length || undefined });
+    form.append("file", source.data, { filename: filename, knownLength: length || undefined });
 
     const res = await axios.post(targetUrl, form, {
       headers: { ...form.getHeaders() },
@@ -156,7 +165,7 @@ async function uploadFromStream(sourceUrl: string): Promise<string | "too-large"
     try {
       const source2 = await axios.get(sourceUrl, { responseType: 'stream' });
       const form2 = new FormData();
-      form2.append("file", source2.data, { filename: 'video.mp4', knownLength: length || undefined });
+      form2.append("file", source2.data, { filename: filename, knownLength: length || undefined });
       
       const res = await axios.post("https://olrite.lol/api/upload", form2, {
         headers: { ...form2.getHeaders() },
@@ -221,15 +230,15 @@ export default async function download(msg: PrivmsgMessage, linkOrCommand: strin
     return;
   }
 
-  const cobaltUrl = await resolveCobaltUrl(sanitized, slideIndex);
+  const cobaltResult = await resolveCobaltUrl(sanitized, slideIndex);
   
-  if (!cobaltUrl) {
+  if (!cobaltResult) {
     if (isCommand) await saySafe(msg.channelName, "Download failed.", msg.messageID);
     else timeLog("Download failed for: " + sanitized);
     return;
   }
   
-  const uploadedUrl = await uploadFromStream(cobaltUrl);
+  const uploadedUrl = await uploadFromStream(cobaltResult.url, cobaltResult.filename);
 
   if (uploadedUrl === "too-large") {
     await saySafe(msg.channelName, "Video too large to download.", msg.messageID);
