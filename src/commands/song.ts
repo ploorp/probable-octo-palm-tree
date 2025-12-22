@@ -46,7 +46,6 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
         format: 'json',
         limit: 1,
         extended: 1,
-        autocorrect: 1,
       },
     });
   } catch (error) {
@@ -79,6 +78,7 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
           user: username,
           api_key: config.lastfm.client_id,
           format: 'json',
+          autocorrect: 1,
         },
       });
       if (trackInfo?.data?.track?.userplaycount != null) {
