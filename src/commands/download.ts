@@ -2,6 +2,10 @@ import { client, saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from "axios";
 import FormData from "form-data";
+import fs from "fs";
+import os from "os";
+import path from "path";
+import crypto from "crypto";
 import { timeLog } from '../utils.js';
 import validator from "validator";
 import config from '../../config.json' with { type: 'json' };
@@ -92,7 +96,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
   }
 }
 
-async function uploadGoFile(stream: any, length: number | undefined, filename: string): Promise<string | undefined> {
+async function uploadGoFile(stream: any, length: number, filename: string): Promise<string | undefined> {
   try {
     const form = new FormData();
     form.append("file", stream, { filename: filename, knownLength: length });
@@ -165,8 +169,31 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
 
   // If length is unknown (0) or larger than SEGS_LIMIT, or forced, use GoFile
   if (length === 0 || length > SEGS_LIMIT || forceGoFile) {
-    // Use GoFile
-    return await uploadGoFile(source.data, length || undefined, filename);
+    if (length === 0) {
+      timeLog("Stream length unknown, downloading to temp file for GoFile upload...");
+      const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
+      const writer = fs.createWriteStream(tempFile);
+      
+      source.data.pipe(writer);
+      
+      await new Promise<void>((resolve, reject) => {
+        writer.on('finish', () => resolve());
+        writer.on('error', reject);
+      });
+      
+      const stat = fs.statSync(tempFile);
+      const fileStream = fs.createReadStream(tempFile);
+      
+      try {
+        const result = await uploadGoFile(fileStream, stat.size, filename);
+        return result;
+      } finally {
+        fs.unlinkSync(tempFile);
+      }
+    } else {
+      // Use GoFile stream
+      return await uploadGoFile(source.data, length, filename);
+    }
   }
 
   // Use Segs/Olrite
