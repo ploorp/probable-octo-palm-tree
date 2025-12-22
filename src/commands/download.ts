@@ -6,7 +6,6 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import crypto from "crypto";
-import { spawn } from "child_process";
 import { timeLog } from '../utils.js';
 import validator from "validator";
 import config from '../../config.json' with { type: 'json' };
@@ -151,17 +150,18 @@ async function uploadGoFile(stream: any, length: number, filename: string): Prom
 }
 
 async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Promise<string | undefined> {
-  timeLog("Downloading to temp file for GoFile upload (via curl)...");
+  timeLog("Downloading to temp file for GoFile upload...");
   const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
   
   try {
+    const response = await axios.get(sourceUrl, { responseType: 'stream' });
+    const writer = fs.createWriteStream(tempFile);
+    
+    response.data.pipe(writer);
+    
     await new Promise<void>((resolve, reject) => {
-      const curl = spawn("curl", ["-L", "-o", tempFile, sourceUrl]);
-      curl.on("close", (code) => {
-        if (code === 0) resolve();
-        else reject(new Error(`curl exited with code ${code}`));
-      });
-      curl.on("error", reject);
+      writer.on('finish', () => resolve());
+      writer.on('error', reject);
     });
 
     const stat = fs.statSync(tempFile);
@@ -187,8 +187,8 @@ async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Pro
     const fileStream = fs.createReadStream(tempFile);
     return await uploadGoFile(fileStream, stat.size, filename);
 
-  } catch (err) {
-    timeLog("Error in curl download: " + err);
+  } catch (err: any) {
+    timeLog("Error in downloadAndUploadGoFile: " + err);
     return undefined;
   } finally {
     if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
@@ -196,10 +196,6 @@ async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Pro
 }
 
 async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile: boolean = false): Promise<string | "too-large" | undefined> {
-  if (forceGoFile) {
-    return await downloadAndUploadGoFile(sourceUrl, filename);
-  }
-
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
   let length = parseInt(source.headers['content-length'] || '0');
   const contentType = source.headers['content-type'];
@@ -229,7 +225,10 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
   }
 
   // If length is unknown (0) or larger than SEGS_LIMIT, use GoFile
-  if (length === 0 || length > SEGS_LIMIT) {
+  if (forceGoFile || length === 0 || length > SEGS_LIMIT) {
+    if (length > 0) {
+      return await uploadGoFile(source.data, length, filename);
+    }
     source.data.destroy();
     return await downloadAndUploadGoFile(sourceUrl, filename);
   }
