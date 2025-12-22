@@ -1,6 +1,5 @@
 import { client, saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { spawn } from "child_process";
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -12,11 +11,12 @@ import validator from "validator";
 const { isURL, trim } = validator;
 
 const sizeLimit = 100 * 1024 * 1024;
+const cobaltUrl = "http://localhost:9001";
 
 function sanitizeUrl(rawUrl: string): string | null {
   const cleaned = trim(rawUrl).replace(/[<>\s]/g, "");
 
-  const allowedPattern = /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+)/i;
+  const allowedPattern = /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
   if (!allowedPattern.test(cleaned)) return null;
 
   if (!isURL(cleaned, { require_protocol: false })) return null;
@@ -67,68 +67,102 @@ async function uploadMedia(filePath: string): Promise<string | undefined> {
   return link;
 }
 
-function ytdlpDownload(url: string): Promise<string | null> {
-  const outputTemplate = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.mp4`);
-  const cookiesPath = "/home/ploorp/cookies.txt";
-
-  return new Promise((resolve) => {
-    const args = [
-      "-o", outputTemplate,
-      "--no-playlist",
-      "--cookies", cookiesPath,
-      "--force-ipv4",
-      "-S", "vcodec:h264",
-      "--max-filesize", "99M",
-      "--match-filters", "!is_live & !was_live",
-      "--embed-metadata",
-      "--", url
-    ];
-    const proc = spawn("/usr/local/bin/yt-dlp", args);
-    let stderr = "";
-
-    proc.stderr.on("data", (data) => { stderr += data.toString(); });
-
-    proc.on("close", (code) => {
-      if (code !== 0) {
-        if (stderr.includes("No video formats found") || stderr.includes("Unsupported URL") || stderr.includes("There is no video") || stderr.includes("No video could be found")) {
-          return resolve("not-video");
-        }
-        if (stderr.includes("File is larger than max-filesize")) {
-          return resolve("too-large");
-        }
-        if (stderr.includes("Restricted Video") || stderr.includes("Restricted Photo")) {
-          return resolve("over-18");
-        }
-        if (stderr.includes("users who follow this account")) {
-          return resolve("private");
-        }
-        timeLog("yt-dlp failed: " + stderr);
-        return resolve(null);
+async function cobaltDownload(url: string): Promise<string | null> {
+  try {
+    const response = await axios.post(cobaltUrl, {
+      url: url,
+      videoQuality: "1080",
+      filenameStyle: "basic",
+      downloadMode: "auto",
+      youtubeVideoCodec: "h264",
+      alwaysProxy: true,
+    }, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       }
-
-      try {
-        if (fs.existsSync(outputTemplate)) return resolve(outputTemplate);
-      } catch (err) {
-        timeLog("error checking output file: " + err);
-      }
-
-      return resolve(null);
     });
 
-    proc.on("error", (err) => {
-      timeLog("yt-dlp spawn error: " + err);
-      resolve(null);
+    const data = response.data;
+    let downloadUrl: string | null = null;
+
+    if (data.status === 'redirect' || data.status === 'tunnel') {
+      downloadUrl = data.url;
+    } else if (data.status === 'picker' && data.picker && data.picker.length > 0) {
+      const video = data.picker.find((p: any) => p.type === 'video');
+      downloadUrl = video ? video.url : data.picker[0].url;
+    }
+
+    if (!downloadUrl) {
+      timeLog(`Cobalt processing failed: ${JSON.stringify(data)}`);
+      return null;
+    }
+
+    const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.mp4`);
+    const writer = fs.createWriteStream(tempFile);
+    
+    const fileResponse = await axios.get(downloadUrl, { responseType: 'stream' });
+    
+    const contentLength = fileResponse.headers['content-length'];
+    if (contentLength && parseInt(contentLength) > sizeLimit) {
+      timeLog("File too large (Cobalt): " + url);
+      writer.close();
+      fs.unlinkSync(tempFile);
+      return "too-large";
+    }
+
+    fileResponse.data.pipe(writer);
+
+    return new Promise((resolve, reject) => {
+      writer.on('finish', () => resolve(tempFile));
+      writer.on('error', (err) => {
+        timeLog("File write error: " + err);
+        reject(null);
+      });
     });
-  });
+
+  } catch (error: any) {
+    timeLog("Cobalt error: " + (error.response?.data ? JSON.stringify(error.response.data) : error.message));
+    return null;
+  }
 }
 
 const downloadCache = new Map<string, string>();
 
-export default async function download(msg: PrivmsgMessage, mediaLink: string) {
+export default async function download(msg: PrivmsgMessage, linkOrCommand: string | boolean, args?: string[]) {
+  let mediaLink: string | null = null;
+  let isCommand = false;
+
+  if (typeof linkOrCommand === 'boolean') {
+    isCommand = linkOrCommand;
+    if (args && args.length > 0) {
+      mediaLink = args[0];
+    }
+  } else {
+    mediaLink = linkOrCommand;
+  }
+
+  if (!mediaLink) {
+    if (isCommand) await saySafe(msg.channelName, "Please provide a link.", msg.messageID);
+    return;
+  }
+
   const sanitized = sanitizeUrl(mediaLink);
   if (!sanitized) {
-    timeLog("Invalid URL for downloader: " + mediaLink);
+    if (isCommand) await saySafe(msg.channelName, "Invalid URL.", msg.messageID);
+    else timeLog("Invalid URL for downloader: " + mediaLink);
     return;
+  }
+
+  // Automatic mode restrictions
+  if (!isCommand) {
+    const isYouTube = sanitized.includes("youtube.com") || sanitized.includes("youtu.be");
+    const isShorts = sanitized.includes("/shorts/");
+    
+    if (isYouTube && !isShorts) {
+      // Skip long youtube videos in auto mode
+      return;
+    }
   }
 
   if (downloadCache.has(sanitized)) {
@@ -137,26 +171,17 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
     return;
   }
 
-  const filePath = await ytdlpDownload(sanitized);
+  const filePath = await cobaltDownload(sanitized);
+  
   if (!filePath) {
-    timeLog("Download failed for: " + sanitized);
-    return saySafe(msg.channelName, `uh download failed`, msg.messageID);
-  }
-  if (filePath === "not-video") {
-    timeLog("Not a video: " + sanitized);
+    if (isCommand) await saySafe(msg.channelName, "Download failed.", msg.messageID);
+    else timeLog("Download failed for: " + sanitized);
     return;
   }
+  
   if (filePath === "too-large") {
-    timeLog("File too large (yt-dlp): " + sanitized);
-    return saySafe(msg.channelName, `ts video too big to download`, msg.messageID);
-  }
-  if (filePath === "over-18") {
-    timeLog("18+ video update cookies: " + sanitized);
-    return saySafe(msg.channelName, `cant download 18+ video`, msg.messageID);
-  }
-  if (filePath === "private") {
-    timeLog("private video: " + sanitized);
-    return saySafe(msg.channelName, `cant download private video`, msg.messageID);
+    await saySafe(msg.channelName, "Video too large to download.", msg.messageID);
+    return;
   }
 
   try {
@@ -174,6 +199,4 @@ export default async function download(msg: PrivmsgMessage, mediaLink: string) {
       timeLog("Error cleaning up file: " + error);
     }
   }
-
-  return;
 }

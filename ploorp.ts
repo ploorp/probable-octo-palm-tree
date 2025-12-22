@@ -160,6 +160,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await song(msg, false, args);
         return;
 
+      case 'dl':
+      case 'download':
+        await download(msg, true, args);
+        return;
+
       case 'whoknows':
       case 'wk':
       case 'w':
