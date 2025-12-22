@@ -14,7 +14,7 @@ const { isURL, trim } = validator;
 
 const SEGS_LIMIT = 190 * 1024 * 1024; // 190MB
 const GOFILE_LIMIT = 10 * 1024 * 1024 * 1024; // 10GB
-const cobaltUrl = (config as any).cobaltUrl || "http://localhost:9001";
+const cobaltUrl = "http://localhost:9001";
 
 export const downloadLinkPattern = /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
 
@@ -46,7 +46,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
       filenameStyle: "classic",
       downloadMode: "auto",
       youtubeVideoCodec: "vp9",
-      alwaysProxy: false,
+      alwaysProxy: true,
       disableMetadata: true,
     }, {
       headers: {
@@ -61,23 +61,6 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 
     if (data.status === 'redirect' || data.status === 'tunnel' || data.status === 'stream') {
       downloadUrl = data.url;
-
-      // Rewrite localhost to configured host if needed
-      if (downloadUrl && cobaltUrl && !cobaltUrl.includes('localhost') && !cobaltUrl.includes('127.0.0.1')) {
-        try {
-          const cobaltUrlObj = new URL(cobaltUrl);
-          const downloadUrlObj = new URL(downloadUrl);
-          if (downloadUrlObj.hostname === 'localhost' || downloadUrlObj.hostname === '127.0.0.1') {
-            downloadUrlObj.hostname = cobaltUrlObj.hostname;
-            downloadUrlObj.port = cobaltUrlObj.port;
-            downloadUrl = downloadUrlObj.toString();
-            timeLog(`Rewrote Cobalt URL to: ${downloadUrl}`);
-          }
-        } catch (e) {
-          timeLog(`Failed to rewrite Cobalt URL: ${e}`);
-        }
-      }
-
       if (data.filename) filename = data.filename;
     } else if (data.status === 'picker' && data.picker && data.picker.length > 0) {
       let item;
