@@ -87,9 +87,11 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 async function downloadTunnelToFile(sourceUrl: string, tempFile: string): Promise<number> {
   const response = await axios.get(sourceUrl, {
     responseType: 'stream',
+    proxy: false, // ← CRITICAL FIX
     headers: {
       'User-Agent': 'Mozilla/5.0',
       'Accept': '*/*',
+      'Accept-Encoding': 'identity',
       'Range': 'bytes=0-',
     },
     timeout: 0,
