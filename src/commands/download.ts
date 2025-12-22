@@ -47,6 +47,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
       downloadMode: "auto",
       youtubeVideoCodec: "h264",
       alwaysProxy: false,
+      disableMetadata: true,
     }, {
       headers: {
         'Accept': 'application/json',
