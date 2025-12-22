@@ -30,12 +30,11 @@ function sanitizeUrl(rawUrl: string): string | null {
   }
 }
 
-interface CobaltResult {
-  url: string;
-  filename: string;
-}
+type CobaltResult = 
+  | { status: 'success'; url: string; filename: string }
+  | { status: 'error'; message: string };
 
-async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<CobaltResult | null> {
+async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<CobaltResult> {
   try {
     const response = await axios.post(cobaltUrl, {
       url: url,
@@ -63,8 +62,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
       if (slideIndex) {
         item = data.picker[slideIndex - 1];
         if (!item) {
-          timeLog(`Slide ${slideIndex} not found.`);
-          return null;
+          return { status: 'error', message: `Slide ${slideIndex} not found` };
         }
       } else {
         item = data.picker[0];
@@ -76,14 +74,18 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 
     if (!downloadUrl) {
       timeLog(`Cobalt processing failed: ${JSON.stringify(data)}`);
-      return null;
+      return { status: 'error', message: 'Processing failed' };
     }
 
-    return { url: downloadUrl, filename };
+    return { status: 'success', url: downloadUrl, filename };
 
   } catch (error: any) {
+    const code = error.response?.data?.error?.code;
+    const context = error.response?.data?.error?.context;
+    const message = code ? (context?.service ? `${code} (${context.service})` : code) : error.message;
+    
     timeLog("Cobalt error: " + (error.response?.data ? JSON.stringify(error.response.data) : error.message));
-    return null;
+    return { status: 'error', message };
   }
 }
 
@@ -224,17 +226,19 @@ export default async function download(msg: PrivmsgMessage, linkOrCommand: strin
     }
   }
 
-  if (downloadCache.has(sanitized)) {
-    const cachedLink = downloadCache.get(sanitized)!;
+  const cacheKey = slideIndex ? `${sanitized}|${slideIndex}` : sanitized;
+
+  if (downloadCache.has(cacheKey)) {
+    const cachedLink = downloadCache.get(cacheKey)!;
     await saySafe(msg.channelName, `🪞 ${cachedLink}`, msg.messageID);
     return;
   }
 
   const cobaltResult = await resolveCobaltUrl(sanitized, slideIndex);
   
-  if (!cobaltResult) {
-    if (isCommand) await saySafe(msg.channelName, "Download failed.", msg.messageID);
-    else timeLog("Download failed for: " + sanitized);
+  if (cobaltResult.status === 'error') {
+    if (isCommand) await saySafe(msg.channelName, `Download failed: ${cobaltResult.message}`, msg.messageID);
+    else timeLog("Download failed for: " + sanitized + " : " + cobaltResult.message);
     return;
   }
   
@@ -248,7 +252,7 @@ export default async function download(msg: PrivmsgMessage, linkOrCommand: strin
   if (!uploadedUrl) {
     await saySafe(msg.channelName, `uh upload failed`, msg.messageID);
   } else {
-    downloadCache.set(sanitized, uploadedUrl);
+    downloadCache.set(cacheKey, uploadedUrl);
     await saySafe(msg.channelName, `🪞 ${uploadedUrl}`, msg.messageID);
   }
 }
