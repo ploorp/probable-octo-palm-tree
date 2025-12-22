@@ -2,10 +2,6 @@ import { client, saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from "axios";
 import FormData from "form-data";
-import fs from "fs";
-import os from "os";
-import path from "path";
-import crypto from "crypto";
 import { timeLog } from '../utils.js';
 import validator from "validator";
 import config from '../../config.json' with { type: 'json' };
@@ -96,19 +92,15 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
   }
 }
 
-async function uploadGoFile(stream: any, length: number, filename: string): Promise<string | undefined> {
+async function uploadGoFile(stream: any, length: number | undefined, filename: string): Promise<string | undefined> {
   try {
-    // Get best server (required by GoFile API)
-    let server = "store1";
-    try {
-      const srv = await axios.get("https://api.gofile.io/servers");
-      if (srv.data?.data?.servers?.[0]?.name) server = srv.data.data.servers[0].name;
-    } catch {}
-
     const form = new FormData();
-    form.append("file", stream, { filename: filename, knownLength: length });
+    const options: any = { filename };
+    if (length) options.knownLength = length;
+    
+    form.append("file", stream, options);
 
-    const uploadRes = await axios.post(`https://${server}.gofile.io/uploadfile`, form, {
+    const uploadRes = await axios.post(`https://store1.gofile.io/uploadfile`, form, {
       headers: { 
         ...form.getHeaders(),
         'Authorization': `Bearer ${config.gofile.token}`
@@ -149,51 +141,7 @@ async function uploadGoFile(stream: any, length: number, filename: string): Prom
   }
 }
 
-async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Promise<string | undefined> {
-  timeLog("Downloading to temp file for GoFile upload...");
-  const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
-  
-  try {
-    const response = await axios.get(sourceUrl, { responseType: 'stream' });
-    const writer = fs.createWriteStream(tempFile);
-    
-    response.data.pipe(writer);
-    
-    await new Promise<void>((resolve, reject) => {
-      writer.on('finish', () => resolve());
-      writer.on('error', reject);
-    });
 
-    const stat = fs.statSync(tempFile);
-    timeLog(`Temp file created: ${tempFile} (${stat.size} bytes)`);
-
-    if (stat.size === 0) {
-      timeLog("Temp file is empty, aborting upload.");
-      return undefined;
-    }
-    
-    // Check for JSON error in file content
-    const fd = fs.openSync(tempFile, 'r');
-    const buffer = Buffer.alloc(1024);
-    const bytesRead = fs.readSync(fd, buffer, 0, 1024, 0);
-    fs.closeSync(fd);
-    
-    const content = buffer.toString('utf8', 0, bytesRead);
-    if (content.trim().startsWith('{') && content.includes('"status":') && content.includes('"error"')) {
-       timeLog(`Cobalt returned JSON error in file: ${content}`);
-       return undefined;
-    }
-
-    const fileStream = fs.createReadStream(tempFile);
-    return await uploadGoFile(fileStream, stat.size, filename);
-
-  } catch (err: any) {
-    timeLog("Error in downloadAndUploadGoFile: " + err);
-    return undefined;
-  } finally {
-    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
-  }
-}
 
 async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile: boolean = false): Promise<string | "too-large" | undefined> {
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
@@ -226,11 +174,7 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
 
   // If length is unknown (0) or larger than SEGS_LIMIT, use GoFile
   if (forceGoFile || length === 0 || length > SEGS_LIMIT) {
-    if (length > 0) {
-      return await uploadGoFile(source.data, length, filename);
-    }
-    source.data.destroy();
-    return await downloadAndUploadGoFile(sourceUrl, filename);
+    return await uploadGoFile(source.data, length || undefined, filename);
   }
 
   // Use Segs/Olrite
