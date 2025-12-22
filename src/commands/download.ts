@@ -146,19 +146,19 @@ async function uploadGoFile(stream: any, length: number | undefined, filename: s
   }
 }
 
-async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Promise<string | undefined> {
+async function downloadAndUploadGoFile(inputStream: any, filename: string): Promise<string | undefined> {
   timeLog("Downloading to temp file for GoFile upload...");
   const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
   
   try {
-    const response = await axios.get(sourceUrl, { responseType: 'stream' });
     const writer = fs.createWriteStream(tempFile);
     
-    response.data.pipe(writer);
+    inputStream.pipe(writer);
     
     await new Promise<void>((resolve, reject) => {
       writer.on('finish', () => resolve());
       writer.on('error', reject);
+      inputStream.on('error', reject);
     });
 
     const stat = fs.statSync(tempFile);
@@ -217,8 +217,7 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
       return await uploadGoFile(source.data, length, filename);
     }
     timeLog("Length unknown, falling back to temp file download.");
-    source.data.destroy();
-    return await downloadAndUploadGoFile(sourceUrl, filename);
+    return await downloadAndUploadGoFile(source.data, filename);
   }
 
   // Use Segs/Olrite
