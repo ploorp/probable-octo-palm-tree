@@ -98,10 +98,17 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 
 async function uploadGoFile(stream: any, length: number, filename: string): Promise<string | undefined> {
   try {
+    // Get best server (required by GoFile API)
+    let server = "store1";
+    try {
+      const srv = await axios.get("https://api.gofile.io/servers");
+      if (srv.data?.data?.servers?.[0]?.name) server = srv.data.data.servers[0].name;
+    } catch {}
+
     const form = new FormData();
     form.append("file", stream, { filename: filename, knownLength: length });
 
-    const uploadRes = await axios.post("https://upload.gofile.io/uploadfile", form, {
+    const uploadRes = await axios.post(`https://${server}.gofile.io/uploadfile`, form, {
       headers: { 
         ...form.getHeaders(),
         'Authorization': `Bearer ${config.gofile.token}`
@@ -185,6 +192,13 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
     });
     
     const stat = fs.statSync(tempFile);
+    timeLog(`Temp file created: ${tempFile} (${stat.size} bytes)`);
+    
+    if (stat.size === 0) {
+      timeLog("Temp file is empty, aborting upload.");
+      return undefined;
+    }
+
     const fileStream = fs.createReadStream(tempFile);
     
     try {
