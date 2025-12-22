@@ -116,21 +116,25 @@ async function uploadGoFile(stream: any, length: number, filename: string): Prom
     }
 
     const contentId = uploadRes.data.data.fileId; 
+    const downloadPage = uploadRes.data.data.downloadPage;
     
-    // Create direct link
-    const linkRes = await axios.post(`https://api.gofile.io/contents/${contentId}/directlinks`, {}, {
-      headers: {
-        'Authorization': `Bearer ${config.gofile.token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    try {
+      // Create direct link
+      const linkRes = await axios.post(`https://api.gofile.io/contents/${contentId}/directlinks`, {}, {
+        headers: {
+          'Authorization': `Bearer ${config.gofile.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-    if (linkRes.data.status !== 'ok') {
-       timeLog("GoFile direct link failed, using downloadPage");
-       return uploadRes.data.data.downloadPage;
+      if (linkRes.data.status === 'ok') {
+        return linkRes.data.data.directLink;
+      }
+    } catch (error) {
+      // Direct link creation failed (likely not premium), fallback to downloadPage
     }
 
-    return linkRes.data.data.directLink;
+    return downloadPage;
 
   } catch (error: any) {
     timeLog("GoFile error: " + (error.response?.data ? JSON.stringify(error.response.data) : error.message));
