@@ -10,7 +10,7 @@ import config from './config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
-import download from './src/commands/download.js';
+import download, { downloadLinkPattern } from './src/commands/download.js';
 import { allowAutomod } from './src/eventsub.js';
 import rating from './src/commands/rating.js';
 import song from './src/commands/song.js';
@@ -65,8 +65,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   // media download stuff
   if (!isOptedOut(msg.channelID)) {
-    const downloadLinkPattern =
-      /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
     const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
 
     if (mediaLink) {
