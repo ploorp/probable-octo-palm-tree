@@ -12,8 +12,8 @@ import config from '../../config.json' with { type: 'json' };
 
 const { isURL, trim } = validator;
 
-const SEGS_LIMIT = 100 * 1024 * 1024; // 100MB
-const GOFILE_LIMIT = 2 * 1024 * 1024 * 1024; // 2GB
+const SEGS_LIMIT = 190 * 1024 * 1024; // 190MB
+const GOFILE_LIMIT = 10 * 1024 * 1024 * 1024; // 10GB
 const cobaltUrl = "http://localhost:9001";
 
 export const downloadLinkPattern = /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
@@ -169,30 +169,25 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
 
   // If length is unknown (0) or larger than SEGS_LIMIT, or forced, use GoFile
   if (length === 0 || length > SEGS_LIMIT || forceGoFile) {
-    if (length === 0) {
-      timeLog("Stream length unknown, downloading to temp file for GoFile upload...");
-      const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
-      const writer = fs.createWriteStream(tempFile);
-      
-      source.data.pipe(writer);
-      
-      await new Promise<void>((resolve, reject) => {
-        writer.on('finish', () => resolve());
-        writer.on('error', reject);
-      });
-      
-      const stat = fs.statSync(tempFile);
-      const fileStream = fs.createReadStream(tempFile);
-      
-      try {
-        const result = await uploadGoFile(fileStream, stat.size, filename);
-        return result;
-      } finally {
-        fs.unlinkSync(tempFile);
-      }
-    } else {
-      // Use GoFile stream
-      return await uploadGoFile(source.data, length, filename);
+    timeLog("Downloading to temp file for GoFile upload...");
+    const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
+    const writer = fs.createWriteStream(tempFile);
+    
+    source.data.pipe(writer);
+    
+    await new Promise<void>((resolve, reject) => {
+      writer.on('finish', () => resolve());
+      writer.on('error', reject);
+    });
+    
+    const stat = fs.statSync(tempFile);
+    const fileStream = fs.createReadStream(tempFile);
+    
+    try {
+      const result = await uploadGoFile(fileStream, stat.size, filename);
+      return result;
+    } finally {
+      fs.unlinkSync(tempFile);
     }
   }
 
