@@ -46,7 +46,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
       filenameStyle: "basic",
       downloadMode: "auto",
       youtubeVideoCodec: "h264",
-      alwaysProxy: true,
+      alwaysProxy: false,
     }, {
       headers: {
         'Accept': 'application/json',
@@ -58,7 +58,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
     let downloadUrl: string | null = null;
     let filename = 'video.mp4';
 
-    if (data.status === 'redirect' || data.status === 'tunnel') {
+    if (data.status === 'redirect' || data.status === 'tunnel' || data.status === 'stream') {
       downloadUrl = data.url;
       if (data.filename) filename = data.filename;
     } else if (data.status === 'picker' && data.picker && data.picker.length > 0) {
