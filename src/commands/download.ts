@@ -137,9 +137,25 @@ async function uploadGoFile(stream: any, length: number | undefined, filename: s
 async function uploadFromStream(sourceUrl: string, filename: string): Promise<string | "too-large" | undefined> {
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
   let length = parseInt(source.headers['content-length'] || '0');
+  const contentType = source.headers['content-type'];
+
+  if (contentType && contentType.includes('application/json')) {
+    const chunks = [];
+    for await (const chunk of source.data) {
+      chunks.push(chunk);
+    }
+    const errorBody = Buffer.concat(chunks).toString();
+    timeLog(`Cobalt tunnel returned JSON error: ${errorBody}`);
+    return undefined;
+  }
 
   if (length === 0 && source.headers['estimated-content-length']) {
     length = parseInt(source.headers['estimated-content-length']);
+  }
+
+  if (length > 0 && length < 1000 && filename.endsWith('.mp4')) {
+    timeLog(`Stream too small for video (${length} bytes), likely error.`);
+    return undefined;
   }
 
   if (length > GOFILE_LIMIT) {
