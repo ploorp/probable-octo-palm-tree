@@ -81,15 +81,18 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 
   } catch (error: any) {
     const code = error.response?.data?.error?.code;
-    const context = error.response?.data?.error?.context;
-    const message = code ? (context?.service ? `${code} (${context.service})` : code) : error.message;
+    let message = code || error.message;
+
+    if (code === 'error.api.content.video.unavailable') {
+      message = 'Video unavailable';
+    }
     
     timeLog("Cobalt error: " + (error.response?.data ? JSON.stringify(error.response.data) : error.message));
     return { status: 'error', message };
   }
 }
 
-async function uploadGoFile(stream: any, length: number, filename: string): Promise<string | undefined> {
+async function uploadGoFile(stream: any, length: number | undefined, filename: string): Promise<string | undefined> {
   try {
     const form = new FormData();
     form.append("file", stream, { filename: filename, knownLength: length });
@@ -133,16 +136,21 @@ async function uploadGoFile(stream: any, length: number, filename: string): Prom
 
 async function uploadFromStream(sourceUrl: string, filename: string): Promise<string | "too-large" | undefined> {
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
-  const length = parseInt(source.headers['content-length'] || '0');
+  let length = parseInt(source.headers['content-length'] || '0');
+
+  if (length === 0 && source.headers['estimated-content-length']) {
+    length = parseInt(source.headers['estimated-content-length']);
+  }
 
   if (length > GOFILE_LIMIT) {
     source.data.destroy();
     return "too-large";
   }
 
-  if (length > SEGS_LIMIT) {
+  // If length is unknown (0) or larger than SEGS_LIMIT, use GoFile
+  if (length === 0 || length > SEGS_LIMIT) {
     // Use GoFile
-    return await uploadGoFile(source.data, length, filename);
+    return await uploadGoFile(source.data, length || undefined, filename);
   }
 
   // Use Segs/Olrite
