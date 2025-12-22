@@ -43,9 +43,9 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
     const response = await axios.post(cobaltUrl, {
       url: url,
       videoQuality: "1080",
-      filenameStyle: "basic",
+      filenameStyle: "classic",
       downloadMode: "auto",
-      youtubeVideoCodec: "h264",
+      youtubeVideoCodec: "vp9",
       alwaysProxy: false,
       disableMetadata: true,
     }, {
@@ -152,7 +152,13 @@ async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Pro
   const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
   
   try {
-    const response = await axios.get(sourceUrl, { responseType: 'stream' });
+    const response = await axios.get(sourceUrl, { 
+      responseType: 'stream',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*'
+      }
+    });
     timeLog(`Download response status: ${response.status}`);
     timeLog(`Download response headers: ${JSON.stringify(response.headers)}`);
 
