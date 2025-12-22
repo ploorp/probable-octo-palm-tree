@@ -42,12 +42,6 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
   try {
     const response = await axios.post(cobaltUrl, {
       url: url,
-      videoQuality: "1080",
-      filenameStyle: "classic",
-      downloadMode: "auto",
-      youtubeVideoCodec: "vp9",
-      alwaysProxy: false,
-      disableMetadata: true,
     }, {
       headers: {
         'Accept': 'application/json',
@@ -152,22 +146,24 @@ async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Pro
   const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
   
   try {
-    const response = await axios.get(sourceUrl, { 
-      responseType: 'stream',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': '*/*'
-      }
-    });
+    const response = await axios.get(sourceUrl, { responseType: 'stream' });
     timeLog(`Download response status: ${response.status}`);
     timeLog(`Download response headers: ${JSON.stringify(response.headers)}`);
 
     const writer = fs.createWriteStream(tempFile);
     
+    let bytesReceived = 0;
+    response.data.on('data', (chunk: any) => {
+      bytesReceived += chunk.length;
+    });
+
     response.data.pipe(writer);
     
     await new Promise<void>((resolve, reject) => {
-      writer.on('finish', () => resolve());
+      writer.on('finish', () => {
+        timeLog(`Stream finished. Total bytes received: ${bytesReceived}`);
+        resolve();
+      });
       writer.on('error', reject);
       response.data.on('error', reject);
     });
