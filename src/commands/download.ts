@@ -93,6 +93,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 }
 
 async function uploadGoFile(stream: any, length: number | undefined, filename: string): Promise<string | undefined> {
+  timeLog(`Starting GoFile upload. Filename: ${filename}, Length: ${length ?? 'unknown'}`);
   try {
     const form = new FormData();
     const options: any = { filename };
@@ -144,8 +145,10 @@ async function uploadGoFile(stream: any, length: number | undefined, filename: s
 
 
 async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile: boolean = false): Promise<string | "too-large" | undefined> {
+  timeLog(`Fetching source stream: ${sourceUrl}`);
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
   let length = parseInt(source.headers['content-length'] || '0');
+  timeLog(`Source headers received. Content-Length: ${source.headers['content-length']}, Content-Type: ${source.headers['content-type']}`);
   const contentType = source.headers['content-type'];
 
   if (contentType && contentType.includes('application/json')) {
