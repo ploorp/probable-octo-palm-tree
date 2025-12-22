@@ -6,6 +6,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import crypto from "crypto";
+import { spawn } from "child_process";
 import { timeLog } from '../utils.js';
 import validator from "validator";
 import config from '../../config.json' with { type: 'json' };
@@ -149,7 +150,56 @@ async function uploadGoFile(stream: any, length: number, filename: string): Prom
   }
 }
 
+async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Promise<string | undefined> {
+  timeLog("Downloading to temp file for GoFile upload (via curl)...");
+  const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
+  
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const curl = spawn("curl", ["-L", "-o", tempFile, sourceUrl]);
+      curl.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`curl exited with code ${code}`));
+      });
+      curl.on("error", reject);
+    });
+
+    const stat = fs.statSync(tempFile);
+    timeLog(`Temp file created: ${tempFile} (${stat.size} bytes)`);
+
+    if (stat.size === 0) {
+      timeLog("Temp file is empty, aborting upload.");
+      return undefined;
+    }
+    
+    // Check for JSON error in file content
+    const fd = fs.openSync(tempFile, 'r');
+    const buffer = Buffer.alloc(1024);
+    const bytesRead = fs.readSync(fd, buffer, 0, 1024, 0);
+    fs.closeSync(fd);
+    
+    const content = buffer.toString('utf8', 0, bytesRead);
+    if (content.trim().startsWith('{') && content.includes('"status":') && content.includes('"error"')) {
+       timeLog(`Cobalt returned JSON error in file: ${content}`);
+       return undefined;
+    }
+
+    const fileStream = fs.createReadStream(tempFile);
+    return await uploadGoFile(fileStream, stat.size, filename);
+
+  } catch (err) {
+    timeLog("Error in curl download: " + err);
+    return undefined;
+  } finally {
+    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+  }
+}
+
 async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile: boolean = false): Promise<string | "too-large" | undefined> {
+  if (forceGoFile) {
+    return await downloadAndUploadGoFile(sourceUrl, filename);
+  }
+
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
   let length = parseInt(source.headers['content-length'] || '0');
   const contentType = source.headers['content-type'];
@@ -178,35 +228,10 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
     return "too-large";
   }
 
-  // If length is unknown (0) or larger than SEGS_LIMIT, or forced, use GoFile
-  if (length === 0 || length > SEGS_LIMIT || forceGoFile) {
-    timeLog("Downloading to temp file for GoFile upload...");
-    const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
-    const writer = fs.createWriteStream(tempFile);
-    
-    source.data.pipe(writer);
-    
-    await new Promise<void>((resolve, reject) => {
-      writer.on('finish', () => resolve());
-      writer.on('error', reject);
-    });
-    
-    const stat = fs.statSync(tempFile);
-    timeLog(`Temp file created: ${tempFile} (${stat.size} bytes)`);
-    
-    if (stat.size === 0) {
-      timeLog("Temp file is empty, aborting upload.");
-      return undefined;
-    }
-
-    const fileStream = fs.createReadStream(tempFile);
-    
-    try {
-      const result = await uploadGoFile(fileStream, stat.size, filename);
-      return result;
-    } finally {
-      fs.unlinkSync(tempFile);
-    }
+  // If length is unknown (0) or larger than SEGS_LIMIT, use GoFile
+  if (length === 0 || length > SEGS_LIMIT) {
+    source.data.destroy();
+    return await downloadAndUploadGoFile(sourceUrl, filename);
   }
 
   // Use Segs/Olrite
