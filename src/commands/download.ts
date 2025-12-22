@@ -134,7 +134,7 @@ async function uploadGoFile(stream: any, length: number | undefined, filename: s
   }
 }
 
-async function uploadFromStream(sourceUrl: string, filename: string): Promise<string | "too-large" | undefined> {
+async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile: boolean = false): Promise<string | "too-large" | undefined> {
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
   let length = parseInt(source.headers['content-length'] || '0');
   const contentType = source.headers['content-type'];
@@ -163,8 +163,8 @@ async function uploadFromStream(sourceUrl: string, filename: string): Promise<st
     return "too-large";
   }
 
-  // If length is unknown (0) or larger than SEGS_LIMIT, use GoFile
-  if (length === 0 || length > SEGS_LIMIT) {
+  // If length is unknown (0) or larger than SEGS_LIMIT, or forced, use GoFile
+  if (length === 0 || length > SEGS_LIMIT || forceGoFile) {
     // Use GoFile
     return await uploadGoFile(source.data, length || undefined, filename);
   }
@@ -265,8 +265,10 @@ export default async function download(msg: PrivmsgMessage, linkOrCommand: strin
     else timeLog("Download failed for: " + sanitized + " : " + cobaltResult.message);
     return;
   }
+
+  const isYouTube = sanitized.includes("youtube.com") || sanitized.includes("youtu.be");
   
-  const uploadedUrl = await uploadFromStream(cobaltResult.url, cobaltResult.filename);
+  const uploadedUrl = await uploadFromStream(cobaltResult.url, cobaltResult.filename, isYouTube);
 
   if (uploadedUrl === "too-large") {
     await saySafe(msg.channelName, "Video too large to download.", msg.messageID);
