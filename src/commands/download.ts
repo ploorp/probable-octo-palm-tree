@@ -14,7 +14,7 @@ const { isURL, trim } = validator;
 
 const SEGS_LIMIT = 190 * 1024 * 1024; // 190MB
 const GOFILE_LIMIT = 10 * 1024 * 1024 * 1024; // 10GB
-const cobaltUrl = "http://localhost:9001";
+const cobaltUrl = "http://127.0.0.1:9001";
 
 export const downloadLinkPattern = /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
 
@@ -46,7 +46,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
       filenameStyle: "classic",
       downloadMode: "auto",
       youtubeVideoCodec: "vp9",
-      alwaysProxy: true,
+      alwaysProxy: false,
       disableMetadata: true,
     }, {
       headers: {
@@ -61,6 +61,9 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 
     if (data.status === 'redirect' || data.status === 'tunnel' || data.status === 'stream') {
       downloadUrl = data.url;
+      if (downloadUrl && downloadUrl.includes('localhost')) {
+        downloadUrl = downloadUrl.replace('localhost', '127.0.0.1');
+      }
       if (data.filename) filename = data.filename;
     } else if (data.status === 'picker' && data.picker && data.picker.length > 0) {
       let item;
@@ -152,7 +155,13 @@ async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Pro
   const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
   
   try {
-    const response = await axios.get(sourceUrl, { responseType: 'stream' });
+    const response = await axios.get(sourceUrl, { 
+      responseType: 'stream',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*'
+      }
+    });
     timeLog(`Download response status: ${response.status}`);
     timeLog(`Download response headers: ${JSON.stringify(response.headers)}`);
 
@@ -201,7 +210,13 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
   }
 
   timeLog(`Fetching source stream: ${sourceUrl}`);
-  const source = await axios.get(sourceUrl, { responseType: 'stream' });
+  const source = await axios.get(sourceUrl, { 
+    responseType: 'stream',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': '*/*'
+    }
+  });
   let length = parseInt(source.headers['content-length'] || '0');
   timeLog(`Source headers received. Content-Length: ${source.headers['content-length']}, Content-Type: ${source.headers['content-type']}`);
   const contentType = source.headers['content-type'];
