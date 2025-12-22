@@ -14,7 +14,7 @@ const { isURL, trim } = validator;
 
 const SEGS_LIMIT = 190 * 1024 * 1024; // 190MB
 const GOFILE_LIMIT = 10 * 1024 * 1024 * 1024; // 10GB
-const cobaltUrl = "http://127.0.0.1:9001";
+const cobaltUrl = "http://localhost:9001";
 
 export const downloadLinkPattern = /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
 
@@ -45,8 +45,8 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
       videoQuality: "1080",
       filenameStyle: "classic",
       downloadMode: "auto",
-      youtubeVideoCodec: "vp9",
-      alwaysProxy: false,
+      youtubeVideoCodec: "h264",
+      alwaysProxy: true,
       disableMetadata: true,
     }, {
       headers: {
@@ -61,9 +61,6 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 
     if (data.status === 'redirect' || data.status === 'tunnel' || data.status === 'stream') {
       downloadUrl = data.url;
-      if (downloadUrl && downloadUrl.includes('localhost')) {
-        downloadUrl = downloadUrl.replace('localhost', '127.0.0.1');
-      }
       if (data.filename) filename = data.filename;
     } else if (data.status === 'picker' && data.picker && data.picker.length > 0) {
       let item;
