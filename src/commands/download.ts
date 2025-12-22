@@ -12,291 +12,221 @@ import config from '../../config.json' with { type: 'json' };
 
 const { isURL, trim } = validator;
 
-const SEGS_LIMIT = 190 * 1024 * 1024; // 190MB
-const GOFILE_LIMIT = 10 * 1024 * 1024 * 1024; // 10GB
+const SEGS_LIMIT = 190 * 1024 * 1024;
+const GOFILE_LIMIT = 10 * 1024 * 1024 * 1024;
 const cobaltUrl = "http://localhost:9001";
 
-export const downloadLinkPattern = /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
+export const downloadLinkPattern =
+  /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+|(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/)\S+|youtu\.be\/\S+)/i;
 
 function sanitizeUrl(rawUrl: string): string | null {
   const cleaned = trim(rawUrl).replace(/[<>\s]/g, "");
-
   if (!downloadLinkPattern.test(cleaned)) return null;
-
   if (!isURL(cleaned, { require_protocol: false })) return null;
 
   try {
     const url = new URL(cleaned.startsWith("http") ? cleaned : "https://" + cleaned);
     return url.href;
   } catch {
-    timeLog("Invalid URL for downloader:" + cleaned);
+    timeLog("Invalid URL for downloader: " + cleaned);
     return null;
   }
 }
 
-type CobaltResult = 
+type CobaltResult =
   | { status: 'success'; url: string; filename: string }
   | { status: 'error'; message: string };
 
 async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<CobaltResult> {
   try {
-    const response = await axios.post(cobaltUrl, {
-      url: url,
-      videoQuality: "1080",
-      filenameStyle: "classic",
-      downloadMode: "auto",
-      youtubeVideoCodec: "h264",
-      alwaysProxy: true,
-      disableMetadata: true,
-    }, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+    const response = await axios.post(
+      cobaltUrl,
+      {
+        url,
+        filenameStyle: "classic",
+        downloadMode: "auto",
+
+        // IMPORTANT: avoid impossible YT combos
+        videoQuality: "auto",
+        youtubeVideoCodec: "h264",
+
+        alwaysProxy: true,
+        disableMetadata: true,
+      },
+      {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
       }
-    });
+    );
 
     const data = response.data;
     let downloadUrl: string | null = null;
     let filename = 'video.mp4';
 
-    if (data.status === 'redirect' || data.status === 'tunnel' || data.status === 'stream') {
+    if (['redirect', 'tunnel', 'stream'].includes(data.status)) {
       downloadUrl = data.url;
       if (data.filename) filename = data.filename;
-    } else if (data.status === 'picker' && data.picker && data.picker.length > 0) {
-      let item;
-      if (slideIndex) {
-        item = data.picker[slideIndex - 1];
-        if (!item) {
-          return { status: 'error', message: `Slide ${slideIndex} not found` };
-        }
-      } else {
-        item = data.picker[0];
-      }
+    } else if (data.status === 'picker' && data.picker?.length) {
+      const item = slideIndex ? data.picker[slideIndex - 1] : data.picker[0];
+      if (!item) return { status: 'error', message: 'Picker item not found' };
+
       downloadUrl = item.url;
-      if (item.type === 'photo') filename = 'image.jpg';
-      if (item.type === 'gif') filename = 'image.gif';
+      filename =
+        item.type === 'photo' ? 'image.jpg' :
+        item.type === 'gif'   ? 'image.gif'  :
+        filename;
     }
 
     if (!downloadUrl) {
-      timeLog(`Cobalt processing failed: ${JSON.stringify(data)}`);
-      return { status: 'error', message: 'Processing failed' };
+      timeLog("Cobalt failed: " + JSON.stringify(data));
+      return { status: 'error', message: 'Cobalt processing failed' };
     }
 
     return { status: 'success', url: downloadUrl, filename };
 
-  } catch (error: any) {
-    const code = error.response?.data?.error?.code;
-    let message = code || error.message;
-
-    if (code === 'error.api.content.video.unavailable') {
-      message = 'Video unavailable';
-    }
-    
-    timeLog("Cobalt error: " + (error.response?.data ? JSON.stringify(error.response.data) : error.message));
-    return { status: 'error', message };
+  } catch (err: any) {
+    const code = err.response?.data?.error?.code;
+    timeLog("Cobalt error: " + (code || err.message));
+    return { status: 'error', message: code || 'Cobalt error' };
   }
 }
 
-async function uploadGoFile(stream: any, length: number | undefined, filename: string): Promise<string | undefined> {
-  timeLog(`Starting GoFile upload. Filename: ${filename}, Length: ${length ?? 'unknown'}`);
-  try {
-    const form = new FormData();
-    const options: any = { filename };
-    if (length) options.knownLength = length;
-    
-    form.append("file", stream, options);
+/* ---------------- Tunnel helpers ---------------- */
 
-    const uploadRes = await axios.post(`https://store1.gofile.io/uploadfile`, form, {
-      headers: { 
+async function downloadTunnelToFile(sourceUrl: string, tempFile: string): Promise<number> {
+  const response = await axios.get(sourceUrl, {
+    responseType: 'stream',
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': '*/*',
+      'Range': 'bytes=0-',
+    },
+    timeout: 0,
+  });
+
+  let bytes = 0;
+  const writer = fs.createWriteStream(tempFile);
+
+  response.data.on('data', (chunk: Buffer) => {
+    bytes += chunk.length;
+  });
+
+  response.data.pipe(writer);
+
+  await new Promise<void>((resolve, reject) => {
+    writer.on('finish', resolve);
+    writer.on('error', reject);
+    response.data.on('error', reject);
+  });
+
+  return bytes;
+}
+
+/* ---------------- GoFile upload ---------------- */
+
+async function uploadGoFile(stream: any, length: number, filename: string): Promise<string | undefined> {
+  timeLog(`Uploading to GoFile: ${filename} (${length} bytes)`);
+
+  const form = new FormData();
+  form.append("file", stream, { filename, knownLength: length });
+
+  const uploadRes = await axios.post(
+    "https://store1.gofile.io/uploadfile",
+    form,
+    {
+      headers: {
         ...form.getHeaders(),
-        'Authorization': `Bearer ${config.gofile.token}`
+        Authorization: `Bearer ${config.gofile.token}`,
       },
+      maxBodyLength: GOFILE_LIMIT,
       maxContentLength: GOFILE_LIMIT,
-      maxBodyLength: GOFILE_LIMIT
-    });
-
-    if (uploadRes.data.status !== 'ok') {
-      timeLog("GoFile upload failed status: " + JSON.stringify(uploadRes.data));
-      return undefined;
     }
+  );
 
-    const contentId = uploadRes.data.data.fileId; 
-    const downloadPage = uploadRes.data.data.downloadPage;
-    
-    try {
-      // Create direct link
-      const linkRes = await axios.post(`https://api.gofile.io/contents/${contentId}/directlinks`, {}, {
-        headers: {
-          'Authorization': `Bearer ${config.gofile.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (linkRes.data.status === 'ok') {
-        return linkRes.data.data.directLink;
-      }
-    } catch (error) {
-      // Direct link creation failed (likely not premium), fallback to downloadPage
-    }
-
-    return downloadPage;
-
-  } catch (error: any) {
-    timeLog("GoFile error: " + (error.response?.data ? JSON.stringify(error.response.data) : error.message));
+  if (uploadRes.data.status !== 'ok') {
+    timeLog("GoFile upload failed: " + JSON.stringify(uploadRes.data));
     return undefined;
   }
+
+  return uploadRes.data.data.downloadPage;
 }
 
+/* ---------------- YouTube-safe path ---------------- */
+
 async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Promise<string | undefined> {
-  timeLog("Downloading to temp file for GoFile upload...");
+  timeLog("Downloading tunnel to temp file (YouTube-safe)");
   const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
-  
+
   try {
-    const response = await axios.get(sourceUrl, { 
-      responseType: 'stream',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': '*/*'
-      }
-    });
-    timeLog(`Download response status: ${response.status}`);
-    timeLog(`Download response headers: ${JSON.stringify(response.headers)}`);
+    const bytes = await downloadTunnelToFile(sourceUrl, tempFile);
+    timeLog(`Downloaded ${bytes} bytes`);
 
-    const writer = fs.createWriteStream(tempFile);
-    
-    let bytesReceived = 0;
-    response.data.on('data', (chunk: any) => {
-      bytesReceived += chunk.length;
-    });
-
-    response.data.pipe(writer);
-    
-    await new Promise<void>((resolve, reject) => {
-      writer.on('finish', () => {
-        timeLog(`Stream finished. Total bytes received: ${bytesReceived}`);
-        resolve();
-      });
-      writer.on('error', reject);
-      response.data.on('error', reject);
-    });
-
-    const stat = fs.statSync(tempFile);
-    timeLog(`Temp file created: ${tempFile} (${stat.size} bytes)`);
-
-    if (stat.size === 0) {
-      timeLog("Temp file is empty, aborting upload.");
+    if (bytes === 0) {
+      timeLog("Zero-byte tunnel response");
       return undefined;
     }
-    
-    const fileStream = fs.createReadStream(tempFile);
-    return await uploadGoFile(fileStream, stat.size, filename);
 
+    return await uploadGoFile(fs.createReadStream(tempFile), bytes, filename);
   } catch (err: any) {
-    timeLog("Error in downloadAndUploadGoFile: " + err);
+    timeLog("Temp download failed: " + err.message);
     return undefined;
   } finally {
     if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
   }
 }
 
-async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile: boolean = false): Promise<string | "too-large" | undefined> {
-  // If we need to use GoFile (e.g. for YouTube), download to temp file first to get exact size
-  // and avoid issues with unknown content-length or single-use tokens.
+/* ---------------- Unified upload ---------------- */
+
+async function uploadFromStream(
+  sourceUrl: string,
+  filename: string,
+  forceGoFile: boolean
+): Promise<string | "too-large" | undefined> {
+
   if (forceGoFile) {
     return await downloadAndUploadGoFile(sourceUrl, filename);
   }
 
-  timeLog(`Fetching source stream: ${sourceUrl}`);
-  const source = await axios.get(sourceUrl, { 
-    responseType: 'stream',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': '*/*'
-    }
-  });
+  const source = await axios.get(sourceUrl, { responseType: 'stream' });
   let length = parseInt(source.headers['content-length'] || '0');
-  timeLog(`Source headers received. Content-Length: ${source.headers['content-length']}, Content-Type: ${source.headers['content-type']}`);
-  const contentType = source.headers['content-type'];
 
-  if (contentType && contentType.includes('application/json')) {
-    const chunks = [];
-    for await (const chunk of source.data) {
-      chunks.push(chunk);
-    }
-    const errorBody = Buffer.concat(chunks).toString();
-    timeLog(`Cobalt tunnel returned JSON error: ${errorBody}`);
-    return undefined;
-  }
-
-  if (length === 0 && source.headers['estimated-content-length']) {
-    length = parseInt(source.headers['estimated-content-length']);
-  }
-
-  if (length > 0 && length < 1000 && filename.endsWith('.mp4')) {
-    timeLog(`Stream too small for video (${length} bytes), likely error.`);
-    return undefined;
-  }
-
-  if (length > GOFILE_LIMIT) {
+  if (length > SEGS_LIMIT) {
     source.data.destroy();
     return "too-large";
   }
 
-  // If length is unknown (0) or larger than SEGS_LIMIT, use GoFile
-  if (length === 0 || length > SEGS_LIMIT) {
-    timeLog("Length unknown or too large, downloading to temp file.");
-    source.data.destroy();
-    return await downloadAndUploadGoFile(sourceUrl, filename);
-  }
-
-  // Use Segs/Olrite
-  const attemptUpload = async (targetUrl: string) => {
-    const form = new FormData();
-    form.append("file", source.data, { filename: filename, knownLength: length || undefined });
-
-    const res = await axios.post(targetUrl, form, {
-      headers: { ...form.getHeaders() },
-      maxContentLength: SEGS_LIMIT,
-      maxBodyLength: SEGS_LIMIT
-    });
-    return res.data.link || res.data.url;
-  };
+  const form = new FormData();
+  form.append("file", source.data, { filename, knownLength: length || undefined });
 
   try {
-    return await attemptUpload("https://segs.lol/api/upload");
-  } catch (e: any) {
-    timeLog("segs.lol failed: " + e.message);
-    
-    // Re-fetch stream for fallback (since the first stream is consumed)
-    try {
-      const source2 = await axios.get(sourceUrl, { responseType: 'stream' });
-      const form2 = new FormData();
-      form2.append("file", source2.data, { filename: filename, knownLength: length || undefined });
-      
-      const res = await axios.post("https://olrite.lol/api/upload", form2, {
-        headers: { ...form2.getHeaders() },
-        maxContentLength: SEGS_LIMIT,
-        maxBodyLength: SEGS_LIMIT
-      });
-      return res.data.url;
-    } catch (e: any) {
-      timeLog("olrite.lol failed: " + e.message);
-      return undefined;
-    }
+    const res = await axios.post("https://segs.lol/api/upload", form, {
+      headers: form.getHeaders(),
+      maxBodyLength: SEGS_LIMIT,
+      maxContentLength: SEGS_LIMIT,
+    });
+    return res.data.link || res.data.url;
+  } catch {
+    return undefined;
   }
 }
 
+/* ---------------- Command entry ---------------- */
+
 const downloadCache = new Map<string, string>();
 
-export default async function download(msg: PrivmsgMessage, linkOrCommand: string | boolean, args?: string[]) {
+export default async function download(
+  msg: PrivmsgMessage,
+  linkOrCommand: string | boolean,
+  args?: string[]
+) {
   let mediaLink: string | null = null;
-  let isCommand = false;
   let slideIndex: number | undefined;
 
   if (typeof linkOrCommand === 'boolean') {
-    isCommand = linkOrCommand;
-    if (args && args.length > 0) {
-      if (args.length > 1 && /^\d+$/.test(args[0])) {
+    if (args?.length) {
+      if (/^\d+$/.test(args[0])) {
         slideIndex = parseInt(args[0]);
         mediaLink = args[1];
       } else {
@@ -307,58 +237,36 @@ export default async function download(msg: PrivmsgMessage, linkOrCommand: strin
     mediaLink = linkOrCommand;
   }
 
-  if (!mediaLink) {
-    if (isCommand) await saySafe(msg.channelName, "Please provide a link.", msg.messageID);
-    return;
-  }
+  if (!mediaLink) return;
 
   const sanitized = sanitizeUrl(mediaLink);
-  if (!sanitized) {
-    if (isCommand) await saySafe(msg.channelName, "Invalid URL.", msg.messageID);
-    else timeLog("Invalid URL for downloader: " + mediaLink);
-    return;
-  }
+  if (!sanitized) return;
 
-  // Automatic mode restrictions
-  if (!isCommand) {
-    const isYouTube = sanitized.includes("youtube.com") || sanitized.includes("youtu.be");
-    const isShorts = sanitized.includes("/shorts/");
-    
-    if (isYouTube && !isShorts) {
-      // Skip long youtube videos in auto mode
-      return;
-    }
-  }
+  const isYouTube =
+    sanitized.includes("youtube.com") || sanitized.includes("youtu.be");
 
   const cacheKey = slideIndex ? `${sanitized}|${slideIndex}` : sanitized;
-
   if (downloadCache.has(cacheKey)) {
-    const cachedLink = downloadCache.get(cacheKey)!;
-    await saySafe(msg.channelName, `🪞 ${cachedLink}`, msg.messageID);
+    await saySafe(msg.channelName, `🪞 ${downloadCache.get(cacheKey)}`, msg.messageID);
     return;
   }
 
-  const cobaltResult = await resolveCobaltUrl(sanitized, slideIndex);
-  
-  if (cobaltResult.status === 'error') {
-    if (isCommand) await saySafe(msg.channelName, `Download failed: ${cobaltResult.message}`, msg.messageID);
-    else timeLog("Download failed for: " + sanitized + " : " + cobaltResult.message);
-    return;
+  const cobalt = await resolveCobaltUrl(sanitized, slideIndex);
+  if (cobalt.status === 'error') return;
+
+  // Safety check after tunnel resolution
+  if (isYouTube && !cobalt.filename.endsWith('.mp4')) {
+    timeLog("Unexpected YouTube filename: " + cobalt.filename);
   }
 
-  const isYouTube = sanitized.includes("youtube.com") || sanitized.includes("youtu.be");
-  
-  const uploadedUrl = await uploadFromStream(cobaltResult.url, cobaltResult.filename, isYouTube);
+  const uploaded = await uploadFromStream(
+    cobalt.url,
+    cobalt.filename,
+    isYouTube
+  );
 
-  if (uploadedUrl === "too-large") {
-    await saySafe(msg.channelName, "Video too large to download.", msg.messageID);
-    return;
-  }
+  if (!uploaded || uploaded === "too-large") return;
 
-  if (!uploadedUrl) {
-    await saySafe(msg.channelName, `uh upload failed`, msg.messageID);
-  } else {
-    downloadCache.set(cacheKey, uploadedUrl);
-    await saySafe(msg.channelName, `🪞 ${uploadedUrl}`, msg.messageID);
-  }
+  downloadCache.set(cacheKey, uploaded);
+  await saySafe(msg.channelName, `🪞 ${uploaded}`, msg.messageID);
 }
