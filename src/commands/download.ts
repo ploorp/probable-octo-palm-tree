@@ -146,19 +146,20 @@ async function uploadGoFile(stream: any, length: number | undefined, filename: s
   }
 }
 
-async function downloadAndUploadGoFile(inputStream: any, filename: string): Promise<string | undefined> {
+async function downloadAndUploadGoFile(sourceUrl: string, filename: string): Promise<string | undefined> {
   timeLog("Downloading to temp file for GoFile upload...");
   const tempFile = path.join(os.tmpdir(), `dl-${crypto.randomUUID()}.tmp`);
   
   try {
+    const response = await axios.get(sourceUrl, { responseType: 'stream' });
     const writer = fs.createWriteStream(tempFile);
     
-    inputStream.pipe(writer);
+    response.data.pipe(writer);
     
     await new Promise<void>((resolve, reject) => {
       writer.on('finish', () => resolve());
       writer.on('error', reject);
-      inputStream.on('error', reject);
+      response.data.on('error', reject);
     });
 
     const stat = fs.statSync(tempFile);
@@ -181,25 +182,26 @@ async function downloadAndUploadGoFile(inputStream: any, filename: string): Prom
 }
 
 async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile: boolean = false): Promise<string | "too-large" | undefined> {
-  timeLog(`Fetching source stream: ${sourceUrl}`);
-  const source = await axios.get(sourceUrl, { responseType: 'stream' });
-  let length = parseInt(source.headers['content-length'] || '0');
-  timeLog(`Source headers received. Content-Length: ${source.headers['content-length']}, Content-Type: ${source.headers['content-type']}`);
-  const contentType = source.headers['content-type'];
+  timeLog(`Checking source headers: ${sourceUrl}`);
+  
+  let length = 0;
+  let contentType: string | undefined;
 
-  if (contentType && contentType.includes('application/json')) {
-    const chunks = [];
-    for await (const chunk of source.data) {
-      chunks.push(chunk);
+  try {
+    const head = await axios.head(sourceUrl);
+    length = parseInt(head.headers['content-length'] || '0');
+    contentType = head.headers['content-type'];
+    if (length === 0 && head.headers['estimated-content-length']) {
+      length = parseInt(head.headers['estimated-content-length']);
     }
-    const errorBody = Buffer.concat(chunks).toString();
-    timeLog(`Cobalt tunnel returned JSON error: ${errorBody}`);
-    return undefined;
+    timeLog(`HEAD headers received. Content-Length: ${length}, Content-Type: ${contentType}`);
+  } catch (e) {
+    timeLog("HEAD request failed, falling back to GET stream check.");
   }
 
-  if (length === 0 && source.headers['estimated-content-length']) {
-    length = parseInt(source.headers['estimated-content-length']);
-  }
+  // If HEAD failed or gave no info, we might need to start the stream to check, 
+  // but that risks consuming a single-use token. 
+  // So if HEAD failed, we assume we need to download it if we can't trust the length.
 
   if (length > 0 && length < 1000 && filename.endsWith('.mp4')) {
     timeLog(`Stream too small for video (${length} bytes), likely error.`);
@@ -207,20 +209,24 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
   }
 
   if (length > GOFILE_LIMIT) {
-    source.data.destroy();
     return "too-large";
   }
 
   // If length is unknown (0) or larger than SEGS_LIMIT, use GoFile
   if (forceGoFile || length === 0 || length > SEGS_LIMIT) {
     if (length > 0) {
+      // We know the length, so we can stream directly
+      const source = await axios.get(sourceUrl, { responseType: 'stream' });
       return await uploadGoFile(source.data, length, filename);
     }
-    timeLog("Length unknown, falling back to temp file download.");
-    return await downloadAndUploadGoFile(source.data, filename);
+    
+    timeLog("Length unknown, downloading to temp file.");
+    return await downloadAndUploadGoFile(sourceUrl, filename);
   }
 
   // Use Segs/Olrite
+  const source = await axios.get(sourceUrl, { responseType: 'stream' });
+  
   const attemptUpload = async (targetUrl: string) => {
     const form = new FormData();
     form.append("file", source.data, { filename: filename, knownLength: length || undefined });
@@ -238,7 +244,7 @@ async function uploadFromStream(sourceUrl: string, filename: string, forceGoFile
   } catch (e: any) {
     timeLog("segs.lol failed: " + e.message);
     
-    // Re-fetch stream for fallback
+    // Re-fetch stream for fallback (since the first stream is consumed)
     try {
       const source2 = await axios.get(sourceUrl, { responseType: 'stream' });
       const form2 = new FormData();
