@@ -40,19 +40,21 @@ type CobaltResult =
 async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<CobaltResult> {
   try {
     const response = await axios.post(
-    cobaltUrl,
-      {
+      cobaltUrl,
+      JSON.stringify({
         url,
         videoQuality: "auto",
         youtubeVideoCodec: "h264"
-      },
+      }),
       {
         headers: {
-          Accept: 'application/json',
+          'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
+        transformRequest: x => x, // IMPORTANT: prevent axios mutation
       }
     );
+
 
     const data = response.data;
     let downloadUrl: string | null = null;
