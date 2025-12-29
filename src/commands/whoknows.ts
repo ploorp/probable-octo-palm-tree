@@ -1,5 +1,6 @@
 import { client, saySafe } from '../client.js';
 import axios from 'axios';
+import { spawn } from 'child_process';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount, getAllLastFmUsers, refreshUsername } from '../db/dbManager.js';
@@ -110,6 +111,49 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
 
   const parts = plays.map((p, i) => `${i + 1}. ${p.username} (${p.playcount})`);
   const message = `${correctArtistName}: ${parts.join(', ')}`;
+
+  if (message.length > 450) {
+    try {
+      const link = await new Promise<string>((resolve, reject) => {
+        const curl = spawn('curl', ['-F', 'file=@-', 'https://0x0.st']);
+        let output = '';
+        let error = '';
+
+        curl.stdout.on('data', (data) => {
+          output += data.toString();
+        });
+
+        curl.stderr.on('data', (data) => {
+          error += data.toString();
+        });
+
+        curl.on('close', (code) => {
+          if (code === 0) {
+            resolve(output.trim());
+          } else {
+            reject(new Error(`curl exited with code ${code}: ${error}`));
+          }
+        });
+
+        curl.stdin.write(message);
+        curl.stdin.end();
+      });
+
+      const suffix = ` ... ${link}`;
+      let truncated = `${correctArtistName}: `;
+
+      for (const part of parts) {
+        const nextStr = truncated === `${correctArtistName}: ` ? part : `, ${part}`;
+        if (truncated.length + nextStr.length + suffix.length > 450) break;
+        truncated += nextStr;
+      }
+      truncated += suffix;
+      return saySafe(msg.channelName, truncated, msg.messageID);
+    } catch (e) {
+      console.error('0x0 upload failed', e);
+      return saySafe(msg.channelName, message.substring(0, 447) + '...', msg.messageID);
+    }
+  }
 
   return saySafe(msg.channelName, message, msg.messageID);
 }
