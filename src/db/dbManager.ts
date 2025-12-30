@@ -1,5 +1,5 @@
 import db from "./db.js";
-import { getUsername } from "../helix.js";
+import { getUsername, getUserId } from "../helix.js";
 import config from "../../config.json" with { type: "json" };
 
 export function ensureUserRow(id: string) {
@@ -19,9 +19,12 @@ export async function refreshUsername(id: string): Promise<string | null> {
   return null;
 }
 
-export async function editLastfm(id: string, username: string) {
+export async function editLastfm(twitchUsername: string, lastfmUsername: string): Promise<boolean> {
+  const id = await getUserId(twitchUsername);
+  if (!id) return false;
   ensureUserRow(id);
-  db.prepare("UPDATE users SET lastfm = ? WHERE id = ?").run(username, id);
+  db.prepare("UPDATE users SET lastfm = ? WHERE id = ?").run(lastfmUsername, id);
+  return true;
 }
 
 export function getJoinedChannels(): { id: string; username?: string }[] {

@@ -171,7 +171,12 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'lu':
         if (!isWhitelisted(msg.senderUserID)) return;
-        await editLastfm(args[1], args[2]);
+        const success = await editLastfm(args[1], args[2]);
+        if (success) {
+          saySafe(msg.channelName, `set lastfm for ${args[1]} to ${args[2]}`, msg.messageID);
+        } else {
+          saySafe(msg.channelName, `user ${args[1]} not found`, msg.messageID);
+        }
         return;
       
       case 'sc':

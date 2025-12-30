@@ -23,6 +23,9 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   if (account) {
     try {
       const recents = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+        headers: {
+          'User-Agent': 'ploorp',
+        },
         params: {
           method: 'user.getrecenttracks',
           user: account,
@@ -62,6 +65,9 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           response = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+            headers: {
+              'User-Agent': 'ploorp',
+            },
             params: {
               method: 'artist.getinfo',
               artist: artistName,

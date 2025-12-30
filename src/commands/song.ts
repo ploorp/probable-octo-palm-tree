@@ -39,6 +39,9 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
   let recents;
   try {
     recents = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+      headers: {
+        'User-Agent': 'ploorp',
+      },
       params: {
         method: 'user.getrecenttracks',
         user: username,
@@ -71,6 +74,9 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
     let trackInfo;
     try {
       trackInfo = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+        headers: {
+          'User-Agent': 'ploorp',
+        },
         params: {
           method: 'track.getinfo',
           artist,
