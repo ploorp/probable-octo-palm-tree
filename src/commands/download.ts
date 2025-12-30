@@ -34,7 +34,7 @@ function sanitizeUrl(rawUrl: string): string | null {
 }
 
 type CobaltResult =
-  | { status: 'success'; url: string; filename: string }
+  | { status: 'success'; url: string; filename: string; isImage: boolean }
   | { status: 'error'; message: string };
 
 async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<CobaltResult> {
@@ -53,6 +53,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
     const data = response.data;
     let downloadUrl: string | null = null;
     let filename = 'video.mp4';
+    let isImage = false;
 
     if (['redirect', 'tunnel', 'stream'].includes(data.status)) {
       downloadUrl = data.url;
@@ -62,10 +63,12 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
       if (!item) return { status: 'error', message: 'Picker item not found' };
 
       downloadUrl = item.url;
-      filename =
-        item.type === 'photo' ? 'image.jpg' :
-        item.type === 'gif'   ? 'image.gif'  :
-        filename;
+      if (item.type === 'photo') {
+        filename = 'image.jpg';
+        isImage = true;
+      } else if (item.type === 'gif') {
+        filename = 'image.gif';
+      }
     }
 
     if (!downloadUrl) {
@@ -73,7 +76,11 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
       return { status: 'error', message: 'Cobalt processing failed' };
     }
 
-    return { status: 'success', url: downloadUrl, filename };
+    if (!isImage && /\.(jpg|jpeg|png|webp)$/i.test(filename)) {
+      isImage = true;
+    }
+
+    return { status: 'success', url: downloadUrl, filename, isImage };
 
   } catch (err: any) {
     const code = err.response?.data?.error?.code;
@@ -244,6 +251,14 @@ export default async function download(
 
   const cobalt = await resolveCobaltUrl(sanitized, slideIndex);
   if (cobalt.status === 'error') return;
+
+  const isExplicit = typeof linkOrCommand === 'boolean';
+  const hostname = new URL(sanitized).hostname;
+  const isTwitter = hostname.includes('twitter.com') || hostname.includes('x.com');
+
+  if (!isExplicit && isTwitter && cobalt.isImage) {
+    return;
+  }
 
   // Safety check after tunnel resolution
   if (isYouTube && !cobalt.filename.endsWith('.mp4')) {
