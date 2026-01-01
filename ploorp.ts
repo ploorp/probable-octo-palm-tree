@@ -26,6 +26,7 @@ import randomline from './src/commands/randomline.js';
 import listen from './src/commands/listen.js';
 import { editLastfm } from './src/db/dbManager.js';
 import osu from './src/commands/osu.js';
+import plays from './src/commands/plays.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -167,6 +168,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'wk':
       case 'w':
         await whoKnows(msg, args);
+        return;
+
+      case 'plays':
+      case 'p':
+        await plays(msg, args);
         return;
 
       case 'lu':
