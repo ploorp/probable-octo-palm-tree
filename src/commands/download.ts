@@ -92,16 +92,31 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
 /* ---------------- Tunnel helpers ---------------- */
 
 async function downloadTunnelToFile(sourceUrl: string, tempFile: string): Promise<number> {
+  let hostname = '';
+  try {
+    hostname = new URL(sourceUrl).hostname;
+  } catch {}
+
+  const headers: Record<string, string> = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': '*/*',
+    'Accept-Encoding': 'identity',
+  };
+
+  if (hostname.includes('instagram.com') || hostname.includes('cdninstagram.com')) {
+    headers['Referer'] = 'https://www.instagram.com/';
+    headers['Sec-Fetch-Dest'] = 'video';
+    headers['Sec-Fetch-Mode'] = 'no-cors';
+    headers['Sec-Fetch-Site'] = 'cross-site';
+  } else if (hostname.includes('tiktok.com')) {
+    headers['Referer'] = 'https://www.tiktok.com/';
+  }
+
   const response = await axios.get(sourceUrl, {
     responseType: 'stream',
-    proxy: false, // ← CRITICAL FIX
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': '*/*',
-      'Accept-Encoding': 'identity',
-      'Range': 'bytes=0-',
-    },
-    timeout: 0,
+    proxy: false,
+    headers,
+    timeout: 30000, // Explicit timeout is better than 0 (infinite) to avoid hangs
   });
 
   let bytes = 0;
@@ -119,6 +134,10 @@ async function downloadTunnelToFile(sourceUrl: string, tempFile: string): Promis
     response.data.on('error', reject);
   });
 
+  if (bytes === 0) {
+    timeLog(`Tunnel download yielded 0 bytes. Status: ${response.status}. Headers: ${JSON.stringify(response.headers)}`);
+  }
+
   return bytes;
 }
 
@@ -130,25 +149,33 @@ async function uploadGoFile(stream: any, length: number, filename: string): Prom
   const form = new FormData();
   form.append("file", stream, { filename, knownLength: length });
 
-  const uploadRes = await axios.post(
-    "https://store1.gofile.io/uploadfile",
-    form,
-    {
-      headers: {
-        ...form.getHeaders(),
-        Authorization: `Bearer ${config.gofile.token}`,
-      },
-      maxBodyLength: GOFILE_LIMIT,
-      maxContentLength: GOFILE_LIMIT,
-    }
-  );
+  try {
+    const uploadRes = await axios.post(
+      "https://upload.gofile.io/uploadfile",
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          Authorization: `Bearer ${config.gofile.token}`,
+        },
+        maxBodyLength: GOFILE_LIMIT,
+        maxContentLength: GOFILE_LIMIT,
+      }
+    );
 
-  if (uploadRes.data.status !== 'ok') {
-    timeLog("GoFile upload failed: " + JSON.stringify(uploadRes.data));
+    if (uploadRes.data.status !== 'ok') {
+      timeLog("GoFile upload failed: " + JSON.stringify(uploadRes.data));
+      return undefined;
+    }
+
+    return uploadRes.data.data.downloadPage;
+  } catch (err: any) {
+    timeLog("GoFile upload exception: " + err.message);
+    if (err.response) {
+      timeLog("GoFile response: " + JSON.stringify(err.response.data));
+    }
     return undefined;
   }
-
-  return uploadRes.data.data.downloadPage;
 }
 
 /* ---------------- YouTube-safe path ---------------- */
@@ -242,6 +269,11 @@ export default async function download(
 
   const isYouTube =
     sanitized.includes("youtube.com") || sanitized.includes("youtu.be");
+
+  // Passive mode (linkOrCommand is string): Block YouTube unless it's explicitly a Short
+  if (typeof linkOrCommand === 'string' && isYouTube && !sanitized.includes("/shorts/")) {
+    return;
+  }
 
   const cacheKey = slideIndex ? `${sanitized}|${slideIndex}` : sanitized;
   if (downloadCache.has(cacheKey)) {
