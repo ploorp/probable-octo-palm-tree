@@ -148,14 +148,6 @@ export default async function download(
   const sanitized = sanitizeUrl(mediaLink);
   if (!sanitized) return;
 
-  const isYouTube =
-    sanitized.includes("youtube.com") || sanitized.includes("youtu.be");
-
-  // Passive mode (linkOrCommand is string): Block YouTube unless it's explicitly a Short
-  if (typeof linkOrCommand === 'string' && isYouTube && !sanitized.includes("/shorts/")) {
-    return;
-  }
-
   const cacheKey = slideIndex ? `${sanitized}|${slideIndex}` : sanitized;
   if (downloadCache.has(cacheKey)) {
     await saySafe(msg.channelName, `🪞 ${downloadCache.get(cacheKey)}`, msg.messageID);
@@ -173,15 +165,9 @@ export default async function download(
     return;
   }
 
-  // Safety check after tunnel resolution
-  if (isYouTube && !cobalt.filename.endsWith('.mp4')) {
-    timeLog("Unexpected YouTube filename: " + cobalt.filename);
-  }
-
   const uploaded = await uploadFromStream(
     cobalt.url,
-    cobalt.filename,
-    isYouTube
+    cobalt.filename
   );
 
   if (!uploaded || uploaded === "too-large") return;
