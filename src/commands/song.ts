@@ -116,12 +116,12 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
   }
 
   if (nowPlaying) {
-    return saySafe(msg.channelName, `${username} is currently playing "${songTitle}" by ${artist}${scrobbleCount} kittyJam`, msg.messageID);
+    return saySafe(msg.channelName, `${username} is currently playing "${songTitle}" by ${artist}${scrobbleCount} SourPls`, msg.messageID);
   } else {
     let ago = 'unknown time ago';
     if (date?.uts) {
       ago = timeAgo(new Date(parseInt(date.uts) * 1000));
     }
-    return saySafe(msg.channelName, `${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} kittyJam`, msg.messageID);
+    return saySafe(msg.channelName, `${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} SourPls`, msg.messageID);
   }
 }
