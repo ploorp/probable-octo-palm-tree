@@ -1,7 +1,18 @@
 {
-  "id": "123456789",
-  "username": "your_username",
+  "id": "bot_id",
+  "username": "bot_username",
   "prefix": "%",
+  "cooldown": 2000,
+  "channels": [ 
+    "3456329087",
+    "ploorp"
+  ],
+  "whitelist_channels": [
+      "ploorp"
+  ],
+  "opted_out": [ 
+    "a_username"
+  ],
   "helix": {
     "access_token": "https://twitchtokengenerator.com/",
     "helix_id": "gp762nuuoqcoxypju8c569th9wz7q5"
@@ -10,11 +21,15 @@
     "client_id": ""
   },
   "osu": {
-    "client_id": "",
+    "client_id": "", 
     "client_secret": ""
   },
-  "cooldown": 2000,
-  "whitelist_channels": [
-      "your_channel"
-  ]
+  "commands": {
+    "osu_enabled": false,
+    "fortune_enabled": false,
+    "downloader_enabled": false,
+    "gup": true
+  },
+  "cobalt_url": "http://localhost:9000",
+  "uploader_url": "https://segs.lol"
 }

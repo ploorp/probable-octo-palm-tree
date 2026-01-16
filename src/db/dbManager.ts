@@ -1,6 +1,7 @@
 import db from "./db.js";
-import { getUsername, getUserId } from "../helix.js";
+import { getUsername, getUserId } from "../api/helix.js";
 import config from "../../config.json" with { type: "json" };
+
 
 export function ensureUserRow(id: string) {
   db.prepare(`
@@ -27,10 +28,23 @@ export async function editLastfm(twitchUsername: string, lastfmUsername: string)
   return true;
 }
 
-export function getJoinedChannels(): { id: string; username?: string }[] {
+export async function getJoinedChannels(): Promise<{ id: string; username?: string; }[]> {
   const rows = db.prepare('SELECT id, username FROM users WHERE is_joined = 1').all() as { id: string; username?: string }[];
-  return rows.map(r => ({ id: r.id, username: r.username }));
+  if (rows.length === 0) {
+    const channels = config.channels 
+    if (channels.length === 0) return [{ id: config.id, username: config.username }]; // at least join bot channel
+    const joined: { id: string; username?: string }[] = [];
+    for (const chan of channels) {
+      const id = await getUserId(chan);
+      if (id) {
+        joined.push({ id, username: chan });
+      }
+    }
+    return joined;
+  }
+  return rows;
 }
+
 
 // OPT-OUT
 export function isOptedOut(id: string): boolean {
@@ -43,6 +57,7 @@ export async function setOptOut(id: string, optOut: boolean) {
   ensureUserRow(id);
   db.prepare("UPDATE users SET opted_out = ? WHERE id = ?").run(optOut ? 1 : 0, id);
 }
+
 
 // CHANNELS
 export async function addChannel(id: string, prefix: string = config.prefix) {
@@ -78,6 +93,7 @@ export function setPrefix(id: string, prefix: string) {
   `).run(id, prefix);
 }
 
+
 // WHITELIST
 export function setWhitelist(id: string, whitelist: boolean) {
   ensureUserRow(id);
@@ -94,6 +110,20 @@ export function getWhitelistedUsers(): string[] {
   const rows = db.prepare("SELECT id FROM users WHERE is_whitelisted = 1").all() as { id: string }[];
   return rows.map(row => row.id);
 }
+
+export function initWhitelist() {
+  for (const adminId of config.admins) {
+    setWhitelist(adminId, true);
+  }
+  for (const channel of config.whitelist_channels) {
+    getUserId(channel).then(id => {
+      if (id) {
+        setWhitelist(id, true);
+      }
+    });
+  }
+}
+
 
 // CONNECTIONS
 export function linkAccount(id: string, service: string, handle: string) {
@@ -122,6 +152,7 @@ export function getAllLastFmUsers(): { id: string; username?: string; lastfm: st
   const rows = db.prepare('SELECT id, username, lastfm FROM users WHERE lastfm IS NOT NULL').all() as { id: string; username?: string; lastfm: string }[];
   return rows;
 }
+
 
 // FORTUNE
 export function updateStreak(userId: string) {

@@ -1,0 +1,15 @@
+#/etc/systemd/system/ploorpbot.service
+[Unit]
+Description=ploorp twitch bot
+After=network.target
+
+# obviously change the paths
+[Service]
+User=ploorp
+ExecStart=/home/ploorp/.nvm/versions/node/v24.12.0/bin/node /home/ploorp/probable-octo-palm-tree/dist/ploorp.js 
+WorkingDirectory=/home/ploorp/probable-octo-palm-tree
+StandardOutput=append:/home/ploorp/probable-octo-palm-tree/service.log
+StandardError=append:/home/ploorp/probable-octo-palm-tree/service.log
+
+[Install]
+WantedBy=multi-user.target

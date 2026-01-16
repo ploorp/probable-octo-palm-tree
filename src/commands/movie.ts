@@ -1,4 +1,4 @@
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';

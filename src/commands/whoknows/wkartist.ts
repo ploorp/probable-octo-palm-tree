@@ -1,10 +1,10 @@
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../../client.js';
+import { timeLog } from '../../utils.js';
 import axios from 'axios';
-import { spawn } from 'child_process';
-import config from '../../config.json' with { type: 'json' };
+import config from '../../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { getAccount, getAllLastFmUsers, refreshUsername } from '../db/dbManager.js';
-import { usernameToID } from '../utils.js';
+import { getAccount, getAllLastFmUsers, refreshUsername } from '../../db/dbManager.js';
+import { usernameToID, uploadToHastebin } from '../../utils.js';
 
 export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
@@ -110,7 +110,9 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (plays.length === 0) {
-    return saySafe(msg.channelName, `ts artist is niche`, msg.messageID);
+    const responses = ['who is that', 'ts is niche', 'underground', 'they have no fans', 'never heard of them'];
+    const response = responses[Math.floor(Math.random() * responses.length)];
+    return saySafe(msg.channelName, response, msg.messageID);
   }
 
   plays.sort((a, b) => b.playcount - a.playcount);
@@ -120,30 +122,12 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
 
   if (message.length > 450) {
     try {
-      const link = await new Promise<string>((resolve, reject) => {
-        const curl = spawn('curl', ['-F', 'file=@-', 'https://0x0.st']);
-        let output = '';
-        let error = '';
-
-        curl.stdout.on('data', (data) => {
-          output += data.toString();
-        });
-
-        curl.stderr.on('data', (data) => {
-          error += data.toString();
-        });
-
-        curl.on('close', (code) => {
-          if (code === 0) {
-            resolve(output.trim());
-          } else {
-            reject(new Error(`curl exited with code ${code}: ${error}`));
-          }
-        });
-
-        curl.stdin.write(message);
-        curl.stdin.end();
-      });
+      let link;
+      link = await uploadToHastebin(message);
+      if (!link) {
+        timeLog('Hastebin upload failed');
+        link = '';
+      }
 
       const suffix = ` ... ${link}`;
       let truncated = `${correctArtistName}: `;
@@ -156,7 +140,7 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
       truncated += suffix;
       return saySafe(msg.channelName, truncated, msg.messageID);
     } catch (e) {
-      console.error('0x0 upload failed', e);
+      timeLog(`Error uploading to Hastebin: ${e}`);
       return saySafe(msg.channelName, message.substring(0, 447) + '...', msg.messageID);
     }
   }

@@ -1,5 +1,5 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
 
 export default async function listcmds(msg: PrivmsgMessage, args: string[]) {

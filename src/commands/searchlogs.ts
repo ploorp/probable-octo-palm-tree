@@ -1,4 +1,4 @@
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { timeLog } from '../utils.js';
@@ -6,8 +6,6 @@ import { getPrefix } from '../db/dbManager.js';
 
 export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
   const prefix = getPrefix(msg.channelID)
-
-  console.log(args);
 
   if (args.length < 4) {
     return saySafe(msg.channelName, `format is ${prefix}searchlogs <channel> <username> <query>`, msg.messageID);

@@ -1,6 +1,6 @@
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
-import { getUserId } from '../helix.js';
+import { getUserId } from '../api/helix.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount } from '../db/dbManager.js';
 

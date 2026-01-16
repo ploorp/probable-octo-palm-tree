@@ -1,4 +1,4 @@
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { exec } from "child_process";
 import { timeLog } from '../utils.js';

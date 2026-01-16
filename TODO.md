@@ -1,0 +1,39 @@
+- clean stuff up and reorganize, get rid of redundant code
+- sql, bash, and js commands
+- generic command factory thing with help, aliases, and flags
+- real command flags
+- update ping command
+- send and accept whispers
+- url shortener command w/ custom urls
+- image background remover
+- more lastfm whoknows commands (wk song/album and lastfm friends only version), maybe figure out caching
+- lastfm search command that gives info
+- lastfm chart generator command
+- lastfm top whatever commands
+- fmbot user affinity command
+- 7tv api support for idk what
+- ytdlp to gofile?
+- livestream?
+- machine learning something
+- ai but pretend to be a real chatter
+- user profiles and settings, could be displayed on static site or just a paste
+- settings for %song: what platform to give a link, show play count, more info
+- track users downloads/other stats
+- save songs/movies for later or reccommend them to people
+- recommendations?
+- save notes or snippets
+- random movie
+- random animal or bug or something
+- random art?
+- random poem
+- ai scary poem
+- games puzzles, riddles, trivia
+- game involving letterboxd, lastfm, or firehose?
+- letterboxd guess movie from popular review or guess as many film ratings in a row as you can 
+- letterboxd whoknows command
+- music and movie piracy?
+- fmhy search
+- something with jo secret link
+- command that keeps track of time since a time
+- username finder
+- what niche holiday is today

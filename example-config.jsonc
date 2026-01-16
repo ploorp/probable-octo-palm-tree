@@ -1,0 +1,36 @@
+// copy example-config.json to config.json and fill in stuff
+{
+  "id": "bot_id",
+  "username": "bot_username",
+  "prefix": "%", // default prefix
+  "cooldown": 2000, // cooldown time for users and for channels without roles
+  "channels": [ // channels to join if there are none in the database (if none, join bot channel)
+    "3456329087",
+    "ploorp"
+  ],
+  "whitelist_channels": [
+      "ploorp" // channels that get no cooldown and can use echo and other special commands 
+  ],
+  "opted_out": [ 
+    "a_username" // channels opted out of the auto download, connections and namechange commands
+  ],
+  "helix": {
+    "access_token": "https://twitchtokengenerator.com/", // pick the correct scopes (user:read:chat, user:write:chat, user:manage:whispers, channel:moderate, moderator:manage:automod)
+    "helix_id": "gp762nuuoqcoxypju8c569th9wz7q5" // ttg default id
+  },
+  "lastfm": {
+    "client_id": "" // https://www.last.fm/api/authentication
+  },
+  "osu": { // for stupid osu command 
+    "client_id": "", 
+    "client_secret": "" // https://osu.ppy.sh/home/account/edit
+  },
+  "commands": {
+    "osu_enabled": false, // enable osu command
+    "fortune_enabled": false, // enable fortune command (relies on linux cli fortune command)
+    "downloader_enabled": false, // enable the tiktok mirror thing (needs cobalt running)
+    "gup": true // enable stupid reply messages
+  },
+  "cobalt_url": "http://localhost:9000", // for tiktok mirror https://github.com/imputnet/cobalt
+  "uploader_url": "https://segs.lol" // segs.lol instance for uploading files
+}

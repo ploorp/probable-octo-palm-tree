@@ -1,8 +1,8 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
 import { isOptedOut } from '../db/dbManager.js';
-import { getUserId } from '../helix.js';
+import { getUserId } from '../api/helix.js';
 
 export default async function namechange(msg: PrivmsgMessage, args: string[]) {
   let username;

@@ -1,0 +1,1 @@
+// search lastfm for something and return link + info

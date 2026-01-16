@@ -1,9 +1,9 @@
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount } from '../db/dbManager.js';
-import { getUserId } from '../helix.js';
+import { getUserId } from '../api/helix.js';
 
 export default async function song(msg: PrivmsgMessage, playcount: boolean, args: string[]) {
   let username: string;

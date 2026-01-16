@@ -1,6 +1,6 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client, saySafe } from '../client.js';
-import { getUsername, whisperUser } from '../helix.js';
+import { getUsername, whisperUser } from '../api/helix.js';
 import { timeLog } from '../utils.js';
 import { getPrefix } from '../db/dbManager.js';
 

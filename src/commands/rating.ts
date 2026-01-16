@@ -1,9 +1,9 @@
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount, getPrefix } from '../db/dbManager.js';
-import { getUserId } from '../helix.js';
+import { getUserId } from '../api/helix.js';
 import { timeLog } from '../utils.js';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';

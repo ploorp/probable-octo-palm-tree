@@ -1,7 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client, saySafe } from '../client.js';
 import { partChannel, isWhitelisted, addChannel } from '../db/dbManager.js';
-import { getUserId } from '../helix.js';
+import { getUserId } from '../api/helix.js';
 import config from '../../config.json' with { type: 'json' };
 
 export default async function join(msg: PrivmsgMessage, args: string[]) {

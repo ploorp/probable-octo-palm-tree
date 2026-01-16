@@ -1,7 +1,6 @@
 import config from '../config.json' with { type: 'json' };
 import {
   ChatClient,
-  AlternateMessageModifier,
   SlowModeRateLimiter,
   PrivmsgMessageRateLimiter,
   UserStateTracker,
@@ -144,7 +143,7 @@ async function joinChannels() {
     await ensureReady().catch(() => {});
   }
 
-  const channels = getJoinedChannels();
+  const channels = await getJoinedChannels();
   if (!channels.length) {
     timeLog('No channels to join in database');
     return;

@@ -1,5 +1,5 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
 import { timeLog } from '../utils.js';
 
@@ -37,7 +37,7 @@ export default async function randomline(msg: PrivmsgMessage, args: string[]) {
     const body = res.data;
 
     if (res.status === 404) {
-      console.log(body);
+      timeLog(`randomline 404 for ${url}`);
       if (!body) return saySafe(msg.channelName, `no lines found ohno`, msg.messageID);
       if (body.includes('The user does not exist')) {
         return saySafe(msg.channelName, `user not found ohno`, msg.messageID);

@@ -1,8 +1,8 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import axios from 'axios';
 import { isOptedOut } from '../db/dbManager.js';
-import { getUserId } from '../helix.js';
+import { getUserId } from '../api/helix.js';
 
 export default async function connections(msg: PrivmsgMessage, args: string[]) {
   const endpoint = 'https://api.potat.app/users/';
@@ -14,24 +14,28 @@ export default async function connections(msg: PrivmsgMessage, args: string[]) {
   let username: string = sender;
   let platform: Platform | undefined;
 
-  const rawUser = args[1]?.toLowerCase();
-  const rawPlatform = args[2]?.toLowerCase();
+  const arg1 = args[1]?.toLowerCase();
+  const arg2 = args[2]?.toLowerCase();
 
-  if (!rawUser) {
+  if (!arg1) {
     username = sender;
-  } else if (!rawPlatform) {
-    if ((PLATFORMS as readonly string[]).includes(rawUser)) {
-      platform = rawUser as Platform;
+  } else if (!arg2) {
+    if ((PLATFORMS as readonly string[]).includes(arg1)) {
+      platform = arg1 as Platform;
       username = sender;
     } else {
-      username = rawUser.replace(/^@/, '');
+      username = arg1.replace(/^@/, '');
     }
   } else {
-    username = rawUser.replace(/^@/, '');
-    if ((PLATFORMS as readonly string[]).includes(rawPlatform)) {
-      platform = rawPlatform as Platform;
+    // support both orderings: user platform OR platform user
+    if ((PLATFORMS as readonly string[]).includes(arg1)) {
+      platform = arg1 as Platform;
+      username = arg2.replace(/^@/, '');
+    } else if ((PLATFORMS as readonly string[]).includes(arg2)) {
+      username = arg1.replace(/^@/, '');
+      platform = arg2 as Platform;
     } else {
-      return saySafe(msg.channelName, `format is %connections <username> <platform>`, msg.messageID);
+      return saySafe(msg.channelName, `format is %connections <username|platform> <username|platform>`, msg.messageID);
     }
   }
 

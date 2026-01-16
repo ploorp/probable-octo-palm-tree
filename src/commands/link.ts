@@ -1,5 +1,5 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import { linkAccount, unlinkAccount } from '../db/dbManager.js';
 import config from '../../config.json' with { type: 'json' };
 import axios from 'axios';

@@ -11,22 +11,23 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
 import download, { downloadLinkPattern } from './src/commands/download.js';
-import { allowAutomod } from './src/eventsub.js';
+// import { allowAutomod } from './src/api/eventsub.js'; // pointless function that i had to auto allow my automod messages
 import rating from './src/commands/rating.js';
 import song from './src/commands/song.js';
-import whoKnows from './src/commands/whoknows.js';
+import whoKnows from './src/commands/whoknows/wkartist.js';
 import fortune from './src/commands/fortune.js';
 import join from './src/commands/join.js';
 import link from './src/commands/link.js';
 import supibot from './src/commands/supibot.js';
 import newname from './src/commands/newname.js';
-import { getPrefix, getWhitelistedUsers, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix } from './src/db/dbManager.js';
-import { getUserId } from './src/helix.js';
+import { getPrefix, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix } from './src/db/dbManager.js';
+import { getUserId } from './src/api/helix.js';
 import randomline from './src/commands/randomline.js';
 import listen from './src/commands/listen.js';
 import { editLastfm } from './src/db/dbManager.js';
 import osu from './src/commands/osu.js';
 import plays from './src/commands/plays.js';
+import paste from './src/commands/paste.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -46,7 +47,6 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const senderID = msg.senderUserID;
 
   // set up coooldowns (except for whitelisted users)
-  // skip cooldowns for whitelisted users (check by ID)
   if (!isWhitelisted(senderID)) {
     const now = Date.now();
     const last = cooldowns.get(senderID) ?? 0;
@@ -67,7 +67,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const prefix = getPrefix(msg.channelID);
 
   // media download stuff
-  if (!isOptedOut(msg.channelID) && !msgText.startsWith(prefix)) {
+  if (!config.commands.downloader_enabled && !isOptedOut(msg.channelID) && !msgText.startsWith(prefix)) {
     const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
 
     if (mediaLink) {
@@ -161,11 +161,14 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'dl':
       case 'download':
-        await download(msg, true, args.slice(1));
+        if (config.commands.downloader_enabled) {
+          await download(msg, true, args.slice(1));
+        }
         return;
 
       case 'whoknows':
       case 'wk':
+      case 'wka':
       case 'w':
         await whoKnows(msg, args);
         return;
@@ -175,8 +178,12 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await plays(msg, args);
         return;
 
-      case 'lu':
+      case 'setlastfm':
+      case 'sfm':
         if (!isWhitelisted(msg.senderUserID)) return;
+        if (args.length < 3) {
+          return saySafe(msg.channelName, `usage is ${prefix}setlastfm <twitch> <lastfm>`, msg.messageID);
+        }
         const success = await editLastfm(args[1], args[2]);
         if (success) {
           saySafe(msg.channelName, `set lastfm for ${args[1]} to ${args[2]}`, msg.messageID);
@@ -187,6 +194,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       
       case 'sc':
         await song(msg, true, args);
+        return;
+
+      case 'paste':
+        await paste(msg, args);
         return;
 
       case 'newname':
@@ -202,7 +213,9 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'fortune':
       case 'f':
       case 'cookie':
-        await fortune(msg, args);
+        if (config.commands.fortune_enabled) {
+          await fortune(msg, args);
+        }
         return;
 
       case 'randomline':
@@ -211,10 +224,12 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         return;
       
       case 'osu':
-        await osu(msg, args);
+        if (config.commands.osu_enabled) {
+          await osu(msg, args);
+        }
         return;
 
-      case 'listen':
+      case 'listen': // stupid command but can maybe do something interesting
         if (!isWhitelisted(msg.senderUserID)) return;
         await listen(msg, args, false, "logs.spanix.team");
         return;
@@ -230,6 +245,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         return;
 
       case 'optout':
+      case 'optin':
         if (!isWhitelisted(msg.senderUserID)) return;
         if (args[1]) {
           const optStatus = isOptedOut(args[1])
@@ -248,10 +264,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
             }
             const newPrefix = args[1];
             setPrefix(msg.channelID, newPrefix);
-            return saySafe(msg.channelName, `prefix set to ${newPrefix}`, msg.messageID);
+            return saySafe(msg.channelName, `prefix changed wow`, msg.messageID);
           }
         } else {
-          return saySafe(msg.channelName, `you must be broadcaster to set prefix`, msg.messageID);
+          return saySafe(msg.channelName, `you can't use this command bruh`, msg.messageID);
         }
 
       case 'echo': {
@@ -281,7 +297,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       }
 
       case 'whitelist':
-        if (msg.senderUserID === "502913017") {
+        if (config.admins.includes(msg.senderUserID)) {
           if (args[1]) {
             const userID = await getUserId(args[1]);
             if (!userID) {
@@ -304,20 +320,26 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   // STUFF THATS NOT REALLY A COMMAND
   if (msg.senderUserID != config.id) {
-    if (msgText === 'test') {
-      return saySafe(msg.channelName, 'A');
-    }
+    if (config.commands.gup) {
+      if (msgText === 'test') {
+        return saySafe(msg.channelName, 'A');
+      }
 
-    if (msgText === 'test2') {
-      return saySafe(msg.channelName, 'A', msg.messageID);
-    }
+      if (msgText === 'test2') {
+        return saySafe(msg.channelName, 'A', msg.messageID);
+      }
 
-    if (msgText.includes(config.username)) {
-      return saySafe(msg.channelName, 'hi', msg.messageID);
-    }
+      if (msgText === 'test4') {
+        return saySafe(msg.channelName, 'test4');
+      }
 
-    if (msgText.toLowerCase() === 'gup') {
-      return saySafe(msg.channelName, 'gup');
+      if (msgText.includes(config.username)) {
+        return saySafe(msg.channelName, 'hi', msg.messageID);
+      }
+
+      if (msgText.toLowerCase() === 'gup') {
+        return saySafe(msg.channelName, 'gup');
+      }
     }
 
     if (msgText.toLowerCase() === 'prefix?') {

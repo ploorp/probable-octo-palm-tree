@@ -1,6 +1,6 @@
 import axios from 'axios';
-import config from '../config.json' with { type: 'json' };
-import { timeLog } from './utils.js';
+import config from '../../config.json' with { type: 'json' };
+import { timeLog } from '../utils.js';
 
 let accessToken: string | null = null;
 let tokenExpiration: number = 0;

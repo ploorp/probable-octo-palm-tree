@@ -3,7 +3,7 @@ import { saySafe } from '../client.js';
 import axios from 'axios';
 import config from '../../config.json' with { type: 'json' };
 import { getAccount } from '../db/dbManager.js';
-import { getUserId } from '../helix.js';
+import { getUserId } from '../api/helix.js';
 import { getUserInfo } from '../utils.js';
 
 export default async function plays(msg: PrivmsgMessage, args: string[]) {

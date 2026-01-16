@@ -1,8 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { saySafe } from '../client.js';
-import { getAccount, linkAccount } from '../db/dbManager.js';
-import { getUser, getRecentPlays, getBestPlays, getBeatmap } from '../osu.js';
-import config from '../../config.json' with { type: 'json' };
+import { getAccount } from '../db/dbManager.js';
+import { getUser, getRecentPlays, getBestPlays, getBeatmap } from '../api/osu.js';
 import { getFlagEmoji } from '../utils.js';
 
 export default async function osu(msg: PrivmsgMessage, args: string[]) {

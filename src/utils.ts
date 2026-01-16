@@ -2,12 +2,14 @@ import axios from "axios";
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+
 export const timeLog = (message: string) => {
   const timestamp = new Date().toLocaleString('en-US', {hour12: false});
   const logMessage = `[${timestamp}] ${message}`;
 
   console.error(logMessage);
 }
+
 
 // trim, but it also removes the reserved character and double spaces
 export const ttrim = (str: string | undefined) => {
@@ -16,6 +18,8 @@ export const ttrim = (str: string | undefined) => {
   return str.replace(pattern, '').replace(/\s{2,}/g, ' ');
 }
 
+
+// potat users api
 export async function getUserInfo(username: string) {
   const endpoint = "https://api.potat.app/users/";
   let response;
@@ -42,6 +46,8 @@ export async function getUserInfo(username: string) {
   return response.data;
 }
 
+
+// get id from potat users api response
 export async function usernameToID(userInfo: any) {
   if (!userInfo) {
     return null;
@@ -55,6 +61,8 @@ export async function usernameToID(userInfo: any) {
   }
 }
 
+
+// identifying interesting users
 export async function getFirstSeen(userInfo: any) {
   if (!userInfo) {
     return null;
@@ -67,6 +75,7 @@ export async function getFirstSeen(userInfo: any) {
     return null;
   }
 }
+
 
 export async function isColorDefault(userInfo: any) {
   if (!userInfo) {
@@ -81,6 +90,7 @@ export async function isColorDefault(userInfo: any) {
     return true;
   }
 }
+
 
 export async function isPfpDefault(userInfo: any) {
   if (!userInfo) {
@@ -104,10 +114,31 @@ export async function isPfpDefault(userInfo: any) {
   }
 }
 
+
+// for osu
 export function getFlagEmoji(countryCode: string) {
   const codePoints = countryCode
     .toUpperCase()
     .split('')
     .map(char =>  127397 + char.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
+}
+
+
+export async function uploadToHastebin(content: string): Promise<string | null> {
+  try {
+    const response = await axios.post('https://h.potat.app/documents', content, {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      },
+      transformRequest: [(data) => data]
+    });
+    if (response.data && response.data.key) {
+      return `https://h.potat.app/${response.data.key}`;
+    }
+    return null;
+  } catch (error) {
+    timeLog(`Hastebin upload failed: ${error}`);
+    return null;
+  }
 }

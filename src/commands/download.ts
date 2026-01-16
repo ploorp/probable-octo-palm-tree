@@ -1,11 +1,7 @@
-import { client, saySafe } from '../client.js';
+import { saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from "axios";
 import FormData from "form-data";
-import fs from "fs";
-import os from "os";
-import path from "path";
-import crypto from "crypto";
 import { timeLog } from '../utils.js';
 import validator from "validator";
 import config from '../../config.json' with { type: 'json' };
@@ -13,7 +9,7 @@ import config from '../../config.json' with { type: 'json' };
 const { isURL, trim } = validator;
 
 const SEGS_LIMIT = 190 * 1024 * 1024;
-const cobaltUrl = "http://localhost:9001";
+const cobaltUrl = config.cobalt_url;
 
 export const downloadLinkPattern =
   /\S*(tiktok\.com\/\S+|(instagram|facebook)\.com\/(reels?|p|share)\/\S+|(x|twitter)\.com\/(?:i\/)?(?:\w+\/)?status\/\d+)/i;
@@ -40,7 +36,7 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
   try {
     const response = await axios.post(
       cobaltUrl,
-      { url }, // <-- THIS IS THE CRITICAL PART
+      { url },
       {
         headers: {
           Accept: 'application/json',
@@ -88,7 +84,6 @@ async function resolveCobaltUrl(url: string, slideIndex?: number): Promise<Cobal
   }
 }
 
-/* ---------------- Unified upload ---------------- */
 
 async function uploadFromStream(
   sourceUrl: string,
@@ -107,7 +102,7 @@ async function uploadFromStream(
   form.append("file", source.data, { filename, knownLength: length || undefined });
 
   try {
-    const res = await axios.post("https://segs.lol/api/upload", form, {
+    const res = await axios.post("https://potat.irish/api/upload", form, {
       headers: form.getHeaders(),
       maxBodyLength: SEGS_LIMIT,
       maxContentLength: SEGS_LIMIT,
@@ -118,7 +113,6 @@ async function uploadFromStream(
   }
 }
 
-/* ---------------- Command entry ---------------- */
 
 const downloadCache = new Map<string, string>();
 
