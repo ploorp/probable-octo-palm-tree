@@ -3,6 +3,7 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { exec } from "child_process";
 import { timeLog } from '../utils.js';
 import { isWhitelisted, updateStreak } from '../db/dbManager.js';
+import config from '../../config.json' with { type: 'json' };
 
 function getTimeLeftToMidnightUTC() {
   const now = new Date();
@@ -17,7 +18,7 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
   if (isWhitelisted(msg.senderUserID)) {
     if (args[1]) {
       let f_args = "";
-      if (msg.senderUserID === '502913017') {
+      if (config.admins.includes(msg.senderUserID)) {
         f_args = args.slice(1).join(" ");
       } else {
         for (const char of args.slice(1).join(" ")) {

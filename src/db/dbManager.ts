@@ -112,16 +112,15 @@ export function getWhitelistedUsers(): string[] {
   return rows.map(row => row.id);
 }
 
-export function initWhitelist() {
+export async function updateWhitelist() {
   for (const adminId of admins) {
     setWhitelist(adminId, true);
   }
   for (const channel of config.whitelist_channels) {
-    getUserId(channel).then(id => {
-      if (id) {
-        setWhitelist(id, true);
-      }
-    });
+    const id = await getUserId(channel);
+    if (id) {
+      setWhitelist(id, true);
+    }
   }
 }
 
