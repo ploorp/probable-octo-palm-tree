@@ -20,7 +20,7 @@ import join from './src/commands/join.js';
 import link from './src/commands/link.js';
 import supibot from './src/commands/supibot.js';
 import newname from './src/commands/newname.js';
-import { getPrefix, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix } from './src/db/dbManager.js';
+import { getPrefix, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix, updateWhitelist } from './src/db/dbManager.js';
 import { getUserId } from './src/api/helix.js';
 import randomline from './src/commands/randomline.js';
 import listen from './src/commands/listen.js';
@@ -31,8 +31,10 @@ import paste from './src/commands/paste.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
+const admins: string[] = Array.isArray(config.admins) ? (config.admins as string[]) : [];
 
 timeLog('Bot is starting');
+await updateWhitelist();
 
 
 client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
@@ -297,7 +299,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       }
 
       case 'whitelist':
-        if (config.admins.includes(msg.senderUserID)) {
+        if (admins.includes(msg.senderUserID)) {
           if (args[1]) {
             const userID = await getUserId(args[1]);
             if (!userID) {

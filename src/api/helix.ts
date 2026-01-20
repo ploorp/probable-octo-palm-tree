@@ -4,7 +4,7 @@ import { timeLog } from '../utils.js';
 
 const BAN_API = 'https://api.twitch.tv/helix/moderation/bans';
 const clientId = config.helix.helix_id;
-const accessToken = config.helix.access_token;
+const accessToken = config.helix.access_token.replace(/^oauth:/i, '');
 
 export async function chatBan(userId: string, broadcasterId: string, reason: string) {
   if (!userId || !broadcasterId || !config.id) {
@@ -139,8 +139,16 @@ export async function getUserId(username: string): Promise<string | null> {
     }
   });
 
+  if (!res.ok) {
+    timeLog(`getUserId failed: status ${res.status}`);
+    return null;
+  }
+
   const data = await res.json();
-  if (!data.data || data.data.length === 0) return null;
+  if (!data.data || data.data.length === 0) {
+    timeLog(`getUserId: no data for ${username}`);
+    return null;
+  }
   return data.data[0].id;
 }
 
@@ -152,8 +160,16 @@ export async function getUsername(userId: string): Promise<string | null> {
     }
   });
 
+  if (!res.ok) {
+    timeLog(`getUsername failed: status ${res.status}`);
+    return null;
+  }
+
   const data = await res.json();
-  if (!data.data || data.data.length === 0) return null;
+  if (!data.data || data.data.length === 0) {
+    timeLog(`getUsername: no data for ${userId}`);
+    return null;
+  }
   return data.data[0].login;
 }
 

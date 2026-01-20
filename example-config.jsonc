@@ -8,6 +8,9 @@
     "3456329087",
     "ploorp"
   ],
+  "admins": [ 
+    "502913017" // user ids of bot admins
+  ],
   "whitelist_channels": [
       "ploorp" // channels that get no cooldown and can use echo and other special commands 
   ],
