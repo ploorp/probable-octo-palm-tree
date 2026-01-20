@@ -37,3 +37,5 @@
 - command that keeps track of time since a time
 - username finder
 - what niche holiday is today
+- user commands for letterboxd and lastfm
+- command that shows time since a person was banned
