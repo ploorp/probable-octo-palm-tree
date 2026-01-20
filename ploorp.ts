@@ -31,6 +31,7 @@ import paste from './src/commands/paste.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
+const admins: string[] = Array.isArray(config.admins) ? (config.admins as string[]) : [];
 
 timeLog('Bot is starting');
 
@@ -297,7 +298,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       }
 
       case 'whitelist':
-        if (config.admins.includes(msg.senderUserID)) {
+        if (admins.includes(msg.senderUserID)) {
           if (args[1]) {
             const userID = await getUserId(args[1]);
             if (!userID) {
