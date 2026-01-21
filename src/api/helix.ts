@@ -7,7 +7,7 @@ const clientId = config.helix.helix_id;
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_WHISPER_LENGTH = 500;
 
-type HelixResponse = { ok: boolean; status: number; body: any };
+type HelixResponse<T = unknown> = { ok: boolean; status: number; body: T };
 
 let tokenProvider: (() => Promise<string>) | null = null;
 
@@ -23,6 +23,7 @@ export const createAppAccessTokenProvider = () => {
 
   let cachedToken = '';
   let expiresAt = 0;
+  let inflight: Promise<string> | null = null;
 
   return async () => {
     const now = Date.now();
@@ -34,29 +35,56 @@ export const createAppAccessTokenProvider = () => {
       return process.env.HELIX_ACCESS_TOKEN ?? config.helix.access_token ?? '';
     }
 
-    const res = await axios.post(
-      'https://id.twitch.tv/oauth2/token',
-      null,
-      {
-        params: {
-          client_id: clientIdOverride,
-          client_secret: clientSecret,
-          grant_type: 'client_credentials',
-        },
-        timeout: REQUEST_TIMEOUT_MS,
-      }
-    );
+    if (inflight) {
+      return inflight;
+    }
 
-    cachedToken = res.data?.access_token ?? '';
-    const expiresIn = Number(res.data?.expires_in ?? 0) * 1000;
-    expiresAt = expiresIn > 0 ? now + expiresIn : now + 3_600_000;
-    return cachedToken;
+    inflight = (async () => {
+      const startedAt = Date.now();
+      try {
+        const res = await axios.post(
+          'https://id.twitch.tv/oauth2/token',
+          null,
+          {
+            params: {
+              client_id: clientIdOverride,
+              client_secret: clientSecret,
+              grant_type: 'client_credentials',
+            },
+            timeout: REQUEST_TIMEOUT_MS,
+          }
+        );
+
+        cachedToken = res.data?.access_token ?? '';
+        const expiresIn = Number(res.data?.expires_in ?? 0) * 1000;
+        expiresAt = expiresIn > 0 ? startedAt + expiresIn : startedAt + 3_600_000;
+        return cachedToken;
+      } catch (err: any) {
+        logAxiosError('fetch app access token', err);
+        const fallbackToken = process.env.HELIX_ACCESS_TOKEN ?? config.helix.access_token ?? '';
+        if (fallbackToken) {
+          cachedToken = fallbackToken;
+          expiresAt = startedAt + 3_600_000;
+          return cachedToken;
+        }
+        return cachedToken;
+      } finally {
+        inflight = null;
+      }
+    })();
+
+    return inflight;
   };
 };
 
 const getAccessToken = async (): Promise<string> => {
   const raw = tokenProvider ? await tokenProvider() : (process.env.HELIX_ACCESS_TOKEN ?? config.helix.access_token ?? '');
-  return raw.replace(/^oauth:/i, '');
+  const token = raw.replace(/^oauth:/i, '');
+  if (!token) {
+    timeLog('Helix access token is not configured. Set HELIX_ACCESS_TOKEN, config.helix.access_token, or a Helix token provider.');
+    throw new Error('Helix access token is not configured');
+  }
+  return token;
 };
 
 const authHeaders = async (extra?: Record<string, string>) => ({
@@ -65,10 +93,34 @@ const authHeaders = async (extra?: Record<string, string>) => ({
   ...(extra ?? {}),
 });
 
+const sanitizeErrorBodyForLog = (body: any): string => {
+  const MAX_LOG_BODY_LENGTH = 1000;
+  if (body == null) return '';
+
+  const truncate = (s: string) => (s.length > MAX_LOG_BODY_LENGTH ? `${s.slice(0, MAX_LOG_BODY_LENGTH)}…[truncated]` : s);
+  const sensitiveKeys = ['access_token', 'refresh_token', 'token', 'authorization', 'password', 'client_secret'];
+
+  if (typeof body === 'object') {
+    const sanitized: Record<string, any> = Array.isArray(body) ? [...body] : { ...body };
+    if (!Array.isArray(sanitized)) {
+      for (const key of Object.keys(sanitized)) {
+        const lowerKey = key.toLowerCase();
+        if (sensitiveKeys.some(s => lowerKey.includes(s))) {
+          sanitized[key] = '[REDACTED]';
+        }
+      }
+    }
+    return truncate(JSON.stringify(sanitized));
+  }
+
+  return truncate(String(body));
+};
+
 const logAxiosError = (action: string, err: any) => {
   const status = err?.response?.status ?? 'no-status';
   const body = err?.response?.data ?? err?.message;
-  timeLog(`${action} failed: status=${status} body=${JSON.stringify(body)}`);
+  const safeBody = sanitizeErrorBodyForLog(body);
+  timeLog(`${action} failed: status=${status} body=${safeBody}`);
 };
 
 export async function chatBan(userId: string, broadcasterId: string, reason: string): Promise<HelixResponse> {
@@ -247,23 +299,27 @@ export async function getUsername(userId: string): Promise<string | null> {
   }
 }
 
-export async function whisperUser(userId: string, message: string): Promise<[boolean, number, any]> {
+export async function whisperUser(userId: string, message: string): Promise<HelixResponse> {
   try {
     const url = `https://api.twitch.tv/helix/whispers?from_user_id=${encodeURIComponent(config.id)}&to_user_id=${encodeURIComponent(userId)}`;
     const sanitized = String(message).replace(/\n|\r/g, ' ');
     const truncated = sanitized.slice(0, MAX_WHISPER_LENGTH);
+    if (sanitized.length > MAX_WHISPER_LENGTH) {
+      timeLog(`whisperUser: message for ${userId} truncated from ${sanitized.length} to ${MAX_WHISPER_LENGTH} characters`);
+    }
     const payload = { message: truncated };
 
     const res = await axios.post(url, payload, {
       headers: await authHeaders({ 'Content-Type': 'application/json' }),
     });
 
+    const ok = res.status === 204 || (res.status >= 200 && res.status < 300);
     timeLog(`Sent whisper to user ${userId} (status ${res.status})`);
-    return [res.status === 204, res.status, res.data];
+    return { ok, status: res.status, body: res.data };
   } catch (err: any) {
     const status = err.response?.status ?? 0;
     const body = err.response?.data ?? err.message;
     timeLog(`Error sending whisper to ${userId}: status=${status} body=${JSON.stringify(body)}`);
-    return [false, status, body];
+    return { ok: false, status, body };
   }
 }

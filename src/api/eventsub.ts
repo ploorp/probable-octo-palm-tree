@@ -52,14 +52,23 @@ export function allowAutomod() {
           subscribed = true;
         } catch (err: any) {
           const status = err?.response?.status ?? 'no-status';
-          const body = err?.response?.data ?? err?.message;
-          timeLog(`Subscription attempt ${attempt}/3 failed: status=${status} body=${JSON.stringify(body)}`);
+          const message = err?.message ?? 'unknown error';
+          timeLog(`Subscription attempt ${attempt}/3 failed: status=${status} message=${message}`);
           if (status === 401 || status === 403) {
+            timeLog('Authentication/authorization failed (status 401/403); abandoning further subscription retry attempts.');
             break;
           }
-          const waitMs = attempt * 2000;
-          await delay(waitMs);
+          if (attempt < 3) {
+            const waitMs = attempt * 2000;
+            await delay(waitMs);
+          }
         }
+      }
+
+      if (!subscribed) {
+        timeLog('failed to subscribe to automod.message.hold after 3 attempts, closing websocket');
+        ws.close();
+        return;
       }
 
     } else if (msg.metadata?.message_type === 'notification') {
