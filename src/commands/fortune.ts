@@ -5,6 +5,8 @@ import { timeLog } from '../utils.js';
 import { isWhitelisted, updateStreak } from '../db/dbManager.js';
 import config from '../../config.json' with { type: 'json' };
 
+const admins: string[] = Array.isArray(config.admins) ? (config.admins as string[]) : [];
+
 function getTimeLeftToMidnightUTC() {
   const now = new Date();
   const nextMidnightUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0));
@@ -18,7 +20,7 @@ export default async function fortune(msg: PrivmsgMessage, args: string[]) {
   if (isWhitelisted(msg.senderUserID)) {
     if (args[1]) {
       let f_args = "";
-      if (config.admins.includes(msg.senderUserID)) {
+      if (admins.includes(msg.senderUserID)) {
         f_args = args.slice(1).join(" ");
       } else {
         for (const char of args.slice(1).join(" ")) {
