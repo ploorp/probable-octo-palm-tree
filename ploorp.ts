@@ -14,7 +14,7 @@ import download, { downloadLinkPattern } from './src/commands/download.js';
 // import { allowAutomod } from './src/api/eventsub.js'; // pointless function that i had to auto allow my automod messages
 import rating from './src/commands/rating.js';
 import song from './src/commands/song.js';
-import whoKnows from './src/commands/whoknows/wkartist.js';
+import { whoKnowsAlbum, whoKnowsArtist, whoKnowsTrack } from './src/commands/whoknows.js';
 import fortune from './src/commands/fortune.js';
 import join from './src/commands/join.js';
 import link from './src/commands/link.js';
@@ -170,9 +170,16 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'whoknows':
       case 'wk':
-      case 'wka':
       case 'w':
-        await whoKnows(msg, args);
+        await whoKnowsArtist(msg, args);
+        return;
+
+      case 'wka':
+        await whoKnowsAlbum(msg, args);
+        return;
+
+      case 'wkt':
+        await whoKnowsTrack(msg, args);
         return;
 
       case 'plays':

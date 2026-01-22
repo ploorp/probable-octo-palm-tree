@@ -1,12 +1,11 @@
-import { saySafe } from '../../client.js';
-import { timeLog } from '../../utils.js';
-import axios from 'axios';
-import config from '../../../config.json' with { type: 'json' };
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { getAccount, getAllLastFmUsers, refreshUsername } from '../../db/dbManager.js';
-import { usernameToID, uploadToHastebin } from '../../utils.js';
+import axios from 'axios';
+import config from '../../config.json' with { type: 'json' };
+import { getAccount, getAllLastFmUsers, refreshUsername } from '../db/dbManager.js';
+import { saySafe } from '../client.js';
+import { timeLog, usernameToID, uploadToHastebin } from '../utils.js';
 
-export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
+export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
   let account: string | null = null;
 
@@ -45,15 +44,15 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (!artistName) {
-    return saySafe(msg.channelName, `cant find artist`, msg.messageID);
+    return saySafe(msg.channelName, 'cant find artist', msg.messageID);
   }
 
   const users = getAllLastFmUsers();
   if (users.length === 0) {
-    return saySafe(msg.channelName, `no lastfm users lol`, msg.messageID);
+    return saySafe(msg.channelName, 'no lastfm users lol', msg.messageID);
   }
 
-  const plays: { username: string, playcount: number }[] = [];
+  const plays: { username: string; playcount: number }[] = [];
   let correctArtistName = artistName;
   let artistNameUpdated = false;
 
@@ -97,7 +96,7 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
         let displayName;
         if (count > 0) {
           if (!user.username) {
-            displayName = await refreshUsername(user.id) || 'unknown';
+            displayName = (await refreshUsername(user.id)) || 'unknown';
           } else {
             displayName = user.username;
           }
@@ -147,3 +146,13 @@ export default async function whoKnows(msg: PrivmsgMessage, args: string[]) {
 
   return saySafe(msg.channelName, message, msg.messageID);
 }
+
+export async function whoKnowsAlbum(msg: PrivmsgMessage, _args?: string[]) {
+  return saySafe(msg.channelName, 'whoknows album is not implemented yet FeelsDankMan', msg.messageID);
+}
+
+export async function whoKnowsTrack(msg: PrivmsgMessage, _args?: string[]) {
+  return saySafe(msg.channelName, 'whoknows track is not implemented yet FeelsDankMan', msg.messageID);
+}
+
+export default whoKnowsArtist;
