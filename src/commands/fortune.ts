@@ -4,8 +4,11 @@ import { exec } from "child_process";
 import { timeLog } from '../utils.js';
 import { isWhitelisted, updateStreak } from '../db/dbManager.js';
 import config from '../../config.json' with { type: 'json' };
+import { assertConfig } from '../config/assertConfig.js';
 
-const admins: string[] = Array.isArray(config.admins) ? (config.admins as string[]) : [];
+assertConfig(config);
+
+const admins: string[] = config.admins;
 
 function getTimeLeftToMidnightUTC() {
   const now = new Date();

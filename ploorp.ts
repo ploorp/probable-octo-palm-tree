@@ -7,6 +7,7 @@ import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
 import { timeLog, ttrim} from './src/utils.js';
 import config from './config.json' with { type: 'json' };
+import { assertConfig } from './src/config/assertConfig.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
@@ -29,9 +30,11 @@ import osu from './src/commands/osu.js';
 import plays from './src/commands/plays.js';
 import paste from './src/commands/paste.js';
 
+assertConfig(config);
+
 const startTime = new Date();
 const cooldowns = new Map();
-const admins: string[] = Array.isArray(config.admins) ? (config.admins as string[]) : [];
+const admins: string[] = config.admins;
 
 timeLog('Bot is starting');
 await updateWhitelist();
