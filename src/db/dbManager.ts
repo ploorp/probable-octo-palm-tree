@@ -1,11 +1,10 @@
 import db from "./db.js";
 import { getUsername, getUserId } from "../api/helix.js";
-import config from "../../config.json" with { type: "json" };
-import { assertConfig } from "../config/assertConfig.js";
+import rawConfig from "../../config.json" with { type: "json" };
+import { assertConfig, AppConfig } from "../config/assertConfig.js";
 
+const config = rawConfig as AppConfig;
 assertConfig(config);
-
-const admins: string[] = config.admins;
 
 export function ensureUserRow(id: string) {
   db.prepare(`
@@ -116,7 +115,7 @@ export function getWhitelistedUsers(): string[] {
 }
 
 export async function updateWhitelist() {
-  for (const adminId of admins) {
+  for (const adminId of config.admins) {
     setWhitelist(adminId, true);
   }
   for (const channel of config.whitelist_channels) {
