@@ -257,9 +257,14 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'optin':
         if (!isWhitelisted(msg.senderUserID)) return;
         if (args[1]) {
-          const optStatus = isOptedOut(args[1])
-          setOptOut(args[1], !optStatus);
-          return saySafe(msg.channelName, `${args[1]} is now ${!optStatus ? "opted out" : "opted in"}`, msg.messageID);
+          const target = args[1].toLowerCase().replace(/^@/, '');
+          const id = await getUserId(target);
+          if (!id) return saySafe(msg.channelName, `user ${target} not found`, msg.messageID);
+
+          const optStatus = isOptedOut(id);
+          await setOptOut(id, !optStatus);
+
+          return saySafe(msg.channelName, `${target} is now ${!optStatus ? "opted out" : "opted in"}`, msg.messageID);
         }
 
       case 'setprefix':
