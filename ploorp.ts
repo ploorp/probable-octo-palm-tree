@@ -68,7 +68,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   const prefix = getPrefix(msg.channelID);
 
   // media download stuff
-  if (!config.commands.downloader_enabled && !isOptedOut(msg.channelID) && !msgText.startsWith(prefix)) {
+  if (config.commands.downloader_enabled && !isOptedOut(msg.channelID) && !msgText.startsWith(prefix)) {
     const mediaLink = msgText.match(downloadLinkPattern)?.[0] ?? null;
 
     if (mediaLink) {
@@ -320,6 +320,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
             const whitelistStatus = isWhitelisted(userID);
             setWhitelist(userID, !whitelistStatus);
             return saySafe(msg.channelName, `${args[1]} is ${!whitelistStatus ? "now whitelisted" : "no longer whitelisted"}`, msg.messageID);
+          } else {
+            return saySafe(msg.channelName, `Usage: ${prefix}whitelist <username>`, msg.messageID);
           }
         }
         return;

@@ -221,6 +221,17 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
       setTimeout(() => channelCooldowns.delete(chKey), config.cooldown);
     }
 
+    // Skip duplicate protection if bot is Mod/VIP
+    if (botState && (botState.isMod || botState.isVip)) {
+      let sendText = text.replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
+      if (replyMsgId) {
+        await client.reply(channel, replyMsgId, sendText); 
+      } else {
+        await client.say(channel, sendText);
+      }
+      return;
+    }
+
     const baseText = text;
     const state = duplicateState.get(chKey);
 

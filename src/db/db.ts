@@ -21,10 +21,4 @@ CREATE TABLE IF NOT EXISTS users (
 );
 `).run();
 
-try {
-  db.prepare("ALTER TABLE users ADD COLUMN osu TEXT").run();
-} catch (error) {
-  // Column likely already exists
-}
-
 export default db;
