@@ -2,7 +2,7 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { client, saySafe } from '../client.js';
 import { partChannel, isWhitelisted, addChannel } from '../db/dbManager.js';
 import { getUserId } from '../api/helix.js';
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 
 export default async function join(msg: PrivmsgMessage, args: string[]) {
   args[0] = args[0].slice(config.prefix.length).toLowerCase();

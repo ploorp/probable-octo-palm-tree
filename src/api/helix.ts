@@ -1,4 +1,4 @@
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 import axios from 'axios';
 import { timeLog } from '../utils.js';
 

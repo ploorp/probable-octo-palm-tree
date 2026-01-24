@@ -1,6 +1,6 @@
 import { saySafe } from '../client.js';
 import axios from 'axios';
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount } from '../db/dbManager.js';
 import { getUserId } from '../api/helix.js';

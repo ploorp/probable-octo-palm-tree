@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 
 const db = new Database("bot.db");
 

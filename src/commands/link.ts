@@ -1,7 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { saySafe } from '../client.js';
 import { linkAccount, unlinkAccount } from '../db/dbManager.js';
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 import axios from 'axios';
 
 export default async function link(msg: PrivmsgMessage, args: string[]) {

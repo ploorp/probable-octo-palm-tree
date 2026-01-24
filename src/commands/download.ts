@@ -4,7 +4,7 @@ import axios from "axios";
 import FormData from "form-data";
 import { timeLog } from '../utils.js';
 import validator from "validator";
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 
 const { isURL, trim } = validator;
 

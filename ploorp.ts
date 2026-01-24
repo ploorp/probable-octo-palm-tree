@@ -6,8 +6,7 @@ import listcmds from './src/commands/listcmd.js';
 import ping from './src/commands/ping.js';
 import unicode from './src/commands/unicode.js';
 import { timeLog, ttrim} from './src/utils.js';
-import rawConfig from './config.json' with { type: 'json' };
-import { assertConfig, AppConfig } from './src/config/assertConfig.js';
+import config from './src/config/index.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import movie from './src/commands/movie.js';
 import namechange from './src/commands/namechange.js';
@@ -29,9 +28,6 @@ import { editLastfm } from './src/db/dbManager.js';
 import osu from './src/commands/osu.js';
 import plays from './src/commands/plays.js';
 import paste from './src/commands/paste.js';
-
-const config = rawConfig as AppConfig;
-assertConfig(config);
 
 const startTime = new Date();
 const cooldowns = new Map();

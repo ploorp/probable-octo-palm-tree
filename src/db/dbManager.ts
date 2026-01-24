@@ -1,10 +1,6 @@
 import db from "./db.js";
 import { getUsername, getUserId } from "../api/helix.js";
-import rawConfig from "../../config.json" with { type: "json" };
-import { assertConfig, AppConfig } from "../config/assertConfig.js";
-
-const config = rawConfig as AppConfig;
-assertConfig(config);
+import config from "../config/index.js";
 
 export function ensureUserRow(id: string) {
   db.prepare(`

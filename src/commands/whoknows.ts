@@ -1,6 +1,6 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from 'axios';
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 import { getAccount, getAllLastFmUsers, refreshUsername } from '../db/dbManager.js';
 import { saySafe } from '../client.js';
 import { timeLog, usernameToID, uploadToHastebin } from '../utils.js';
