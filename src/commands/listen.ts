@@ -1,7 +1,7 @@
 import { saySafe } from '../client.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { whisperUser } from '../api/helix.js';
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 
 export type FirehoseMsg = {
   text: string;

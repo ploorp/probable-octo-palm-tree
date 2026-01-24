@@ -3,7 +3,7 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { exec } from "child_process";
 import { timeLog } from '../utils.js';
 import { isWhitelisted, updateStreak } from '../db/dbManager.js';
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 
 function getTimeLeftToMidnightUTC() {
   const now = new Date();

@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 import axios from 'axios';
 import { approveAutomodMessage } from './helix.js';
 import { timeLog } from '../utils.js';
-import config from '../../config.json' with { type: 'json' };
+import config from '../config/index.js';
 
 export function allowAutomod() {
   const accessToken   = config.helix.access_token;

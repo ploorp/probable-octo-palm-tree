@@ -1,8 +1,6 @@
 import db from "./db.js";
 import { getUsername, getUserId } from "../api/helix.js";
-import config from "../../config.json" with { type: "json" };
-
-const admins: string[] = Array.isArray(config.admins) ? (config.admins as string[]) : [];
+import config from "../config/index.js";
 
 export function ensureUserRow(id: string) {
   db.prepare(`
@@ -113,7 +111,7 @@ export function getWhitelistedUsers(): string[] {
 }
 
 export async function updateWhitelist() {
-  for (const adminId of admins) {
+  for (const adminId of config.admins) {
     setWhitelist(adminId, true);
   }
   for (const channel of config.whitelist_channels) {
