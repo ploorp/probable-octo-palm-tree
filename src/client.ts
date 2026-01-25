@@ -8,7 +8,7 @@ import {
   ConnectionRateLimiter
 } from '@mastondzn/dank-twitch-irc';
 import { sleep, timeLog } from './utils.js';
-import { getJoinedChannels, refreshUsername, addChannel } from './db/dbManager.js';
+import { getJoinedChannels, refreshUsername, addChannel, ensureConfigChannelsJoined } from './db/dbManager.js';
 
 // Backoff + readiness state
 let isReady = false;
@@ -111,6 +111,9 @@ client.on('ready', async () => {
     if (config.id) {
       await addChannel(config.id);
     }
+    
+    // Also ensure configured channels are marked joined
+    await ensureConfigChannelsJoined();
   } catch (err: any) {
     timeLog(`Error ensuring bot join in DB: ${err}`);
   }

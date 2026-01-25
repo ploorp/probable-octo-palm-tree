@@ -102,7 +102,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
       case 'part':
       case 'join':
-        await join(msg, args);
+        await join(msg, args, command);
         return;
 
       case 'link':
@@ -269,7 +269,7 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'setprefix':
         if (isWhitelisted(msg.senderUserID) || msg.channelID === msg.senderUserID) {
           if (args[1]) {
-            if (!/^[a-zA-Z0-9!@#$%^&*()\-_=+[\]{};:'",.<>?]+$/.test(args[1])) {
+            if (!/^[a-zA-Z0-9!@#$%^&*()\-_=+[\]{};:'",.<>?~]+$/.test(args[1])) {
               return saySafe(msg.channelName, `invalid prefix`, msg.messageID);
             }
             if (args[1].length > 5) {
