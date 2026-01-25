@@ -4,6 +4,8 @@ import { getUserId } from '../api/helix.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount } from '../db/dbManager.js';
 
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+
 export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   let username: string | undefined;
   let displayName: string | undefined;
@@ -40,7 +42,7 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
 
   rssUrl = `https://letterboxd.com/${username}/rss/`;
   try {
-    response = await axios.get(rssUrl);
+    response = await axios.get(rssUrl, { headers: { 'User-Agent': UA } });
   } catch (error) {
     return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
   }
@@ -56,7 +58,7 @@ export default async function boxd(msg: PrivmsgMessage, args: string[]) {
   let jsonResponse;
 
   try {
-    jsonResponse = await axios.get(jsonUrl);
+    jsonResponse = await axios.get(jsonUrl, { headers: { 'User-Agent': UA } });
   } catch (error) {
     return saySafe(msg.channelName,`error Reacting`, msg.messageID);
   }

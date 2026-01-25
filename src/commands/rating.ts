@@ -79,7 +79,7 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
   let jsonResponse;
 
   try {
-    jsonResponse = await axios.get(`https://letterboxd.com/${username}/film/${found.slug}/json/`);
+    jsonResponse = await axios.get(`https://letterboxd.com/${username}/film/${found.slug}/json/`, { headers: { 'User-Agent': UA } });
   } catch (error) {
     return saySafe(msg.channelName, `no review found sad`, msg.messageID);
   }
