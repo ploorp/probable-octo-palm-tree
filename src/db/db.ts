@@ -21,6 +21,50 @@ CREATE TABLE IF NOT EXISTS users (
 );
 `).run();
 
+// Trivia streaks per channel/category and per user correct counts
+db.prepare(`
+CREATE TABLE IF NOT EXISTS trivia_streaks (
+  channel_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  current_streak INTEGER DEFAULT 0,
+  best_streak INTEGER DEFAULT 0,
+  PRIMARY KEY (channel_id, category)
+);
+`).run();
+
+db.prepare(`
+CREATE TABLE IF NOT EXISTS trivia_user_stats (
+  channel_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  correct_count INTEGER DEFAULT 0,
+  PRIMARY KEY (channel_id, category, user_id)
+);
+`).run();
+
+db.prepare(`
+CREATE TABLE IF NOT EXISTS trivia_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category TEXT NOT NULL,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  aliases TEXT DEFAULT '[]', -- JSON array
+  choices TEXT, -- JSON array of answer options (for multiple/boolean)
+  difficulty TEXT,
+  source TEXT,
+  last_used_at INTEGER,
+  UNIQUE (category, question)
+);
+`).run();
+
+db.prepare(`CREATE INDEX IF NOT EXISTS idx_trivia_questions_category ON trivia_questions(category);`).run();
+
+try {
+  db.prepare("ALTER TABLE trivia_questions ADD COLUMN choices TEXT").run();
+} catch (error) {
+  // Column likely already exists
+}
+
 try {
   db.prepare("ALTER TABLE users ADD COLUMN osu TEXT").run();
 } catch (error) {

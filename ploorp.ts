@@ -28,6 +28,7 @@ import { editLastfm } from './src/db/dbManager.js';
 import osu from './src/commands/osu.js';
 import plays from './src/commands/plays.js';
 import paste from './src/commands/paste.js';
+import { triviaCommand, handleTriviaAnswer } from './src/commands/trivia.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -186,6 +187,11 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await plays(msg, args);
         return;
 
+      case 'trivia':
+      case 'triv':
+        await triviaCommand(msg, args);
+        return;
+
       case 'setlastfm':
       case 'sfm':
         if (!isWhitelisted(msg.senderUserID)) return;
@@ -333,6 +339,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
 
   // STUFF THATS NOT REALLY A COMMAND
   if (msg.senderUserID != config.id) {
+    if (!msgText.startsWith(prefix)) {
+      await handleTriviaAnswer(msg);
+    }
+
     if (config.commands.gup) {
       if (msgText === 'test') {
         return saySafe(msg.channelName, 'A');
