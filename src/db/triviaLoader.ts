@@ -25,7 +25,8 @@ export function importTriviaFromCsv(datasetPath = path.join(process.cwd(), 'data
       aliases: undefined,
       choices,
       difficulty: row.difficulty ? decodeHtml(row.difficulty) : null,
-      source: row.type ? decodeHtml(row.type) : null
+      source: row.type ? decodeHtml(row.type) : null,
+      type: row.type ? decodeHtml(row.type) : null
     };
   });
 

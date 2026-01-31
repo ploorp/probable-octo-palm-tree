@@ -42,6 +42,32 @@ CREATE TABLE IF NOT EXISTS trivia_user_stats (
 );
 `).run();
 
+// Extended trivia leaderboards/streaks per mode and per user correctness
+db.prepare(`
+CREATE TABLE IF NOT EXISTS trivia_scores (
+  channel_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  mode TEXT NOT NULL DEFAULT 'channel',
+  hard INTEGER NOT NULL DEFAULT 0,
+  user_id TEXT NOT NULL,
+  correct_count INTEGER DEFAULT 0,
+  PRIMARY KEY (channel_id, category, mode, hard, user_id)
+);
+`).run();
+
+db.prepare(`
+CREATE TABLE IF NOT EXISTS trivia_streaks_v2 (
+  channel_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  mode TEXT NOT NULL DEFAULT 'channel',
+  hard INTEGER NOT NULL DEFAULT 0,
+  user_id TEXT,
+  current_streak INTEGER DEFAULT 0,
+  best_streak INTEGER DEFAULT 0,
+  PRIMARY KEY (channel_id, category, mode, hard, user_id)
+);
+`).run();
+
 db.prepare(`
 CREATE TABLE IF NOT EXISTS trivia_questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
