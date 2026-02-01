@@ -47,6 +47,20 @@ export async function getJoinedChannels(): Promise<{ id: string; username?: stri
 }
 
 
+export async function ensureConfigChannelsJoined() {
+  for (const channelName of config.channels) {
+    const id = await getUserId(channelName);
+    if (id) {
+       ensureUserRow(id);
+       db.prepare("UPDATE users SET is_joined = 1 WHERE id = ?").run(id);
+       const username = await getUsername(id);
+        if (username) {
+            db.prepare("UPDATE users SET username = ? WHERE id = ?").run(username, id);
+        }
+    }
+  }
+}
+
 // OPT-OUT
 export function isOptedOut(id: string): boolean {
   ensureUserRow(id);

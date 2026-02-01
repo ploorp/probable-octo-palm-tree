@@ -85,16 +85,4 @@ CREATE TABLE IF NOT EXISTS trivia_questions (
 
 db.prepare(`CREATE INDEX IF NOT EXISTS idx_trivia_questions_category ON trivia_questions(category);`).run();
 
-try {
-  db.prepare("ALTER TABLE trivia_questions ADD COLUMN choices TEXT").run();
-} catch (error) {
-  // Column likely already exists
-}
-
-try {
-  db.prepare("ALTER TABLE users ADD COLUMN osu TEXT").run();
-} catch (error) {
-  // Column likely already exists
-}
-
 export default db;
