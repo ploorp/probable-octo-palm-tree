@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 `).run();
 
-// Trivia streaks per channel/category and per user correct counts
+// Legacy trivia streak tables (replaced by trivia_scores/trivia_streaks_v2) kept for backward compatibility
 db.prepare(`
 CREATE TABLE IF NOT EXISTS trivia_streaks (
   channel_id TEXT NOT NULL,

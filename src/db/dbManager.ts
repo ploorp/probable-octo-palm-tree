@@ -2,7 +2,6 @@ import db from "./db.js";
 import { getUsername, getUserId } from "../api/helix.js";
 import config from "../config/index.js";
 import { readFileSync } from "node:fs";
-import * as path from "node:path";
 
 export function ensureUserRow(id: string) {
   db.prepare(`
@@ -402,7 +401,7 @@ export function importTriviaItems(items: TriviaDatasetItem[]): number {
       const question = normalizeText(String(item.question));
       const answer = normalizeText(String(item.answer));
       const aliases = normalizeAliases(item.aliases);
-      const type = normalizeType(item.type ?? item.source ?? null);
+      const type = normalizeType(item.source ?? item.type ?? null);
       const choices = Array.isArray(item.choices)
         ? item.choices.map((c) => normalizeText(String(c))).filter((c) => c.length > 0)
         : null;
