@@ -1,6 +1,7 @@
 import db from "./db.js";
 import { getUsername, getUserId } from "../api/helix.js";
 import config from "../config/index.js";
+import { readFileSync } from "node:fs";
 
 export function ensureUserRow(id: string) {
   db.prepare(`
@@ -191,4 +192,338 @@ export function updateStreak(userId: string) {
   `).run(nowUTC, newStreak, userId);
 
   return { success: true, streak: newStreak };
+}
+
+
+// TRIVIA
+export type TriviaMode = "channel" | "user" | "speed";
+
+type StreakKey = {
+  channelId: string;
+  category: string;
+  mode?: TriviaMode;
+  hard?: boolean;
+  userId?: string | null;
+};
+
+const streakWhere = `channel_id = ? AND category = ? AND mode = ? AND hard = ? AND COALESCE(user_id, '') = COALESCE(?, '')`;
+
+function normalizedMode(mode?: TriviaMode): TriviaMode {
+  return mode ?? "channel";
+}
+
+function ensureTriviaStreakRowV2(key: StreakKey) {
+  const mode = normalizedMode(key.mode);
+  const hard = key.hard ? 1 : 0;
+  db.prepare(`
+    INSERT INTO trivia_streaks_v2 (channel_id, category, mode, hard, user_id, current_streak, best_streak)
+    VALUES (?, ?, ?, ?, ?, 0, 0)
+    ON CONFLICT(channel_id, category, mode, hard, user_id) DO NOTHING
+  `).run(key.channelId, key.category, mode, hard, key.userId ?? null);
+}
+
+export function getTriviaStreak(key: StreakKey): { current: number; best: number } {
+  ensureTriviaStreakRowV2(key);
+  const mode = normalizedMode(key.mode);
+  const hard = key.hard ? 1 : 0;
+  const row = db.prepare(
+    `SELECT current_streak AS current, best_streak AS best FROM trivia_streaks_v2 WHERE ${streakWhere}`
+  ).get(key.channelId, key.category, mode, hard, key.userId ?? "") as { current: number; best: number } | undefined;
+
+  return row ?? { current: 0, best: 0 };
+}
+
+export function incrementTriviaStreak(key: StreakKey): { current: number; best: number } {
+  ensureTriviaStreakRowV2(key);
+  const mode = normalizedMode(key.mode);
+  const hard = key.hard ? 1 : 0;
+
+  db.prepare(
+    `UPDATE trivia_streaks_v2
+     SET current_streak = current_streak + 1,
+         best_streak = CASE WHEN current_streak + 1 > best_streak THEN current_streak + 1 ELSE best_streak END
+     WHERE ${streakWhere}`
+  ).run(key.channelId, key.category, mode, hard, key.userId ?? "");
+
+  return getTriviaStreak(key);
+}
+
+export function resetTriviaStreak(key: StreakKey) {
+  ensureTriviaStreakRowV2(key);
+  const mode = normalizedMode(key.mode);
+  const hard = key.hard ? 1 : 0;
+  db.prepare(`UPDATE trivia_streaks_v2 SET current_streak = 0 WHERE ${streakWhere}`).run(
+    key.channelId,
+    key.category,
+    mode,
+    hard,
+    key.userId ?? ""
+  );
+}
+
+export function recordTriviaCorrect(params: {
+  channelId: string;
+  userId: string;
+  category: string;
+  mode?: TriviaMode;
+  hard?: boolean;
+}): { streak: { current: number; best: number }; userCorrect: number } {
+  const { channelId, category } = params;
+  const mode = normalizedMode(params.mode);
+  const hard = params.hard ? 1 : 0;
+  const streakUser = mode === "user" ? params.userId : null;
+
+  ensureUserRow(params.userId);
+  ensureTriviaStreakRowV2({ channelId, category, mode, hard: !!params.hard, userId: streakUser });
+
+  const streak = incrementTriviaStreak({ channelId, category, mode, hard: !!params.hard, userId: streakUser });
+
+  db.prepare(`
+    INSERT INTO trivia_scores (channel_id, category, mode, hard, user_id, correct_count)
+    VALUES (?, ?, ?, ?, ?, 1)
+    ON CONFLICT(channel_id, category, mode, hard, user_id)
+    DO UPDATE SET correct_count = correct_count + 1
+  `).run(channelId, category, mode, hard, params.userId);
+
+  const userRow = db.prepare(
+    `SELECT correct_count AS correct FROM trivia_scores WHERE channel_id = ? AND category = ? AND mode = ? AND hard = ? AND user_id = ?`
+  ).get(channelId, category, mode, hard, params.userId) as { correct: number } | undefined;
+
+  return {
+    streak,
+    userCorrect: userRow?.correct ?? 1
+  };
+}
+
+export function getTriviaLeaderboard(options: {
+  channelId: string;
+  category?: string | null;
+  mode?: TriviaMode;
+  hard?: boolean;
+  limit?: number;
+}): { user_id: string; correct: number }[] {
+  const mode = normalizedMode(options.mode);
+  const hard = options.hard ? 1 : 0;
+  const limit = options.limit ?? 5;
+
+  let where = `channel_id = ? AND mode = ? AND hard = ?`;
+  const params: (string | number)[] = [options.channelId, mode, hard];
+
+  if (options.category) {
+    where += ` AND category = ?`;
+    params.push(options.category);
+  }
+
+  const rows = db.prepare(
+    `SELECT user_id, SUM(correct_count) AS correct
+     FROM trivia_scores
+     WHERE ${where}
+     GROUP BY user_id
+     ORDER BY correct DESC, user_id ASC
+     LIMIT ?`
+  ).all(...params, limit) as { user_id: string; correct: number }[];
+
+  return rows;
+}
+
+export function getTriviaBestStreaks(channelId: string, mode: TriviaMode = "channel", hard = false) {
+  const rows = db.prepare(
+    `SELECT category, current_streak AS current, best_streak AS best
+     FROM trivia_streaks_v2
+     WHERE channel_id = ? AND mode = ? AND hard = ?
+     ORDER BY category ASC`
+  ).all(channelId, mode, hard ? 1 : 0) as { category: string; current: number; best: number }[];
+
+  return rows;
+}
+
+
+// TRIVIA QUESTIONS
+export type TriviaQuestionRow = {
+  id: number;
+  category: string;
+  question: string;
+  answer: string;
+  aliases: string[];
+  choices?: string[];
+  difficulty?: string | null;
+  source?: string | null;
+  type?: string | null;
+};
+
+export type TriviaDatasetItem = {
+  category: string;
+  question: string;
+  answer: string;
+  aliases?: string[];
+  choices?: string[];
+  difficulty?: string | null;
+  source?: string | null;
+  type?: string | null;
+};
+
+function normalizeCategory(cat: string) {
+  return cat.trim().toLowerCase();
+}
+
+function normalizeText(text: string) {
+  return text.trim();
+}
+
+function normalizeType(type: string | null | undefined) {
+  return type ? type.trim().toLowerCase() : null;
+}
+
+function normalizeAliases(rawAliases?: string[]) {
+  if (!Array.isArray(rawAliases)) return [] as string[];
+  return rawAliases
+    .map((a) => normalizeText(String(a)))
+    .filter((a) => a.length > 0);
+}
+
+export function importTriviaItems(items: TriviaDatasetItem[]): number {
+  const insert = db.prepare(`
+    INSERT INTO trivia_questions (category, question, answer, aliases, choices, difficulty, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(category, question) DO UPDATE SET
+      answer = excluded.answer,
+      aliases = excluded.aliases,
+      choices = excluded.choices,
+      difficulty = excluded.difficulty,
+      source = excluded.source
+  `);
+
+  const tx = db.transaction((rows: TriviaDatasetItem[]) => {
+    let count = 0;
+    for (const item of rows) {
+      if (!item?.category || !item?.question || !item?.answer) continue;
+      const category = normalizeCategory(String(item.category));
+      const question = normalizeText(String(item.question));
+      const answer = normalizeText(String(item.answer));
+      const aliases = normalizeAliases(item.aliases);
+      const type = normalizeType(item.source ?? item.type ?? null);
+      const choices = Array.isArray(item.choices)
+        ? item.choices.map((c) => normalizeText(String(c))).filter((c) => c.length > 0)
+        : null;
+
+      insert.run(
+        category,
+        question,
+        answer,
+        JSON.stringify(aliases),
+        choices ? JSON.stringify(choices) : null,
+        item.difficulty ?? null,
+        type
+      );
+      count++;
+    }
+    return count;
+  });
+
+  return tx(items);
+}
+
+export function getTriviaCategories(): string[] {
+  const rows = db.prepare(`SELECT DISTINCT category FROM trivia_questions ORDER BY category ASC`).all() as { category: string }[];
+  return rows.map((r) => r.category);
+}
+
+export function getTriviaTypes(): string[] {
+  const rows = db.prepare(`SELECT DISTINCT LOWER(source) AS type FROM trivia_questions WHERE source IS NOT NULL ORDER BY type ASC`).all() as {
+    type: string | null;
+  }[];
+  return rows
+    .map((row) => row.type)
+    .filter((t): t is string => !!t)
+    .map((t) => t.toLowerCase());
+}
+
+export function getTriviaCategorySummary(): { category: string; types: string[]; total: number; counts: Record<string, number> }[] {
+  const rows = db.prepare(
+    `SELECT category, LOWER(source) AS qtype, COUNT(*) AS total
+     FROM trivia_questions
+     GROUP BY category, LOWER(source)
+     ORDER BY category ASC, qtype ASC`
+  ).all() as { category: string; qtype: string | null; total: number }[];
+
+  const map = new Map<string, { category: string; types: Set<string>; total: number; counts: Record<string, number> }>();
+
+  for (const row of rows) {
+    const entry = map.get(row.category) ?? { category: row.category, types: new Set<string>(), total: 0, counts: {} };
+    const typeKey = row.qtype ?? 'unknown';
+    if (row.qtype) {
+      entry.types.add(row.qtype);
+    }
+    entry.counts[typeKey] = (entry.counts[typeKey] ?? 0) + row.total;
+    entry.total += row.total;
+    map.set(row.category, entry);
+  }
+
+  return Array.from(map.values())
+    .map((val) => ({ category: val.category, types: Array.from(val.types).sort(), total: val.total, counts: val.counts }))
+    .sort((a, b) => a.category.localeCompare(b.category));
+}
+
+export function getRandomTriviaQuestion(
+  categoryOrOpts?: string | { category?: string | null; type?: string | null }
+): TriviaQuestionRow | null {
+  const category = typeof categoryOrOpts === "string" ? categoryOrOpts : categoryOrOpts?.category ?? null;
+  const type = typeof categoryOrOpts === "object" && categoryOrOpts !== null ? categoryOrOpts.type ?? null : null;
+
+  const whereParts: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (category) {
+    whereParts.push("category = ?");
+    params.push(category);
+  }
+
+  if (type) {
+    whereParts.push("LOWER(source) = LOWER(?)");
+    params.push(type);
+  }
+
+  const where = whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "";
+
+  const row = db.prepare(
+    `SELECT id, category, question, answer, aliases, choices, difficulty, source
+     FROM trivia_questions
+     ${where}
+     ORDER BY COALESCE(last_used_at, 0) ASC, RANDOM()
+     LIMIT 1`
+  ).get(...params) as any;
+
+  if (!row) return null;
+
+  db.prepare(`UPDATE trivia_questions SET last_used_at = ? WHERE id = ?`).run(Date.now(), row.id);
+
+  let aliases: string[] = [];
+  let choices: string[] | undefined;
+  try {
+    aliases = row.aliases ? JSON.parse(row.aliases) : [];
+    if (!Array.isArray(aliases)) aliases = [];
+  } catch {
+    aliases = [];
+  }
+
+  try {
+    choices = row.choices ? JSON.parse(row.choices) : undefined;
+    if (!Array.isArray(choices)) choices = undefined;
+  } catch {
+    choices = undefined;
+  }
+
+  const qType = normalizeType(row.source ?? null);
+
+  return {
+    id: row.id,
+    category: row.category,
+    question: row.question,
+    answer: row.answer,
+    aliases,
+    choices,
+    difficulty: row.difficulty ?? null,
+    source: qType,
+    type: qType
+  };
 }
