@@ -1,22 +1,21 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from 'axios';
 import config from '../config/index.js';
-import { getAccount, getAllLastFmUsers, refreshUsername } from '../db/dbManager.js';
+import { getAccount, getAllLastFmUsers, getPrefix, refreshUsername } from '../db/dbManager.js';
 import { saySafe } from '../client.js';
-import { timeLog, usernameToID, uploadToHastebin } from '../utils.js';
+import { timeLog, uploadToHastebin } from '../utils.js';
 
 export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
   let account: string | null = null;
 
   if (args.length > 1) {
-    if (args[1].startsWith('@')) {
-      account = getAccount(await usernameToID(args[1].replace(/^@/, '')), 'lastfm');
-    } else {
-      artistName = args.slice(1).join(' ');
-    }
+    artistName = args.slice(1).join(' ');
   } else {
     account = getAccount(msg.senderUserID, 'lastfm');
+    if (!account) {
+      return saySafe(msg.channelName, `You are not linked to last.fm 😭 Use ${getPrefix(msg.channelID)}link <username> to link your account.`, msg.messageID);
+    }
   }
 
   if (account) {
@@ -109,7 +108,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (plays.length === 0) {
-    const responses = ['who is that', 'ts is niche', 'underground', 'they have no fans', 'never heard of them'];
+    const responses = ['who is that', 'ts is niche', 'im gatekeeping this response', 'this artist is too underground', 'they have no fans', 'never heard of them'];
     const response = responses[Math.floor(Math.random() * responses.length)];
     return saySafe(msg.channelName, response, msg.messageID);
   }
