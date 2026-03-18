@@ -5,7 +5,7 @@ import { saySafe } from '../client.js';
 export default async function configSys(msg: PrivmsgMessage) {
   const args = msg.messageText.split(' ').slice(1);
   if (args.length === 0) {
-    return saySafe(msg.channelName, 'usage: %config <system> - e.g. %config lastfm', msg.messageID);
+    return saySafe(msg.channelName, 'usage: %config <system> <property> <value> - try a command to see available options', msg.messageID);
   }
 
   const system = args[0].toLowerCase();
