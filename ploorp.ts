@@ -157,6 +157,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await namechange(msg, args);
         return;
 
+      case 'sc':
+        saySafe(msg.channelName, `check out the new lastfm options! type ${config.prefix}config lastfm`, msg.messageID);
       case 'song':
       case 's':
         await song(msg, false, args);

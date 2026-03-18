@@ -26,14 +26,14 @@ export default async function configSys(msg: PrivmsgMessage) {
 
     if (!value) {
       if (property === 'song-link') {
-        return saySafe(msg.channelName, `usage: %config lastfm song-link <none|spotify|youtube>`, msg.messageID);
+        return saySafe(msg.channelName, `usage: %config lastfm song-link <none|spotify|youtube|lastfm>`, msg.messageID);
       }
       return saySafe(msg.channelName, `usage: %config lastfm ${property} <true|false>`, msg.messageID);
     }
 
     if (property === 'song-link') {
-      if (value !== 'none' && value !== 'spotify' && value !== 'youtube') {
-        return saySafe(msg.channelName, 'song-link must be none, spotify, or youtube', msg.messageID);
+      if (value !== 'none' && value !== 'spotify' && value !== 'youtube' && value !== 'lastfm') {
+        return saySafe(msg.channelName, 'song-link must be none, spotify, youtube, or lastfm', msg.messageID);
       }
       setLastFmConfigString(msg.senderUserID, 'lastfm_song_link', value);
       return saySafe(msg.channelName, `lastfm song-link is now ${value}`, msg.messageID);

@@ -168,18 +168,18 @@ export function getAllLastFmUsers(): { id: string; username?: string; lastfm: st
 
 export interface LastFmConfigs {
   playCount: boolean;
-  songLink: 'none' | 'spotify' | 'youtube';
+  songLink: 'none' | 'spotify' | 'youtube' | 'lastfm';
 }
 
 export function getLastFmConfigs(id: string): LastFmConfigs {
   ensureUserRow(id);
   const row = db.prepare("SELECT lastfm_play_count, lastfm_song_link FROM users WHERE id = ?").get(id) as any;
   if (!row) {
-    return { playCount: true, songLink: 'none' };
+    return { playCount: true, songLink: 'lastfm' };
   }
   return {
     playCount: row.lastfm_play_count === 1,
-    songLink: row.lastfm_song_link || 'none'
+    songLink: row.lastfm_song_link || 'lastfm'
   };
 }
 

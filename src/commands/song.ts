@@ -184,6 +184,8 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
   } else if (configs.songLink === 'youtube') {
     const link = await searchYoutube(`${songTitle} ${artist}`);
     if (link) extraLink = ` - ${link}`;
+  } else if (configs.songLink === 'lastfm') {
+    if (track.url) extraLink = ` - ${track.url}`;
   }
 
   if (nowPlaying) {
