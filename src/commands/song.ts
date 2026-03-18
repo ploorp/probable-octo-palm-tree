@@ -81,7 +81,7 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
           method: 'track.getinfo',
           artist,
           track: songTitle,
-          user: username,
+          username: username,
           api_key: config.lastfm.client_id,
           format: 'json',
           autocorrect: 1,
