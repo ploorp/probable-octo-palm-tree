@@ -166,6 +166,33 @@ export function getAllLastFmUsers(): { id: string; username?: string; lastfm: st
   return rows;
 }
 
+export interface LastFmConfigs {
+  playCount: boolean;
+  songLink: 'none' | 'spotify' | 'youtube';
+}
+
+export function getLastFmConfigs(id: string): LastFmConfigs {
+  ensureUserRow(id);
+  const row = db.prepare("SELECT lastfm_play_count, lastfm_song_link FROM users WHERE id = ?").get(id) as any;
+  if (!row) {
+    return { playCount: true, songLink: 'none' };
+  }
+  return {
+    playCount: row.lastfm_play_count === 1,
+    songLink: row.lastfm_song_link || 'none'
+  };
+}
+
+export function setLastFmConfigString(id: string, key: "lastfm_song_link", value: string) {
+  ensureUserRow(id);
+  db.prepare(`UPDATE users SET ${key} = ? WHERE id = ?`).run(value, id);
+}
+
+export function setLastFmConfig(id: string, key: "lastfm_play_count", value: boolean) {
+  ensureUserRow(id);
+  db.prepare(`UPDATE users SET ${key} = ? WHERE id = ?`).run(value ? 1 : 0, id);
+}
+
 
 // FORTUNE
 export function updateStreak(userId: string) {

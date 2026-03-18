@@ -2,11 +2,61 @@ import { saySafe } from '../client.js';
 import axios from 'axios';
 import config from '../config/index.js';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { getAccount } from '../db/dbManager.js';
+import { getAccount, getLastFmConfigs } from '../db/dbManager.js';
 import { getUserId } from '../api/helix.js';
+
+let spotifyToken = "";
+let spotifyTokenExpiry = 0;
+
+async function getSpotifyToken() {
+  if (spotifyToken && Date.now() < spotifyTokenExpiry) return spotifyToken;
+  if (!config.spotify || !config.spotify.client_id || !config.spotify.client_secret) return null;
+  
+  const auth = Buffer.from(`${config.spotify.client_id}:${config.spotify.client_secret}`).toString('base64');
+  try {
+    const res = await axios.post('https://accounts.spotify.com/api/token', 'grant_type=client_credentials', {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+    spotifyToken = res.data.access_token;
+    spotifyTokenExpiry = Date.now() + (res.data.expires_in - 60) * 1000;
+    return spotifyToken;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function searchSpotify(query: string) {
+  const token = await getSpotifyToken();
+  if (!token) return null;
+  
+  try {
+    const res = await axios.get(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return res.data.tracks?.items?.[0]?.external_urls?.spotify || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function searchYoutube(query: string) {
+  if (!config.youtube || !config.youtube.api_key) return null;
+  try {
+    const res = await axios.get(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=1&key=${config.youtube.api_key}`);
+    const videoId = res.data.items?.[0]?.id?.videoId;
+    if (videoId) return `https://youtu.be/${videoId}`;
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
 
 export default async function song(msg: PrivmsgMessage, playcount: boolean, args: string[]) {
   let username: string;
+  let targetUserId: string | null = msg.senderUserID;
 
   if (!args[1]) {
     const account = getAccount(msg.senderUserID, 'lastfm');
@@ -23,6 +73,7 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
       }
       const userId = await getUserId(twitchLogin);
       if (!userId) return saySafe(msg.channelName, `twitch user not found`, msg.messageID);
+      targetUserId = userId;
       const account = getAccount(userId, 'lastfm');
       if (!account) {
         return saySafe(msg.channelName, `${twitchLogin} has no linked lastfm`, msg.messageID);
@@ -33,7 +84,15 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
       if (!/^[a-z0-9_]+$/.test(username)) {
         return saySafe(msg.channelName, `bad username tupid`, msg.messageID);
       }
+      targetUserId = null;
     }
+  }
+
+  let configs;
+  if (targetUserId) {
+    configs = getLastFmConfigs(targetUserId);
+  } else {
+    configs = { playCount: true };
   }
 
   let recents;
@@ -70,7 +129,10 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
   const nowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
 
   let scrobbleCount = '';
-  if (playcount) {
+  let shouldShowPlaycount = configs.playCount;
+  if (playcount) shouldShowPlaycount = true;
+
+  if (shouldShowPlaycount) {
     let trackInfo;
     try {
       trackInfo = await axios.get('https://ws.audioscrobbler.com/2.0/', {
@@ -115,13 +177,22 @@ export default async function song(msg: PrivmsgMessage, playcount: boolean, args
     return `${years}y ago`;
   }
 
+  let extraLink = '';
+  if (configs.songLink === 'spotify') {
+    const link = await searchSpotify(`${songTitle} ${artist}`);
+    if (link) extraLink = ` - ${link}`;
+  } else if (configs.songLink === 'youtube') {
+    const link = await searchYoutube(`${songTitle} ${artist}`);
+    if (link) extraLink = ` - ${link}`;
+  }
+
   if (nowPlaying) {
-    return saySafe(msg.channelName, `${username} is currently playing "${songTitle}" by ${artist}${scrobbleCount} SourPls`, msg.messageID);
+    return saySafe(msg.channelName, `${username} is currently playing "${songTitle}" by ${artist}${scrobbleCount} SourPls${extraLink}`, msg.messageID);
   } else {
     let ago = 'unknown time ago';
     if (date?.uts) {
       ago = timeAgo(new Date(parseInt(date.uts) * 1000));
     }
-    return saySafe(msg.channelName, `${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} SourPls`, msg.messageID);
+    return saySafe(msg.channelName, `${username} last played "${songTitle}" by ${artist} (${ago})${scrobbleCount} SourPls${extraLink}`, msg.messageID);
   }
 }
