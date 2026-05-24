@@ -108,7 +108,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (plays.length === 0) {
-    const responses = ['who is that', 'ts is niche', 'im gatekeeping this response', 'this artist is too underground', 'they have no fans', 'never heard of them'];
+    const responses = ['who is that', 'ts is niche', 'im gatekeeping this response', 'this artist is too underground 😢', 'they have no fans', 'never heard of them', 'try a better artist 🤣'];
     const response = responses[Math.floor(Math.random() * responses.length)];
     return saySafe(msg.channelName, response, msg.messageID);
   }
