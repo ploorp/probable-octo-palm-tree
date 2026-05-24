@@ -19,6 +19,13 @@ export type AppConfig = {
   lastfm: {
     client_id: string;
   };
+  spotify?: {
+    client_id: string;
+    client_secret: string;
+  };
+  youtube?: {
+    api_key: string;
+  };
   osu: {
     client_id: string;
     client_secret: string;
@@ -89,6 +96,17 @@ export function assertConfig(rawConfig: Record<string, unknown>): asserts rawCon
   }
   if (typeof lastfm.client_id !== 'string') {
     throw new Error('config.lastfm.client_id must be a string');
+  }
+
+  const spotify = (rawConfig as any).spotify;
+  if (spotify) {
+    if (typeof spotify.client_id !== 'string') throw new Error('config.spotify.client_id must be a string');
+    if (typeof spotify.client_secret !== 'string') throw new Error('config.spotify.client_secret must be a string');
+  }
+
+  const youtube = (rawConfig as any).youtube;
+  if (youtube) {
+    if (typeof youtube.api_key !== 'string') throw new Error('config.youtube.api_key must be a string');
   }
 
   const osu = (rawConfig as any).osu;

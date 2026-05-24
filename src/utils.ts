@@ -125,7 +125,7 @@ export function getFlagEmoji(countryCode: string) {
 }
 
 
-export async function uploadToHastebin(content: string): Promise<string | null> {
+export async function uploadToHastebin(content: string, raw: boolean = false): Promise<string | null> {
   try {
     const response = await axios.post('https://h.potat.app/documents', content, {
       headers: {
@@ -134,6 +134,7 @@ export async function uploadToHastebin(content: string): Promise<string | null> 
       transformRequest: [(data) => data]
     });
     if (response.data && response.data.key) {
+      if (raw) {return `https://h.potat.app/raw/${response.data.key}`; }
       return `https://h.potat.app/${response.data.key}`;
     }
     return null;

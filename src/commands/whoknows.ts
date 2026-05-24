@@ -121,7 +121,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   if (message.length > 450) {
     try {
       let link;
-      link = await uploadToHastebin(message);
+      link = await uploadToHastebin(message, true);
       if (!link) {
         timeLog('Hastebin upload failed');
         link = '';

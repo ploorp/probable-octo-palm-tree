@@ -17,9 +17,18 @@ CREATE TABLE IF NOT EXISTS users (
   lastfm TEXT,
   letterboxd TEXT,
   osu TEXT,
-  is_whitelisted INTEGER DEFAULT 0
+  is_whitelisted INTEGER DEFAULT 0,
+  lastfm_play_count INTEGER DEFAULT 1,
+  lastfm_song_link TEXT DEFAULT 'lastfm'
 );
 `).run();
+
+try {
+  db.prepare(`ALTER TABLE users ADD COLUMN lastfm_play_count INTEGER DEFAULT 1;`).run();
+} catch (e) {}
+try {
+  db.prepare(`ALTER TABLE users ADD COLUMN lastfm_song_link TEXT DEFAULT 'lastfm';`).run();
+} catch (e) {}
 
 // Legacy trivia streak tables (replaced by trivia_scores/trivia_streaks_v2) kept for backward compatibility
 db.prepare(`

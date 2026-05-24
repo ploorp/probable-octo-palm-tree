@@ -20,6 +20,7 @@ import join from './src/commands/join.js';
 import link from './src/commands/link.js';
 import supibot from './src/commands/supibot.js';
 import newname from './src/commands/newname.js';
+import configSys from './src/commands/config.js';
 import { getPrefix, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix, updateWhitelist } from './src/db/dbManager.js';
 import { getUserId } from './src/api/helix.js';
 import randomline from './src/commands/randomline.js';
@@ -156,9 +157,15 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await namechange(msg, args);
         return;
 
+      case 'sc':
+        saySafe(msg.channelName, `check out the new lastfm options! type ${config.prefix}config lastfm`, msg.messageID);
       case 'song':
       case 's':
         await song(msg, false, args);
+        return;
+
+      case 'config':
+        await configSys(msg);
         return;
 
       case 'dl':
