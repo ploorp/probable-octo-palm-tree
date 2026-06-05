@@ -97,7 +97,7 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
     );
   }
 
-  if (!process.env.TMDB_API_KEY) {
+  if (!config.tmdb || !config.tmdb.api_key) {
     return saySafe(msg.channelName, `tmdb api key missing`, msg.messageID);
   }
 
