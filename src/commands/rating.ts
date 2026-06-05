@@ -122,19 +122,43 @@ async function getUserFilmData(
   username: string,
   slug: string
 ): Promise<FilmData | null> {
-  const jsonUrl =
-    `https://letterboxd.com/${username}/film/${slug}/json/`;
+  const filmUrl = `https://letterboxd.com/${username}/film/${slug}/`;
+  const jsonUrl = `${filmUrl}json/`;
 
   try {
+    const pageRes = await axios.get(filmUrl, {
+      headers: {
+        'User-Agent': UA,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Upgrade-Insecure-Requests': '1',
+      },
+      validateStatus: () => true,
+    });
+
+    timeLog(`film page status=${pageRes.status}`);
+
+    const cookies =
+      pageRes.headers['set-cookie']
+        ?.map((c: string) => c.split(';')[0])
+        .join('; ') || '';
+
+    timeLog(`cookies=${cookies || 'none'}`);
+
     const jsonRes = await axios.get(jsonUrl, {
       headers: {
         'User-Agent': UA,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Upgrade-Insecure-Requests': '1',
+        Referer: filmUrl,
+        Cookie: cookies,
       },
       validateStatus: () => true,
     });
 
     timeLog(
-      `letterboxd json status=${jsonRes.status} url=${jsonUrl}`
+      `json status=${jsonRes.status} cf=${jsonRes.headers['cf-mitigated'] || 'none'}`
     );
 
     if (
@@ -149,20 +173,13 @@ async function getUserFilmData(
     return {
       movieTitle: d.viewingable.name,
       dateLogged: d.viewingDate || '',
-      ratingText: formatRating(
-        d.rating,
-        !!d.liked
-      ),
-      rewatch: d.rewatch
-        ? 'rewatched'
-        : 'watched',
+      ratingText: formatRating(d.rating, !!d.liked),
+      rewatch: d.rewatch ? 'rewatched' : 'watched',
       releaseYear: d.viewingable.releaseYear,
-      reviewUrl: `https://letterboxd.com/${username}/film/${slug}`,
+      reviewUrl: filmUrl,
     };
   } catch (err: any) {
-    timeLog(
-      `letterboxd json failed ${err?.message || err}`
-    );
+    timeLog(`letterboxd json failed ${err?.message || err}`);
     return null;
   }
 }
