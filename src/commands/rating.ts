@@ -146,4 +146,28 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
   const reviewUrl = `https://letterboxd.com/${username}/film/${found.slug}`;
   const dateLogged = jsonData.viewingDate;
   const ratingVal = jsonData.rating;
-  const rewatch = jsonData.rewatch 
+  const rewatch = jsonData.rewatch ? 'rewatched' : 'watched';
+  const releaseDate = jsonData.viewingable.releaseYear;
+  const like = jsonData.liked;
+
+  const ratingText =
+    ratingVal || like
+      ? `rating:${ratingVal ? ` ${ratingVal / 2}/5` : ''}${like ? ' ❤️' : ''}`
+      : '';
+
+  const message = [
+    dateLogged,
+    displayName,
+    rewatch,
+    movieTitle,
+    releaseDate ? `(${releaseDate})` : '',
+    ratingText,
+    reviewUrl,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return saySafe(msg.channelName, message, msg.messageID);
+}
