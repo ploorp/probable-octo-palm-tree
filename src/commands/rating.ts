@@ -1,5 +1,6 @@
 import { saySafe } from '../client.js';
 import axios from 'axios';
+import * as cheerio from 'cheerio';
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { getAccount, getPrefix } from '../db/dbManager.js';
 import { getUserId } from '../api/helix.js';
@@ -13,6 +14,15 @@ type FoundFilm = {
   slug: string;
   title: string;
   year?: string;
+};
+
+type FilmResult = {
+  title: string;
+  releaseYear?: string;
+  dateLogged?: string;
+  ratingText: string;
+  rewatch: 'watched' | 'rewatched';
+  reviewUrl: string;
 };
 
 async function searchFilmTmdb(query: string): Promise<FoundFilm | null> {
@@ -55,15 +65,14 @@ async function searchFilmTmdb(query: string): Promise<FoundFilm | null> {
       validateStatus: () => true,
     });
 
-    timeLog(`letterboxd tmdb status=${lbRes.status} location=${lbRes.headers.location || 'none'}`);
-
     const finalUrl = lbRes.request?.res?.responseUrl || lbRes.headers.location;
     const slug = finalUrl?.match(/\/film\/([^/]+)/)?.[1];
 
-    if (!slug) {
-      timeLog(`letterboxd slug parse failed for tmdb id=${movie.id}`);
-      return null;
-    }
+    timeLog(
+      `letterboxd tmdb status=${lbRes.status} finalUrl=${finalUrl || 'none'} slug=${slug || 'none'}`
+    );
+
+    if (!slug) return null;
 
     return {
       slug,
@@ -72,6 +81,97 @@ async function searchFilmTmdb(query: string): Promise<FoundFilm | null> {
     };
   } catch (err: any) {
     timeLog(`tmdb search failed ${err?.message || err}`);
+    return null;
+  }
+}
+
+function parseFilmPage(html: string, username: string, slug: string): FilmResult | null {
+  const $ = cheerio.load(html);
+
+  const ogTitle = $('meta[property="og:title"]').attr('content') || '';
+  const title = ogTitle.replace(/\s*\|\s*Letterboxd.*$/i, '').trim() || $('h1').first().text().trim() || slug;
+
+  const releaseYear =
+    $('.releasedate').first().text().trim() ||
+    ogTitle.match(/\((\d{4})\)/)?.[1] ||
+    undefined;
+
+  const metaTitle = $('meta[property="og:title"]').attr('content') || '';
+  const ratingMatch = metaTitle.match(/([★½]+)/);
+  const ratingText =
+    ratingMatch ? `rating: ${ratingMatch[1]}` : '';
+
+  let dateLogged =
+    $('.view-date').first().text().trim() ||
+    $('[data-viewing-date]').attr('data-viewing-date') ||
+    '';
+
+  dateLogged = dateLogged.replace(/\s+/g, ' ').replace(/^Watched\s*/i, '').trim();
+
+  const rewatch = metaTitle.toLowerCase().includes('rewatched') ? 'rewatched' : 'watched';
+
+  return {
+    title,
+    releaseYear,
+    dateLogged,
+    ratingText,
+    rewatch,
+    reviewUrl: `https://letterboxd.com/${username}/film/${slug}`,
+  };
+}
+
+async function getUserFilmData(username: string, slug: string): Promise<FilmResult | null> {
+  const jsonUrl = `https://letterboxd.com/${username}/film/${slug}/json/`;
+  const pageUrl = `https://letterboxd.com/${username}/film/${slug}/`;
+
+  try {
+    const jsonRes = await axios.get(jsonUrl, {
+      headers: { 'User-Agent': UA },
+      validateStatus: () => true,
+    });
+
+    timeLog(`letterboxd json status=${jsonRes.status} url=${jsonUrl}`);
+
+    if (jsonRes.status === 200 && jsonRes.data?.viewingable) {
+      const d = jsonRes.data;
+      const ratingText =
+        d.rating || d.liked
+          ? `rating:${d.rating ? ` ${d.rating / 2}/5` : ''}${d.liked ? ' ❤️' : ''}`
+          : '';
+
+      return {
+        title: d.viewingable.name,
+        releaseYear: d.viewingable.releaseYear,
+        dateLogged: d.viewingDate,
+        ratingText,
+        rewatch: d.rewatch ? 'rewatched' : 'watched',
+        reviewUrl: pageUrl,
+      };
+    }
+
+    timeLog(`letterboxd json body=${JSON.stringify(jsonRes.data).slice(0, 500)}`);
+  } catch (err: any) {
+    timeLog(`letterboxd json failed ${err?.message || err}`);
+  }
+
+  try {
+    const pageRes = await axios.get(pageUrl, {
+      headers: { 'User-Agent': UA },
+      validateStatus: () => true,
+    });
+
+    timeLog(`letterboxd page status=${pageRes.status} url=${pageUrl}`);
+
+    if (pageRes.status !== 200 || typeof pageRes.data !== 'string') {
+      return null;
+    }
+
+    const parsed = parseFilmPage(pageRes.data, username, slug);
+    if (!parsed) return null;
+
+    return parsed;
+  } catch (err: any) {
+    timeLog(`letterboxd page failed ${err?.message || err}`);
     return null;
   }
 }
@@ -132,37 +232,19 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
     return saySafe(msg.channelName, `no movie found tupid`, msg.messageID);
   }
 
-  let jsonResponse;
-  try {
-    jsonResponse = await axios.get(`https://letterboxd.com/${username}/film/${found.slug}/json/`, {
-      headers: { 'User-Agent': UA },
-    });
-  } catch {
+  const filmData = await getUserFilmData(username!, found.slug);
+  if (!filmData) {
     return saySafe(msg.channelName, `no review found sad`, msg.messageID);
   }
 
-  const jsonData = jsonResponse.data;
-  const movieTitle = jsonData.viewingable.name;
-  const reviewUrl = `https://letterboxd.com/${username}/film/${found.slug}`;
-  const dateLogged = jsonData.viewingDate;
-  const ratingVal = jsonData.rating;
-  const rewatch = jsonData.rewatch ? 'rewatched' : 'watched';
-  const releaseDate = jsonData.viewingable.releaseYear;
-  const like = jsonData.liked;
-
-  const ratingText =
-    ratingVal || like
-      ? `rating:${ratingVal ? ` ${ratingVal / 2}/5` : ''}${like ? ' ❤️' : ''}`
-      : '';
-
   const message = [
-    dateLogged,
+    filmData.dateLogged,
     displayName,
-    rewatch,
-    movieTitle,
-    releaseDate ? `(${releaseDate})` : '',
-    ratingText,
-    reviewUrl,
+    filmData.rewatch,
+    filmData.title,
+    filmData.releaseYear ? `(${filmData.releaseYear})` : '',
+    filmData.ratingText,
+    filmData.reviewUrl,
   ]
     .filter(Boolean)
     .join(' ')
