@@ -12,7 +12,9 @@ async function searchFilmTmdb(
   query: string
 ): Promise<{ slug: string; title: string; year?: string } | null> {
   try {
-    const { data } = await axios.get('https://api.themoviedb.org/3/search/movie', {
+    timeLog(`tmdb query="${query}" key=${config.tmdb?.api_key ? 'present' : 'missing'}`);
+
+    const tmdbRes = await axios.get('https://api.themoviedb.org/3/search/movie', {
       params: {
         api_key: config.tmdb.api_key,
         query,
@@ -20,12 +22,20 @@ async function searchFilmTmdb(
         page: 1,
       },
       headers: { 'User-Agent': UA },
+      validateStatus: () => true,
     });
 
-    const movie = data?.results?.[0];
+    timeLog(`tmdb status=${tmdbRes.status} url=${tmdbRes.config.url}`);
+
+    if (tmdbRes.status !== 200) {
+      timeLog(`tmdb body=${JSON.stringify(tmdbRes.data)}`);
+      return null;
+    }
+
+    const movie = tmdbRes.data?.results?.[0];
     if (!movie?.id) return null;
 
-    const res = await axios.get(`https://letterboxd.com/tmdb/${movie.id}`, {
+    const lbRes = await axios.get(`https://letterboxd.com/tmdb/${movie.id}`, {
       headers: {
         'User-Agent': UA,
         Referer: 'https://letterboxd.com/',
@@ -34,7 +44,9 @@ async function searchFilmTmdb(
       validateStatus: status => status >= 300 && status < 400,
     });
 
-    const location = res.headers.location as string | undefined;
+    timeLog(`letterboxd tmdb redirect status=${lbRes.status} location=${lbRes.headers.location}`);
+
+    const location = lbRes.headers.location as string | undefined;
     const slug = location?.match(/\/film\/([^/]+)/)?.[1];
 
     if (!slug) return null;
@@ -44,8 +56,8 @@ async function searchFilmTmdb(
       title: movie.title,
       year: movie.release_date?.slice(0, 4),
     };
-  } catch (err) {
-    timeLog(`tmdb search failed ${err}`);
+  } catch (err: any) {
+    timeLog(`tmdb search failed ${err?.message || err}`);
     return null;
   }
 }
