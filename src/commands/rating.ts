@@ -6,11 +6,16 @@ import { getUserId } from '../api/helix.js';
 import { timeLog } from '../utils.js';
 import config from '../config/index.js';
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+const UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
-async function searchFilmTmdb(
-  query: string
-): Promise<{ slug: string; title: string; year?: string } | null> {
+type FoundFilm = {
+  slug: string;
+  title: string;
+  year?: string;
+};
+
+async function searchFilmTmdb(query: string): Promise<FoundFilm | null> {
   try {
     timeLog(`tmdb query="${query}" key=${config.tmdb?.api_key ? 'present' : 'missing'}`);
 
@@ -28,28 +33,37 @@ async function searchFilmTmdb(
     timeLog(`tmdb status=${tmdbRes.status} url=${tmdbRes.config.url}`);
 
     if (tmdbRes.status !== 200) {
-      timeLog(`tmdb body=${JSON.stringify(tmdbRes.data)}`);
+      timeLog(`tmdb body=${JSON.stringify(tmdbRes.data).slice(0, 500)}`);
       return null;
     }
 
     const movie = tmdbRes.data?.results?.[0];
-    if (!movie?.id) return null;
+    if (!movie?.id) {
+      timeLog(`tmdb no results for query="${query}"`);
+      return null;
+    }
 
     const lbRes = await axios.get(`https://letterboxd.com/tmdb/${movie.id}`, {
       headers: {
         'User-Agent': UA,
         Referer: 'https://letterboxd.com/',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Upgrade-Insecure-Requests': '1',
       },
-      maxRedirects: 0,
-      validateStatus: status => status >= 300 && status < 400,
+      maxRedirects: 5,
+      validateStatus: () => true,
     });
 
-    timeLog(`letterboxd tmdb redirect status=${lbRes.status} location=${lbRes.headers.location}`);
+    timeLog(`letterboxd tmdb status=${lbRes.status} location=${lbRes.headers.location || 'none'}`);
 
-    const location = lbRes.headers.location as string | undefined;
-    const slug = location?.match(/\/film\/([^/]+)/)?.[1];
+    const finalUrl = lbRes.request?.res?.responseUrl || lbRes.headers.location;
+    const slug = finalUrl?.match(/\/film\/([^/]+)/)?.[1];
 
-    if (!slug) return null;
+    if (!slug) {
+      timeLog(`letterboxd slug parse failed for tmdb id=${movie.id}`);
+      return null;
+    }
 
     return {
       slug,
@@ -132,28 +146,4 @@ export default async function rating(msg: PrivmsgMessage, args: string[]) {
   const reviewUrl = `https://letterboxd.com/${username}/film/${found.slug}`;
   const dateLogged = jsonData.viewingDate;
   const ratingVal = jsonData.rating;
-  const rewatch = jsonData.rewatch ? 'rewatched' : 'watched';
-  const releaseDate = jsonData.viewingable.releaseYear;
-  const like = jsonData.liked;
-
-  const ratingText =
-    ratingVal || like
-      ? `rating:${ratingVal ? ` ${ratingVal / 2}/5` : ''}${like ? ' ❤️' : ''}`
-      : '';
-
-  const message = [
-    dateLogged,
-    displayName,
-    rewatch,
-    movieTitle,
-    releaseDate ? `(${releaseDate})` : '',
-    ratingText,
-    reviewUrl,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  return saySafe(msg.channelName, message, msg.messageID);
-}
+  const rewatch = jsonData.rewatch 
