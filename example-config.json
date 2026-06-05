@@ -23,6 +23,9 @@
   "lastfm": {
     "client_id": ""
   },
+  "tmdb": {
+    "api_key": ""
+  },
   "spotify": {
     "client_id": "YOUR_SPOTIFY_CLIENT_ID",
     "client_secret": "YOUR_SPOTIFY_CLIENT_SECRET"

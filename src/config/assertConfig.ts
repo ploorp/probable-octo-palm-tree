@@ -19,6 +19,9 @@ export type AppConfig = {
   lastfm: {
     client_id: string;
   };
+  tmdb: {
+    api_key: string;
+  };
   spotify?: {
     client_id: string;
     client_secret: string;
@@ -96,6 +99,14 @@ export function assertConfig(rawConfig: Record<string, unknown>): asserts rawCon
   }
   if (typeof lastfm.client_id !== 'string') {
     throw new Error('config.lastfm.client_id must be a string');
+  }
+
+  const tmdb = (rawConfig as any).tmdb;
+  if (!tmdb || typeof tmdb !== 'object') {
+    throw new Error('config.tmdb must be an object');
+  }
+  if (typeof tmdb.api_key !== 'string') {
+    throw new Error('config.tmdb.api_key must be a string');
   }
 
   const spotify = (rawConfig as any).spotify;
