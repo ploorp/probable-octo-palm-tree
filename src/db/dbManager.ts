@@ -171,6 +171,10 @@ export interface LastFmConfigs {
   songLink: 'none' | 'spotify' | 'youtube' | 'lastfm';
 }
 
+export interface WhoKnowsConfigs {
+  antiPing: boolean;
+}
+
 export function getLastFmConfigs(id: string): LastFmConfigs {
   ensureUserRow(id);
   const row = db.prepare("SELECT lastfm_play_count, lastfm_song_link FROM users WHERE id = ?").get(id) as any;
@@ -189,6 +193,19 @@ export function setLastFmConfigString(id: string, key: "lastfm_song_link", value
 }
 
 export function setLastFmConfig(id: string, key: "lastfm_play_count", value: boolean) {
+  ensureUserRow(id);
+  db.prepare(`UPDATE users SET ${key} = ? WHERE id = ?`).run(value ? 1 : 0, id);
+}
+
+export function getWhoKnowsConfigs(id: string): WhoKnowsConfigs {
+  ensureUserRow(id);
+  const row = db.prepare("SELECT whoknows_antiping FROM users WHERE id = ?").get(id) as { whoknows_antiping?: number } | undefined;
+  return {
+    antiPing: row ? row.whoknows_antiping === 1 : false,
+  };
+}
+
+export function setWhoKnowsConfig(id: string, key: "whoknows_antiping", value: boolean) {
   ensureUserRow(id);
   db.prepare(`UPDATE users SET ${key} = ? WHERE id = ?`).run(value ? 1 : 0, id);
 }

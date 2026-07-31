@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
   osu TEXT,
   is_whitelisted INTEGER DEFAULT 0,
   lastfm_play_count INTEGER DEFAULT 1,
-  lastfm_song_link TEXT DEFAULT 'lastfm'
+  lastfm_song_link TEXT DEFAULT 'lastfm',
+  whoknows_antiping INTEGER DEFAULT 0
 );
 `).run();
 
@@ -28,6 +29,9 @@ try {
 } catch (e) {}
 try {
   db.prepare(`ALTER TABLE users ADD COLUMN lastfm_song_link TEXT DEFAULT 'lastfm';`).run();
+} catch (e) {}
+try {
+  db.prepare(`ALTER TABLE users ADD COLUMN whoknows_antiping INTEGER DEFAULT 0;`).run();
 } catch (e) {}
 
 // Legacy trivia streak tables (replaced by trivia_scores/trivia_streaks_v2) kept for backward compatibility

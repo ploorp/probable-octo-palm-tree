@@ -1,7 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from 'axios';
 import config from '../config/index.js';
-import { getAccount, getAllLastFmUsers, getPrefix, refreshUsername } from '../db/dbManager.js';
+import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUsername } from '../db/dbManager.js';
 import { saySafe } from '../client.js';
 import { timeLog, uploadToHastebin } from '../utils.js';
 
@@ -52,6 +52,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   }
 
   const plays: { username: string; playcount: number }[] = [];
+  const whoKnowsConfigs = getWhoKnowsConfigs(msg.senderUserID);
   let correctArtistName = artistName;
   let artistNameUpdated = false;
 
@@ -99,7 +100,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
           } else {
             displayName = user.username;
           }
-          plays.push({ username: `@${displayName}`, playcount: count });
+          plays.push({ username: whoKnowsConfigs.antiPing ? `@\u{E0000}${displayName}` : `@${displayName}`, playcount: count });
         }
       }
     });

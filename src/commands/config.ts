@@ -1,5 +1,5 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
-import { getLastFmConfigs, setLastFmConfig, setLastFmConfigString } from '../db/dbManager.js';
+import { getLastFmConfigs, getWhoKnowsConfigs, setLastFmConfig, setLastFmConfigString, setWhoKnowsConfig } from '../db/dbManager.js';
 import { saySafe } from '../client.js';
 
 export default async function configSys(msg: PrivmsgMessage) {
@@ -54,5 +54,38 @@ export default async function configSys(msg: PrivmsgMessage) {
     }
   }
 
-  return saySafe(msg.channelName, 'unknown system. available: lastfm', msg.messageID);
+  if (system === 'whoknows') {
+    const property = args[1]?.toLowerCase();
+    const value = args[2]?.toLowerCase();
+
+    const configs = getWhoKnowsConfigs(msg.senderUserID);
+
+    if (!property) {
+      return saySafe(
+        msg.channelName,
+        `current whoknows configs: antiping: ${configs.antiPing} | usage: %config whoknows <property> <value>`,
+        msg.messageID
+      );
+    }
+
+    if (property !== 'antiping') {
+      return saySafe(msg.channelName, 'unknown property. available: antiping', msg.messageID);
+    }
+
+    if (!value) {
+      return saySafe(msg.channelName, 'usage: %config whoknows antiping <true|false>', msg.messageID);
+    }
+
+    let isTrue = false;
+    if (value === 'true' || value === '1' || value === 'on') isTrue = true;
+    else if (value === 'false' || value === '0' || value === 'off') isTrue = false;
+    else {
+      return saySafe(msg.channelName, 'value must be true or false', msg.messageID);
+    }
+
+    setWhoKnowsConfig(msg.senderUserID, 'whoknows_antiping', isTrue);
+    return saySafe(msg.channelName, `whoknows antiping is now ${isTrue}`, msg.messageID);
+  }
+
+  return saySafe(msg.channelName, 'unknown system. available: lastfm, whoknows', msg.messageID);
 }
