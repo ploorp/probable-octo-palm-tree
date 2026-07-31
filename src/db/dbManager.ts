@@ -161,9 +161,14 @@ export function getAccount(id: string, service: string) {
   return null;
 }
 
-export function getAllLastFmUsers(): { id: string; username?: string; lastfm: string }[] {
-  const rows = db.prepare('SELECT id, username, lastfm FROM users WHERE lastfm IS NOT NULL').all() as { id: string; username?: string; lastfm: string }[];
-  return rows;
+export function getAllLastFmUsers(): { id: string; username?: string; lastfm: string; whoknowsAntiping: boolean }[] {
+  const rows = db.prepare('SELECT id, username, lastfm, whoknows_antiping FROM users WHERE lastfm IS NOT NULL').all() as { id: string; username?: string; lastfm: string; whoknows_antiping?: number }[];
+  return rows.map((row) => ({
+    id: row.id,
+    username: row.username,
+    lastfm: row.lastfm,
+    whoknowsAntiping: row.whoknows_antiping === 1,
+  }));
 }
 
 export interface LastFmConfigs {

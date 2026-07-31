@@ -56,7 +56,6 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   }
 
   const plays: { username: string; playcount: number }[] = [];
-  const whoKnowsConfigs = getWhoKnowsConfigs(msg.channelID);
   let correctArtistName = artistName;
   let artistNameUpdated = false;
 
@@ -104,7 +103,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
           } else {
             displayName = user.username;
           }
-          plays.push({ username: formatWhoKnowsUsername(displayName, whoKnowsConfigs.antiPing), playcount: count });
+          plays.push({ username: formatWhoKnowsUsername(displayName, user.whoknowsAntiping), playcount: count });
         }
       }
     });

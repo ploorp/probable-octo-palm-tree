@@ -58,7 +58,7 @@ export default async function configSys(msg: PrivmsgMessage) {
     const property = args[1]?.toLowerCase();
     const value = args[2]?.toLowerCase();
 
-    const configs = getWhoKnowsConfigs(msg.channelID);
+    const configs = getWhoKnowsConfigs(msg.senderUserID);
 
     if (!property) {
       return saySafe(
@@ -83,7 +83,7 @@ export default async function configSys(msg: PrivmsgMessage) {
       return saySafe(msg.channelName, 'value must be true or false', msg.messageID);
     }
 
-    setWhoKnowsConfig(msg.channelID, 'whoknows_antiping', isTrue);
+    setWhoKnowsConfig(msg.senderUserID, 'whoknows_antiping', isTrue);
     return saySafe(msg.channelName, `whoknows antiping is now ${isTrue}`, msg.messageID);
   }
 
