@@ -6,7 +6,7 @@ import { saySafe } from '../client.js';
 import { timeLog, unPing, uploadToHastebin } from '../utils.js';
 
 function formatWhoKnowsUsername(displayName: string, antiPing: boolean) {
-  return antiPing ? `@${unPing(displayName)}` : `@${displayName}`;
+  return antiPing ? `@¾${unPing(displayName)}` : `@${displayName}`;
 }
 
 export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {

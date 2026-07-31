@@ -205,7 +205,9 @@ async function joinChannels() {
   }
 }
 
-// appending U+034F for duplicate messages
+const invisibleSuffix = ' \u{000e0000}';
+
+// appending the Alternator-style invisible suffix for duplicate messages
 const duplicateState = new Map<string, { last: string; nextAppend: boolean }>();
 const channelCooldowns = new Map<string, number>();
 
@@ -251,7 +253,7 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
     } else {
       // Same as last message -> alternate appending
       if (state.nextAppend) {
-        sendText = `${baseText} \u034F`;
+        sendText = `${baseText}${invisibleSuffix}`;
         state.nextAppend = false;
       } else {
         sendText = baseText;
