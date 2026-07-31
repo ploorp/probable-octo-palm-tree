@@ -24,11 +24,15 @@ export default async function configSys(msg: PrivmsgMessage) {
       );
     }
 
+    if (property !== 'song-link' && property !== 'play-count') {
+      return saySafe(msg.channelName, 'unknown property. available: song-link, play-count', msg.messageID);
+    }
+
     if (!value) {
       if (property === 'song-link') {
         return saySafe(msg.channelName, `usage: %config lastfm song-link <none|spotify|youtube|lastfm>`, msg.messageID);
       }
-      return saySafe(msg.channelName, `usage: %config lastfm ${property} <true|false>`, msg.messageID);
+      return saySafe(msg.channelName, `usage: %config lastfm play-count <true|false>`, msg.messageID);
     }
 
     if (property === 'song-link') {
@@ -49,8 +53,6 @@ export default async function configSys(msg: PrivmsgMessage) {
     if (property === 'play-count') {
       setLastFmConfig(msg.senderUserID, 'lastfm_play_count', isTrue);
       return saySafe(msg.channelName, `lastfm play-count is now ${isTrue}`, msg.messageID);
-    } else {
-      return saySafe(msg.channelName, 'unknown property. available: song-link, play-count', msg.messageID);
     }
   }
 
