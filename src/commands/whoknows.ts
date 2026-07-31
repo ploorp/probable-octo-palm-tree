@@ -56,7 +56,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   }
 
   const plays: { username: string; playcount: number }[] = [];
-  const whoKnowsConfigs = getWhoKnowsConfigs(msg.senderUserID);
+  const whoKnowsConfigs = getWhoKnowsConfigs(msg.channelID);
   let correctArtistName = artistName;
   let artistNameUpdated = false;
 
