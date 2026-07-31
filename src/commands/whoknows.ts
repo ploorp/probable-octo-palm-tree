@@ -3,10 +3,10 @@ import axios from 'axios';
 import config from '../config/index.js';
 import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUsername } from '../db/dbManager.js';
 import { saySafe } from '../client.js';
-import { timeLog, uploadToHastebin } from '../utils.js';
+import { timeLog, unPing, uploadToHastebin } from '../utils.js';
 
 function formatWhoKnowsUsername(displayName: string, antiPing: boolean) {
-  return antiPing ? `@\u{E0000}\u034F${displayName}` : `@${displayName}`;
+  return antiPing ? `@${unPing(displayName)}` : `@${displayName}`;
 }
 
 export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {

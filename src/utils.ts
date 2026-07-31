@@ -18,6 +18,20 @@ export const ttrim = (str: string | undefined) => {
   return str.replace(pattern, '').replace(/\s{2,}/g, ' ');
 }
 
+export function unPing(username: string): string {
+  if (!username) return '';
+  const char = '¾';
+  const charArray = username.split('');
+
+  for (let i = charArray.length - 1; i >= 0; i -= 1) {
+    if (i % 2 !== 0) {
+      charArray.splice(i, 0, char);
+    }
+  }
+
+  return charArray.join('');
+}
+
 
 // potat users api
 export async function getUserInfo(username: string) {

@@ -257,8 +257,8 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
       duplicateState.set(chKey, state);
     }
 
-    // sanitize control chars that would break IRC commands
-    sendText = sendText.replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
+    // Replace placeholder anti-ping characters and sanitize control chars before sending.
+    sendText = sendText.replace(/¾/g, '\u{E0000}').replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
     
     if (replyMsgId) {
       await client.reply(channel, replyMsgId, sendText); 
