@@ -5,6 +5,10 @@ import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUs
 import { saySafe } from '../client.js';
 import { timeLog, uploadToHastebin } from '../utils.js';
 
+function formatWhoKnowsUsername(displayName: string, antiPing: boolean) {
+  return antiPing ? `@\u{E0000}\u034F${displayName}` : `@${displayName}`;
+}
+
 export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
   let account: string | null = null;
@@ -100,7 +104,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
           } else {
             displayName = user.username;
           }
-          plays.push({ username: whoKnowsConfigs.antiPing ? `@\u{E0000}${displayName}` : `@${displayName}`, playcount: count });
+          plays.push({ username: formatWhoKnowsUsername(displayName, whoKnowsConfigs.antiPing), playcount: count });
         }
       }
     });
