@@ -226,11 +226,15 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
 
     // Skip duplicate protection if bot is Mod
     if (botState && botState.isMod) {
-      let sendText = text.replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
+      let sendText = text.replace(/\r|\n/g, ' ');
+      sendText = sendText.replace(/¾/g, '\u{E0000}');
+      if (sendText.startsWith('.') || sendText.startsWith('/')) {
+        sendText = `/ ${sendText}`;
+      }
       if (replyMsgId) {
-        await client.reply(channel, replyMsgId, sendText); 
+        client.sendRaw(`@reply-parent-msg-id=${replyMsgId} PRIVMSG #${channel} :${sendText}`);
       } else {
-        await client.say(channel, sendText);
+        client.sendRaw(`PRIVMSG #${channel} :${sendText}`);
       }
       return;
     }
@@ -258,12 +262,16 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
     }
 
     // Replace placeholder anti-ping characters and sanitize control chars before sending.
-    sendText = sendText.replace(/¾/g, '\u{E0000}').replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
-    
+    sendText = sendText.replace(/¾/g, '\u{E0000}').replace(/\r|\n/g, ' ');
+
+    if (sendText.startsWith('.') || sendText.startsWith('/')) {
+      sendText = `/ ${sendText}`;
+    }
+
     if (replyMsgId) {
-      await client.reply(channel, replyMsgId, sendText); 
+      client.sendRaw(`@reply-parent-msg-id=${replyMsgId} PRIVMSG #${channel} :${sendText}`);
     } else {
-      await client.say(channel, sendText);
+      client.sendRaw(`PRIVMSG #${channel} :${sendText}`);
     }
     return;
   } catch (err: any) {
