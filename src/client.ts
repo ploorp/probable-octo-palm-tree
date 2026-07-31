@@ -229,7 +229,7 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
     // Skip duplicate protection if bot is Mod
     if (botState && botState.isMod) {
       let sendText = text.replace(/\r|\n/g, ' ');
-      sendText = sendText.replace(/¾/g, '\u034F');
+      sendText = sendText.replace(/¾/g, '\u3164');
       if (sendText.startsWith('.') || sendText.startsWith('/')) {
         sendText = `/ ${sendText}`;
       }
@@ -264,7 +264,7 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
     }
 
     // Replace placeholder anti-ping characters and sanitize control chars before sending.
-    sendText = sendText.replace(/¾/g, '\u034F').replace(/\r|\n/g, ' ');
+    sendText = sendText.replace(/¾/g, '\u3164').replace(/\r|\n/g, ' ');
 
     if (sendText.startsWith('.') || sendText.startsWith('/')) {
       sendText = `/ ${sendText}`;
