@@ -1,11 +1,12 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { saySafe } from '../client.js';
-import { getRandomPopularRatedMovie, TmdbPopularMovie } from '../api/tmdb.js';
+import { LetterboxdFilm } from '../api/letterboxd.js';
+import { getRandomPopularRatedMovie } from '../api/tmdb.js';
 import { getMovieGameBestStreak, getMovieGameLeaderboard, getPrefix, setMovieGameBestStreak } from '../db/dbManager.js';
 
 type GameState = {
-  left: TmdbPopularMovie;
-  right: TmdbPopularMovie;
+  left: LetterboxdFilm;
+  right: LetterboxdFilm;
   streak: number;
 };
 
@@ -19,12 +20,12 @@ function parseGuess(input: string | undefined): 'left' | 'right' | null {
   return null;
 }
 
-function filmLabel(film: TmdbPopularMovie): string {
+function filmLabel(film: LetterboxdFilm): string {
   const year = film.year || 'n.d.';
   return `${film.title} (${year})`;
 }
 
-function filmWithScore(film: TmdbPopularMovie): string {
+function filmWithScore(film: LetterboxdFilm): string {
   return `${filmLabel(film)} ${rating(film).toFixed(2)}/5`;
 }
 
@@ -32,11 +33,11 @@ function roundChoices(state: Pick<GameState, 'left' | 'right'>): string {
   return `1) ${filmLabel(state.left)} | 2) ${filmLabel(state.right)}`;
 }
 
-function rating(film: TmdbPopularMovie): number {
+function rating(film: LetterboxdFilm): number {
   return film.average || 0;
 }
 
-async function getDistinctRatedFilm(excludedSlug?: string, attempts: number = 8): Promise<TmdbPopularMovie | null> {
+async function getDistinctRatedFilm(excludedSlug?: string, attempts: number = 8): Promise<LetterboxdFilm | null> {
   for (let i = 0; i < attempts; i++) {
     const film = await getRandomPopularRatedMovie();
     if (!film) continue;
@@ -52,14 +53,6 @@ async function createInitialState(): Promise<GameState | null> {
   const right = await getDistinctRatedFilm(left.slug);
   if (!right) return null;
   return { left, right, streak: 0 };
-}
-
-function buildPrompt(prefix: string, state: GameState, best: number): string {
-  return [
-    `Higher/Lower`,
-    roundChoices(state),
-    `reply with 1 or 2 | streak ${state.streak} | channel best ${best}`
-  ].join(' ');
 }
 
 function buildInitialPrompt(prefix: string, state: GameState, best: number): string {

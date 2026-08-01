@@ -21,6 +21,17 @@ export type LetterboxdFilm = {
 	director: string | null;
 };
 
+function parseFilmHtml(html: string, slug: string): LetterboxdFilm {
+	const ogTitle = html.match(/property="og:title"[^>]*content="([^"]+)"/i)?.[1] ?? slug;
+	const [, title = ogTitle, year = null] = ogTitle.match(/^(.*)\s\((\d{4})\)$/) || [];
+
+	const director = html.match(/name="twitter:data1"[^>]*content="([^"]+)"/i)?.[1] ?? null;
+	const average = parseFloat(html.match(/"ratingValue":\s*([\d.]+)/)?.[1] || '') || null;
+	const ratings = parseInt(html.match(/"ratingCount":\s*(\d+)/)?.[1] || '') || null;
+
+	return { title, slug, year, average, ratings, director };
+}
+
 export async function searchFilmHtml(query: string): Promise<{ slug: string; title: string } | null> {
 	const url = `https://letterboxd.com/s/search/films/${encodeURIComponent(query)}/`;
 	try {
@@ -48,17 +59,29 @@ export async function scrapeFilm(slug: string): Promise<LetterboxdFilm | null> {
 	const url = `https://letterboxd.com/film/${slug}/`;
 	try {
 		const { data: html } = await axios.get(url, { headers: HEADERS });
-
-		const ogTitle = html.match(/property="og:title"[^>]*content="([^"]+)"/i)?.[1] ?? slug;
-		const [, title = ogTitle, year = null] = ogTitle.match(/^(.*)\s\((\d{4})\)$/) || [];
-
-		const director = html.match(/name="twitter:data1"[^>]*content="([^"]+)"/i)?.[1] ?? null;
-		const average = parseFloat(html.match(/"ratingValue":\s*([\d.]+)/)?.[1] || '') || null;
-		const ratings = parseInt(html.match(/"ratingCount":\s*(\d+)/)?.[1] || '') || null;
-
-		return { title, slug, year, average, ratings, director };
+		return parseFilmHtml(html, slug);
 	} catch (err) {
 		timeLog(`letterboxd scrape failed for ${slug}: ${err}`);
+		return null;
+	}
+}
+
+export async function scrapeFilmByTmdb(tmdbId: number | string): Promise<LetterboxdFilm | null> {
+	const url = `https://letterboxd.com/tmdb/${tmdbId}`;
+	try {
+		const { data: html, request, headers } = await axios.get(url, {
+			headers: HEADERS,
+			maxRedirects: 10,
+			validateStatus: () => true,
+		});
+
+		const finalUrl = request?.res?.responseUrl || headers.location || '';
+		const slug = finalUrl.match(/\/film\/([^/?#]+)/)?.[1]?.replace(/\/$/, '');
+		if (!slug) return null;
+
+		return parseFilmHtml(html, slug);
+	} catch (err) {
+		timeLog(`letterboxd scrape failed for tmdb ${tmdbId}: ${err}`);
 		return null;
 	}
 }
@@ -68,54 +91,4 @@ export function formatRatings(n: number | null): string {
 	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}m`;
 	if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
 	return n.toString();
-}
-
-function parseFilmSlugFromHref(href: string): string | null {
-	const match = href.match(/^\/film\/([^/]+)\/?$/i);
-	return match?.[1] ?? null;
-}
-
-export async function getRandomPopularFilmSlug(maxPages: number = 25): Promise<string | null> {
-	const page = Math.floor(Math.random() * maxPages) + 1;
-	const pagePath = page === 1 ? '/films/popular/' : `/films/popular/page/${page}/`;
-	const url = `https://letterboxd.com${pagePath}`;
-
-	try {
-		const { data: html } = await axios.get(url, { headers: HEADERS });
-		const $ = cheerio.load(html);
-		const slugs = new Set<string>();
-
-		$('[data-film-slug]').each((_, el) => {
-			const slug = $(el).attr('data-film-slug')?.trim();
-			if (slug) slugs.add(slug);
-		});
-
-		$('a[href^="/film/"]').each((_, el) => {
-			const href = $(el).attr('href');
-			if (!href) return;
-			const slug = parseFilmSlugFromHref(href.trim());
-			if (slug) slugs.add(slug);
-		});
-
-		const list = [...slugs];
-		if (!list.length) return null;
-
-		const randomIndex = Math.floor(Math.random() * list.length);
-		return list[randomIndex];
-	} catch (err) {
-		timeLog(`letterboxd popular scrape failed: ${err}`);
-		return null;
-	}
-}
-
-export async function getRandomPopularRatedFilm(maxAttempts: number = 8): Promise<LetterboxdFilm | null> {
-	for (let i = 0; i < maxAttempts; i++) {
-		const slug = await getRandomPopularFilmSlug(25);
-		if (!slug) continue;
-		const film = await scrapeFilm(slug);
-		if (!film?.average) continue;
-		return film;
-	}
-
-	return null;
 }
