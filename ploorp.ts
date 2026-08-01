@@ -30,6 +30,7 @@ import osu from './src/commands/osu.js';
 import plays from './src/commands/plays.js';
 import paste from './src/commands/paste.js';
 import { triviaCommand, handleTriviaAnswer } from './src/commands/trivia.js';
+import moviegame, { handleMoviegameQuickAnswer } from './src/commands/moviegame.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -122,6 +123,13 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'mv':
       case 'film':
         await movie(msg, args);
+        return;
+
+      case 'moviegame':
+      case 'mg':
+      case 'higherlower':
+      case 'hl':
+        await moviegame(msg, args);
         return;
 
       case 'review':
@@ -349,6 +357,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   // STUFF THATS NOT REALLY A COMMAND
   if (msg.senderUserID != config.id) {
     if (!msgText.startsWith(prefix)) {
+      const handledMovieGame = await handleMoviegameQuickAnswer(msg, msgText);
+      if (handledMovieGame) return;
       await handleTriviaAnswer(msg);
     }
 

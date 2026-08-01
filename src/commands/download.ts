@@ -91,7 +91,7 @@ async function uploadFromStream(
 ): Promise<string | "too-large" | undefined> {
 
   const source = await axios.get(sourceUrl, { responseType: 'stream' });
-  let length = parseInt(source.headers['content-length'] || '0');
+  let length = parseInt(String(source.headers['content-length'] || '0'));
 
   if (length > SEGS_LIMIT) {
     source.data.destroy();

@@ -98,4 +98,28 @@ CREATE TABLE IF NOT EXISTS trivia_questions (
 
 db.prepare(`CREATE INDEX IF NOT EXISTS idx_trivia_questions_category ON trivia_questions(category);`).run();
 
+// Movie higher-lower game
+db.prepare(`
+CREATE TABLE IF NOT EXISTS movie_game_streaks (
+  channel_id TEXT PRIMARY KEY,
+  best_streak INTEGER NOT NULL DEFAULT 0
+);
+`).run();
+
+db.prepare(`
+CREATE TABLE IF NOT EXISTS movie_game_user_streaks (
+  channel_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  username TEXT NOT NULL,
+  best_streak INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+  PRIMARY KEY (channel_id, user_id)
+);
+`).run();
+
+db.prepare(`
+CREATE INDEX IF NOT EXISTS idx_movie_game_user_streaks_channel_best
+ON movie_game_user_streaks (channel_id, best_streak DESC, updated_at ASC);
+`).run();
+
 export default db;

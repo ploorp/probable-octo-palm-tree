@@ -216,6 +216,69 @@ export function setWhoKnowsConfig(id: string, key: "whoknows_antiping", value: b
 }
 
 
+// MOVIE GAME
+function ensureMovieGameRow(channelId: string) {
+  db.prepare(`
+    INSERT INTO movie_game_streaks (channel_id, best_streak)
+    VALUES (?, 0)
+    ON CONFLICT(channel_id) DO NOTHING
+  `).run(channelId);
+}
+
+export function getMovieGameBestStreak(channelId: string): number {
+  ensureMovieGameRow(channelId);
+  const row = db.prepare(`SELECT best_streak FROM movie_game_streaks WHERE channel_id = ?`).get(channelId) as { best_streak: number } | undefined;
+  return row?.best_streak ?? 0;
+}
+
+export function setMovieGameBestStreak(channelId: string, streak: number): number {
+  ensureMovieGameRow(channelId);
+  const best = getMovieGameBestStreak(channelId);
+  const nextBest = Math.max(best, Math.max(0, Math.floor(streak)));
+  if (nextBest !== best) {
+    db.prepare(`UPDATE movie_game_streaks SET best_streak = ? WHERE channel_id = ?`).run(nextBest, channelId);
+  }
+  return nextBest;
+}
+
+export function upsertMovieGameUserBest(channelId: string, userId: string, username: string, streak: number): number {
+  const normalized = Math.max(0, Math.floor(streak));
+
+  db.prepare(`
+    INSERT INTO movie_game_user_streaks (channel_id, user_id, username, best_streak, updated_at)
+    VALUES (?, ?, ?, ?, strftime('%s','now'))
+    ON CONFLICT(channel_id, user_id) DO UPDATE SET
+      username = excluded.username,
+      best_streak = CASE WHEN excluded.best_streak > movie_game_user_streaks.best_streak THEN excluded.best_streak ELSE movie_game_user_streaks.best_streak END,
+      updated_at = CASE WHEN excluded.best_streak > movie_game_user_streaks.best_streak THEN strftime('%s','now') ELSE movie_game_user_streaks.updated_at END
+  `).run(channelId, userId, username.toLowerCase(), normalized);
+
+  const row = db.prepare(`
+    SELECT best_streak
+    FROM movie_game_user_streaks
+    WHERE channel_id = ? AND user_id = ?
+  `).get(channelId, userId) as { best_streak: number } | undefined;
+
+  return row?.best_streak ?? 0;
+}
+
+export function getMovieGameLeaderboard(limit: number = 5): { channelId: string; channelName: string; best: number }[] {
+  const safeLimit = Math.max(1, Math.min(10, Math.floor(limit)));
+  const rows = db.prepare(`
+    SELECT m.channel_id AS channelId,
+           COALESCE(u.username, m.channel_id) AS channelName,
+           m.best_streak AS best
+    FROM movie_game_streaks m
+    LEFT JOIN users u ON u.id = m.channel_id
+    WHERE m.best_streak > 0
+    ORDER BY m.best_streak DESC, channelName ASC
+    LIMIT ?
+  `).all(safeLimit) as { channelId: string; channelName: string; best: number }[];
+
+  return rows;
+}
+
+
 // FORTUNE
 export function updateStreak(userId: string) {
   ensureUserRow(userId);
