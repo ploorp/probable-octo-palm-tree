@@ -1,7 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from 'axios';
 import config from '../config/index.js';
-import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUsername } from '../db/dbManager.js';
+import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUsernames } from '../db/dbManager.js';
 import { saySafe } from '../client.js';
 import { timeLog, unPing, uploadToHastebin } from '../utils.js';
 
@@ -55,7 +55,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
     return saySafe(msg.channelName, 'no lastfm users lol', msg.messageID);
   }
 
-  const plays: { username: string; playcount: number }[] = [];
+  const matches: { id: string; username?: string; playcount: number; whoknowsAntiping: boolean }[] = [];
   let correctArtistName = artistName;
   let artistNameUpdated = false;
 
@@ -96,14 +96,8 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
       const userPlaycount = response.data?.artist?.stats?.userplaycount;
       if (userPlaycount) {
         const count = parseInt(userPlaycount, 10);
-        let displayName;
         if (count > 0) {
-          if (!user.username) {
-            displayName = (await refreshUsername(user.id)) || 'unknown';
-          } else {
-            displayName = user.username;
-          }
-          plays.push({ username: formatWhoKnowsUsername(displayName, user.whoknowsAntiping), playcount: count });
+          matches.push({ id: user.id, username: user.username, playcount: count, whoknowsAntiping: user.whoknowsAntiping });
         }
       }
     });
@@ -111,11 +105,20 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
     await Promise.all(promises);
   }
 
-  if (plays.length === 0) {
+  if (matches.length === 0) {
     const responses = ['who is that', 'ts is niche', 'im gatekeeping this response', 'this artist is too underground 😢', 'they have no fans', 'never heard of them', 'try a better artist 🤣'];
     const response = responses[Math.floor(Math.random() * responses.length)];
     return saySafe(msg.channelName, response, msg.messageID);
   }
+
+  // Refresh current Twitch usernames in one batched call so renamed users show up correctly,
+  // falling back to the cached name if lookup fails.
+  const freshUsernames = await refreshUsernames(matches.map((m) => m.id));
+
+  const plays = matches.map((m) => ({
+    username: formatWhoKnowsUsername(freshUsernames.get(m.id) || m.username || 'unknown', m.whoknowsAntiping),
+    playcount: m.playcount,
+  }));
 
   plays.sort((a, b) => b.playcount - a.playcount);
 

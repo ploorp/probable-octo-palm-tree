@@ -173,6 +173,37 @@ export async function getUsername(userId: string): Promise<string | null> {
   return data.data[0].login;
 }
 
+export async function getUsernames(userIds: string[]): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  const uniqueIds = [...new Set(userIds)].filter(Boolean);
+  if (uniqueIds.length === 0) return result;
+
+  const CHUNK_SIZE = 100; // Helix allows up to 100 `id` params per request
+  for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+    const chunk = uniqueIds.slice(i, i + CHUNK_SIZE);
+    const query = chunk.map((id) => `id=${encodeURIComponent(id)}`).join('&');
+
+    const res = await fetch(`https://api.twitch.tv/helix/users?${query}`, {
+      headers: {
+        "Client-ID": clientId,
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+
+    if (!res.ok) {
+      timeLog(`getUsernames failed: status ${res.status}`);
+      continue;
+    }
+
+    const data = await res.json();
+    for (const user of data.data ?? []) {
+      result.set(user.id, user.login);
+    }
+  }
+
+  return result;
+}
+
 export async function whisperUser(userId: string, message: string): Promise<[boolean, number, any]> {
   try {
     const url = `https://api.twitch.tv/helix/whispers?from_user_id=${encodeURIComponent(config.id)}&to_user_id=${encodeURIComponent(userId)}`;
