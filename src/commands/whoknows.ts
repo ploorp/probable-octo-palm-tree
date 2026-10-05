@@ -1,22 +1,25 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from 'axios';
 import config from '../config/index.js';
-import { getAccount, getAllLastFmUsers, refreshUsernames } from '../db/dbManager.js';
+import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUsernames } from '../db/dbManager.js';
 import { saySafe } from '../client.js';
-import { timeLog, usernameToID, uploadToHastebin } from '../utils.js';
+import { timeLog, unPing, uploadToHastebin } from '../utils.js';
+
+function formatWhoKnowsUsername(displayName: string, antiPing: boolean) {
+  return antiPing ? `@¾${unPing(displayName)}` : `@${displayName}`;
+}
 
 export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
   let account: string | null = null;
 
   if (args.length > 1) {
-    if (args[1].startsWith('@')) {
-      account = getAccount(await usernameToID(args[1].replace(/^@/, '')), 'lastfm');
-    } else {
-      artistName = args.slice(1).join(' ');
-    }
+    artistName = args.slice(1).join(' ');
   } else {
     account = getAccount(msg.senderUserID, 'lastfm');
+    if (!account) {
+      return saySafe(msg.channelName, `You are not linked to last.fm 😭 Use ${getPrefix(msg.channelID)}link <username> to link your account.`, msg.messageID);
+    }
   }
 
   if (account) {
@@ -52,7 +55,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
     return saySafe(msg.channelName, 'no lastfm users lol', msg.messageID);
   }
 
-  const matches: { id: string; username?: string; playcount: number }[] = [];
+  const matches: { id: string; username?: string; playcount: number; whoknowsAntiping: boolean }[] = [];
   let correctArtistName = artistName;
   let artistNameUpdated = false;
 
@@ -94,7 +97,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
       if (userPlaycount) {
         const count = parseInt(userPlaycount, 10);
         if (count > 0) {
-          matches.push({ id: user.id, username: user.username, playcount: count });
+          matches.push({ id: user.id, username: user.username, playcount: count, whoknowsAntiping: user.whoknowsAntiping });
         }
       }
     });
@@ -103,7 +106,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   }
 
   if (matches.length === 0) {
-    const responses = ['who is that', 'ts is niche', 'underground', 'they have no fans', 'never heard of them'];
+    const responses = ['who is that', 'ts is niche', 'im gatekeeping this response', 'this artist is too underground 😢', 'they have no fans', 'never heard of them', 'try a better artist 🤣'];
     const response = responses[Math.floor(Math.random() * responses.length)];
     return saySafe(msg.channelName, response, msg.messageID);
   }
@@ -113,7 +116,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   const freshUsernames = await refreshUsernames(matches.map((m) => m.id));
 
   const plays = matches.map((m) => ({
-    username: `@${freshUsernames.get(m.id) || m.username || 'unknown'}`,
+    username: formatWhoKnowsUsername(freshUsernames.get(m.id) || m.username || 'unknown', m.whoknowsAntiping),
     playcount: m.playcount,
   }));
 
@@ -125,7 +128,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   if (message.length > 450) {
     try {
       let link;
-      link = await uploadToHastebin(message);
+      link = await uploadToHastebin(message, true);
       if (!link) {
         timeLog('Hastebin upload failed');
         link = '';

@@ -20,6 +20,7 @@ import join from './src/commands/join.js';
 import link from './src/commands/link.js';
 import supibot from './src/commands/supibot.js';
 import newname from './src/commands/newname.js';
+import configSys from './src/commands/config.js';
 import { getPrefix, isOptedOut, isWhitelisted, setWhitelist, setOptOut, setPrefix, updateWhitelist } from './src/db/dbManager.js';
 import { getUserId } from './src/api/helix.js';
 import randomline from './src/commands/randomline.js';
@@ -29,6 +30,7 @@ import osu from './src/commands/osu.js';
 import plays from './src/commands/plays.js';
 import paste from './src/commands/paste.js';
 import { triviaCommand, handleTriviaAnswer } from './src/commands/trivia.js';
+import moviegame, { handleMoviegameQuickAnswer } from './src/commands/moviegame.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -123,6 +125,13 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await movie(msg, args);
         return;
 
+      case 'moviegame':
+      case 'mg':
+      case 'higherlower':
+      case 'hl':
+        await moviegame(msg, args);
+        return;
+
       case 'review':
       case 'rating':
       case 'rt':
@@ -156,9 +165,15 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
         await namechange(msg, args);
         return;
 
+      case 'sc':
+        saySafe(msg.channelName, `check out the new lastfm options! type ${config.prefix}config lastfm`, msg.messageID);
       case 'song':
       case 's':
         await song(msg, false, args);
+        return;
+
+      case 'config':
+        await configSys(msg);
         return;
 
       case 'dl':
@@ -342,6 +357,8 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
   // STUFF THATS NOT REALLY A COMMAND
   if (msg.senderUserID != config.id) {
     if (!msgText.startsWith(prefix)) {
+      const handledMovieGame = await handleMoviegameQuickAnswer(msg, msgText);
+      if (handledMovieGame) return;
       await handleTriviaAnswer(msg);
     }
 

@@ -23,6 +23,16 @@
   "lastfm": {
     "client_id": ""
   },
+  "tmdb": {
+    "api_key": ""
+  },
+  "spotify": {
+    "client_id": "YOUR_SPOTIFY_CLIENT_ID",
+    "client_secret": "YOUR_SPOTIFY_CLIENT_SECRET"
+  },
+  "youtube": {
+    "api_key": "YOUR_YOUTUBE_API_KEY"
+  },
   "osu": {
     "client_id": "", 
     "client_secret": ""

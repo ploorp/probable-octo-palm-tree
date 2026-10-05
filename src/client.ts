@@ -205,7 +205,9 @@ async function joinChannels() {
   }
 }
 
-// appending U+034F for duplicate messages
+const invisibleSuffix = ' \u{000e0000}';
+
+// appending the Alternator-style invisible suffix for duplicate messages
 const duplicateState = new Map<string, { last: string; nextAppend: boolean }>();
 const channelCooldowns = new Map<string, number>();
 
@@ -226,11 +228,15 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
 
     // Skip duplicate protection if bot is Mod
     if (botState && botState.isMod) {
-      let sendText = text.replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
+      let sendText = text.replace(/\r|\n/g, ' ');
+      sendText = sendText.replace(/¾/g, '\u034f');
+      if (sendText.startsWith('.') || sendText.startsWith('/')) {
+        sendText = `/ ${sendText}`;
+      }
       if (replyMsgId) {
-        await client.reply(channel, replyMsgId, sendText); 
+        client.sendRaw(`@reply-parent-msg-id=${replyMsgId} PRIVMSG #${channel} :${sendText}`);
       } else {
-        await client.say(channel, sendText);
+        client.sendRaw(`PRIVMSG #${channel} :${sendText}`);
       }
       return;
     }
@@ -247,7 +253,7 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
     } else {
       // Same as last message -> alternate appending
       if (state.nextAppend) {
-        sendText = `${baseText} \u034F`;
+        sendText = `${baseText}${invisibleSuffix}`;
         state.nextAppend = false;
       } else {
         sendText = baseText;
@@ -257,13 +263,17 @@ export async function saySafe(channel: string, text: string, replyMsgId?: string
       duplicateState.set(chKey, state);
     }
 
-    // sanitize control chars that would break IRC commands
-    sendText = sendText.replace(/\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
-    
+    // Replace placeholder anti-ping characters and sanitize control chars before sending.
+    sendText = sendText.replace(/¾/g, '\u034f').replace(/\r|\n/g, ' ');
+
+    if (sendText.startsWith('.') || sendText.startsWith('/')) {
+      sendText = `/ ${sendText}`;
+    }
+
     if (replyMsgId) {
-      await client.reply(channel, replyMsgId, sendText); 
+      client.sendRaw(`@reply-parent-msg-id=${replyMsgId} PRIVMSG #${channel} :${sendText}`);
     } else {
-      await client.say(channel, sendText);
+      client.sendRaw(`PRIVMSG #${channel} :${sendText}`);
     }
     return;
   } catch (err: any) {

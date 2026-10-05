@@ -18,6 +18,20 @@ export const ttrim = (str: string | undefined) => {
   return str.replace(pattern, '').replace(/\s{2,}/g, ' ');
 }
 
+export function unPing(username: string): string {
+  if (!username) return '';
+  const char = '¾';
+  const charArray = username.split('');
+
+  for (let i = charArray.length - 1; i >= 0; i -= 1) {
+    if (i % 2 !== 0) {
+      charArray.splice(i, 0, char);
+    }
+  }
+
+  return charArray.join('');
+}
+
 
 // potat users api
 export async function getUserInfo(username: string) {
@@ -125,7 +139,7 @@ export function getFlagEmoji(countryCode: string) {
 }
 
 
-export async function uploadToHastebin(content: string): Promise<string | null> {
+export async function uploadToHastebin(content: string, raw: boolean = false): Promise<string | null> {
   try {
     const response = await axios.post('https://h.potat.app/documents', content, {
       headers: {
@@ -134,6 +148,7 @@ export async function uploadToHastebin(content: string): Promise<string | null> 
       transformRequest: [(data) => data]
     });
     if (response.data && response.data.key) {
+      if (raw) {return `https://h.potat.app/raw/${response.data.key}`; }
       return `https://h.potat.app/${response.data.key}`;
     }
     return null;
