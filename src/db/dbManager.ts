@@ -1,5 +1,5 @@
 import db from "./db.js";
-import { getUsername, getUserId } from "../api/helix.js";
+import { getUsername, getUserId, getUsernames } from "../api/helix.js";
 import config from "../config/index.js";
 import { readFileSync } from "node:fs";
 
@@ -18,6 +18,23 @@ export async function refreshUsername(id: string): Promise<string | null> {
     return username;
   }
   return null;
+}
+
+// Refreshes and caches the current Twitch usernames for many users in one batched Helix call,
+// so renamed accounts show their up to date name instead of a stale one.
+export async function refreshUsernames(ids: string[]): Promise<Map<string, string>> {
+  const uniqueIds = [...new Set(ids)].filter(Boolean);
+  if (uniqueIds.length === 0) return new Map();
+
+  const usernames = await getUsernames(uniqueIds);
+
+  const update = db.prepare("UPDATE users SET username = ? WHERE id = ?");
+  const updateMany = db.transaction((entries: [string, string][]) => {
+    for (const [id, username] of entries) update.run(username, id);
+  });
+  updateMany([...usernames.entries()]);
+
+  return usernames;
 }
 
 export async function editLastfm(twitchUsername: string, lastfmUsername: string): Promise<boolean> {
