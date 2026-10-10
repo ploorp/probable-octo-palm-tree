@@ -5,7 +5,11 @@ import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUs
 import { saySafe } from '../client.js';
 import { timeLog, unPing, uploadToHastebin } from '../utils.js';
 
-function formatWhoKnowsUsername(displayName: string, antiPing: boolean) {
+const IGNORE_FLAG = '-ignore';
+
+function formatWhoKnowsUsername(displayName: string, antiPing: boolean, forceIgnore: boolean) {
+  // someone used -ignore, so don't ping them no matter what their own antiping setting is
+  if (forceIgnore) return `@\u200B${displayName}`;
   return antiPing ? `@¾${unPing(displayName)}` : `@${displayName}`;
 }
 
@@ -13,8 +17,11 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
   let account: string | null = null;
 
-  if (args.length > 1) {
-    artistName = args.slice(1).join(' ');
+  const ignorePing = args.some((arg) => arg.toLowerCase() === IGNORE_FLAG);
+  const filteredArgs = args.filter((arg) => arg.toLowerCase() !== IGNORE_FLAG);
+
+  if (filteredArgs.length > 1) {
+    artistName = filteredArgs.slice(1).join(' ');
   } else {
     account = getAccount(msg.senderUserID, 'lastfm');
     if (!account) {
@@ -116,7 +123,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   const freshUsernames = await refreshUsernames(matches.map((m) => m.id));
 
   const plays = matches.map((m) => ({
-    username: formatWhoKnowsUsername(freshUsernames.get(m.id) || m.username || 'unknown', m.whoknowsAntiping),
+    username: formatWhoKnowsUsername(freshUsernames.get(m.id) || m.username || 'unknown', m.whoknowsAntiping, ignorePing),
     playcount: m.playcount,
   }));
 
