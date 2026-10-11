@@ -43,7 +43,7 @@ export default async function searchlogs(msg: PrivmsgMessage, args: string[]) {
   }
 
   try {
-    const shortenerResponse = await axios.get(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(logs)}`);
+    const shortenerResponse = await axios.get(`https://da.gd/shorten?url=${encodeURIComponent(logs)}`);
     const shortenedUrl = shortenerResponse.data;
 
     return saySafe(msg.channelName, `${lineCount} matches: ${shortenedUrl}`, msg.messageID);
