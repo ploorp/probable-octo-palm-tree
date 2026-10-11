@@ -8,9 +8,7 @@ import { timeLog, unPing, uploadToHastebin } from '../utils.js';
 const IGNORE_FLAG = '-ignore';
 
 function formatWhoKnowsUsername(displayName: string, antiPing: boolean, forceIgnore: boolean) {
-  // someone used -ignore, so don't ping them no matter what their own antiping setting is
-  if (forceIgnore) return `@\u200B${displayName}`;
-  return antiPing ? `@¾${unPing(displayName)}` : `@${displayName}`;
+  return antiPing || forceIgnore ? `@¾${unPing(displayName)}` : `@${displayName}`;
 }
 
 export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
