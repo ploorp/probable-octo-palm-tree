@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
   is_whitelisted INTEGER DEFAULT 0,
   lastfm_play_count INTEGER DEFAULT 1,
   lastfm_song_link TEXT DEFAULT 'lastfm',
+  lastfm_always_ignore INTEGER DEFAULT 0,
   whoknows_antiping INTEGER DEFAULT 0
 );
 `).run();
@@ -29,6 +30,9 @@ try {
 } catch (e) {}
 try {
   db.prepare(`ALTER TABLE users ADD COLUMN lastfm_song_link TEXT DEFAULT 'lastfm';`).run();
+} catch (e) {}
+try {
+  db.prepare(`ALTER TABLE users ADD COLUMN lastfm_always_ignore INTEGER DEFAULT 0;`).run();
 } catch (e) {}
 try {
   db.prepare(`ALTER TABLE users ADD COLUMN whoknows_antiping INTEGER DEFAULT 0;`).run();

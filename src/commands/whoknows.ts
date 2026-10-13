@@ -1,7 +1,7 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from 'axios';
 import config from '../config/index.js';
-import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUsernames } from '../db/dbManager.js';
+import { getAccount, getAllLastFmUsers, getLastFmConfigs, getPrefix, getWhoKnowsConfigs, refreshUsernames } from '../db/dbManager.js';
 import { saySafe } from '../client.js';
 import { timeLog, unPing, uploadToHastebin } from '../utils.js';
 
@@ -16,7 +16,8 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
   let account: string | null = null;
 
-  const ignorePing = config.lastfm.always_ignore || args.some((arg) => IGNORE_FLAGS.has(arg.toLowerCase()));
+  const lastFmConfigs = getLastFmConfigs(msg.senderUserID);
+  const ignorePing = config.lastfm.always_ignore || lastFmConfigs.alwaysIgnore || args.some((arg) => IGNORE_FLAGS.has(arg.toLowerCase()));
   const selfOnly = args.some((arg) => SELF_FLAGS.has(arg.toLowerCase()));
   const filteredArgs = args.filter((arg) => {
     const flag = arg.toLowerCase();

@@ -191,6 +191,7 @@ export function getAllLastFmUsers(): { id: string; username?: string; lastfm: st
 export interface LastFmConfigs {
   playCount: boolean;
   songLink: 'none' | 'spotify' | 'youtube' | 'lastfm';
+  alwaysIgnore: boolean;
 }
 
 export interface WhoKnowsConfigs {
@@ -199,13 +200,14 @@ export interface WhoKnowsConfigs {
 
 export function getLastFmConfigs(id: string): LastFmConfigs {
   ensureUserRow(id);
-  const row = db.prepare("SELECT lastfm_play_count, lastfm_song_link FROM users WHERE id = ?").get(id) as any;
+  const row = db.prepare("SELECT lastfm_play_count, lastfm_song_link, lastfm_always_ignore FROM users WHERE id = ?").get(id) as any;
   if (!row) {
-    return { playCount: true, songLink: 'lastfm' };
+    return { playCount: true, songLink: 'lastfm', alwaysIgnore: false };
   }
   return {
     playCount: row.lastfm_play_count === 1,
-    songLink: row.lastfm_song_link || 'lastfm'
+    songLink: row.lastfm_song_link || 'lastfm',
+    alwaysIgnore: row.lastfm_always_ignore === 1
   };
 }
 
@@ -214,7 +216,7 @@ export function setLastFmConfigString(id: string, key: "lastfm_song_link", value
   db.prepare(`UPDATE users SET ${key} = ? WHERE id = ?`).run(value, id);
 }
 
-export function setLastFmConfig(id: string, key: "lastfm_play_count", value: boolean) {
+export function setLastFmConfig(id: string, key: "lastfm_play_count" | "lastfm_always_ignore", value: boolean) {
   ensureUserRow(id);
   db.prepare(`UPDATE users SET ${key} = ? WHERE id = ?`).run(value ? 1 : 0, id);
 }
