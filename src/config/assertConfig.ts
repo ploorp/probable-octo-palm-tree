@@ -18,6 +18,7 @@ export type AppConfig = {
   };
   lastfm: {
     client_id: string;
+    always_ignore?: boolean;
   };
   tmdb: {
     api_key: string;
@@ -99,6 +100,9 @@ export function assertConfig(rawConfig: Record<string, unknown>): asserts rawCon
   }
   if (typeof lastfm.client_id !== 'string') {
     throw new Error('config.lastfm.client_id must be a string');
+  }
+  if (lastfm.always_ignore !== undefined && typeof lastfm.always_ignore !== 'boolean') {
+    throw new Error('config.lastfm.always_ignore must be a boolean');
   }
 
   const tmdb = (rawConfig as any).tmdb;

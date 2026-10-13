@@ -22,7 +22,8 @@
     "helix_id": "gp762nuuoqcoxypju8c569th9wz7q5" // ttg default id
   },
   "lastfm": {
-    "client_id": "" // https://www.last.fm/api/authentication
+    "client_id": "", // https://www.last.fm/api/authentication
+    "always_ignore": false // always use -ignore for whoknows output
   },
   "tmdb": {
     "api_key": "" // https://www.themoviedb.org/settings/api

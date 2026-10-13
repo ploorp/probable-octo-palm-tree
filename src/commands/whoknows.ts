@@ -5,7 +5,8 @@ import { getAccount, getAllLastFmUsers, getPrefix, getWhoKnowsConfigs, refreshUs
 import { saySafe } from '../client.js';
 import { timeLog, unPing, uploadToHastebin } from '../utils.js';
 
-const IGNORE_FLAG = '-ignore';
+const IGNORE_FLAGS = new Set(['-ignore', '-i']);
+const SELF_FLAGS = new Set(['-self', '-s']);
 
 function formatWhoKnowsUsername(displayName: string, antiPing: boolean, forceIgnore: boolean) {
   return antiPing || forceIgnore ? `@¾${unPing(displayName)}` : `@${displayName}`;
@@ -15,11 +16,21 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
   let artistName: string | null = null;
   let account: string | null = null;
 
-  const ignorePing = args.some((arg) => arg.toLowerCase() === IGNORE_FLAG);
-  const filteredArgs = args.filter((arg) => arg.toLowerCase() !== IGNORE_FLAG);
+  const ignorePing = config.lastfm.always_ignore || args.some((arg) => IGNORE_FLAGS.has(arg.toLowerCase()));
+  const selfOnly = args.some((arg) => SELF_FLAGS.has(arg.toLowerCase()));
+  const filteredArgs = args.filter((arg) => {
+    const flag = arg.toLowerCase();
+    return !IGNORE_FLAGS.has(flag) && !SELF_FLAGS.has(flag);
+  });
 
   if (filteredArgs.length > 1) {
     artistName = filteredArgs.slice(1).join(' ');
+    if (selfOnly) {
+      account = getAccount(msg.senderUserID, 'lastfm');
+      if (!account) {
+        return saySafe(msg.channelName, `You are not linked to last.fm 😭 Use ${getPrefix(msg.channelID)}link <username> to link your account.`, msg.messageID);
+      }
+    }
   } else {
     account = getAccount(msg.senderUserID, 'lastfm');
     if (!account) {
@@ -55,7 +66,7 @@ export async function whoKnowsArtist(msg: PrivmsgMessage, args: string[]) {
     return saySafe(msg.channelName, 'cant find artist', msg.messageID);
   }
 
-  const users = getAllLastFmUsers();
+  const users = getAllLastFmUsers().filter((user) => !selfOnly || user.id === msg.senderUserID);
   if (users.length === 0) {
     return saySafe(msg.channelName, 'no lastfm users lol', msg.messageID);
   }

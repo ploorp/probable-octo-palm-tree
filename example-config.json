@@ -21,7 +21,8 @@
     "helix_id": "gp762nuuoqcoxypju8c569th9wz7q5"
   },
   "lastfm": {
-    "client_id": ""
+    "client_id": "",
+    "always_ignore": false
   },
   "tmdb": {
     "api_key": ""
