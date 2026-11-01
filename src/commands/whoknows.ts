@@ -413,41 +413,78 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
   }
 
   try {
-    const response = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+    const artistInfo = await axios.get('https://ws.audioscrobbler.com/2.0/', {
       headers: {
         'User-Agent': 'ploorp',
       },
       params: {
-        method: 'artist.gettoptracks',
+        method: 'artist.getinfo',
         artist: artistName,
-        user: account,
+        username: account,
         api_key: config.lastfm.client_id,
         format: 'json',
         autocorrect: 1,
-        limit: MAX_OUTPUT_ITEMS,
       },
       timeout: 5000,
     });
 
-    const topTracks = response.data?.toptracks?.track;
-    const correctedArtist = response.data?.toptracks?.['@attr']?.artist || artistName;
-    if (!topTracks) {
+    const correctedArtist = artistInfo.data?.artist?.name || artistName;
+    if (!correctedArtist) {
       return saySafe(msg.channelName, 'cant find artist', msg.messageID);
     }
 
-    const tracks = Array.isArray(topTracks) ? topTracks : [topTracks];
-    const validTracks = tracks
-      .map((track: any) => ({
-        name: track?.name as string | undefined,
-        playcount: parseInt(track?.playcount ?? '0', 10),
-      }))
-      .filter((track: { name?: string; playcount: number }) => track.name && Number.isFinite(track.playcount) && track.playcount > 0);
+    const normalize = (value: string) => value.trim().toLowerCase();
+    const normalizedArtist = normalize(correctedArtist);
+    const collected: { name: string; playcount: number }[] = [];
 
-    if (validTracks.length === 0) {
+    // user.gettoptracks is ordered by user playcount, so filtering this list preserves ranking.
+    const PAGE_LIMIT = 200;
+    for (let page = 1; page <= 10; page++) {
+      const response = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+        headers: {
+          'User-Agent': 'ploorp',
+        },
+        params: {
+          method: 'user.gettoptracks',
+          user: account,
+          api_key: config.lastfm.client_id,
+          format: 'json',
+          period: 'overall',
+          limit: PAGE_LIMIT,
+          page,
+        },
+        timeout: 5000,
+      });
+
+      const topTracks = response.data?.toptracks?.track;
+      const tracks = Array.isArray(topTracks) ? topTracks : topTracks ? [topTracks] : [];
+
+      for (const track of tracks) {
+        const trackArtist = track?.artist?.name || track?.artist;
+        const trackName = track?.name as string | undefined;
+        const playcount = parseInt(track?.playcount ?? '0', 10);
+
+        if (!trackName || !Number.isFinite(playcount) || playcount <= 0 || !trackArtist) continue;
+        if (normalize(trackArtist) !== normalizedArtist) continue;
+
+        collected.push({ name: trackName, playcount });
+        if (collected.length >= MAX_OUTPUT_ITEMS) break;
+      }
+
+      if (collected.length >= MAX_OUTPUT_ITEMS) break;
+
+      const attr = response.data?.toptracks?.['@attr'];
+      const totalPages = parseInt(attr?.totalPages ?? '0', 10);
+      if (!tracks.length || !Number.isFinite(totalPages) || totalPages <= page) {
+        break;
+      }
+    }
+
+    if (collected.length === 0) {
       return saySafe(msg.channelName, 'no scrobbles for this artist', msg.messageID);
     }
 
-    const parts = validTracks.slice(0, MAX_OUTPUT_ITEMS).map((track, i) => `${i + 1}. ${track.name} (${track.playcount})`);
+    const parts = collected.slice(0, MAX_OUTPUT_ITEMS).map((track, i) => `${i + 1}. ${track.name} (${track.playcount})`);
     return sendLimitedListMessage(msg, `${account}'s top tracks for ${correctedArtist}`, parts, msg.messageID);
   } catch {
     return saySafe(msg.channelName, 'error Reacting', msg.messageID);
