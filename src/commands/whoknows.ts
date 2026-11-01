@@ -2,8 +2,9 @@ import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import axios from 'axios';
 import config from '../config/index.js';
 import { getAccount, getAllLastFmUsers, getLastFmConfigs, getPrefix, refreshUsernames } from '../db/dbManager.js';
+import { getUserId } from '../api/helix.js';
 import { saySafe } from '../client.js';
-import { timeLog, unPing, uploadToHastebin } from '../utils.js';
+import { getUserInfo, timeLog, unPing, uploadToHastebin } from '../utils.js';
 
 const IGNORE_FLAGS = new Set(['-ignore', '-i']);
 const SELF_FLAGS = new Set(['-self', '-s']);
@@ -395,15 +396,42 @@ export async function whoKnowsTrack(msg: PrivmsgMessage, args: string[]) {
 }
 
 export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
-  const account = getAccount(msg.senderUserID, 'lastfm');
+  let account: string | null = null;
+  let artistName: string | null = null;
+
+  if (args.length > 1 && args[1].startsWith('@')) {
+    const twitchUsername = args[1].replace(/^@/, '');
+    const twitchId = await getUserId(twitchUsername);
+
+    if (!twitchId) {
+      return saySafe(msg.channelName, 'user not found saj', msg.messageID);
+    }
+
+    account = getAccount(twitchId, 'lastfm');
+
+    // If account isn't linked in DB, fall back to Potat's public connections.
+    if (!account) {
+      const userInfo = await getUserInfo(twitchUsername);
+      const connection = userInfo?.data?.[0]?.user?.connections?.find((c: any) => c.platform === 'LASTFM');
+      if (connection?.id) {
+        account = connection.id;
+      }
+    }
+
+    artistName = args.length > 2 ? args.slice(2).join(' ').trim() : null;
+  } else {
+    account = getAccount(msg.senderUserID, 'lastfm');
+    artistName = args.length > 1 ? args.slice(1).join(' ').trim() : null;
+  }
+
   if (!account) {
+    if (args.length > 1 && args[1].startsWith('@')) {
+      return saySafe(msg.channelName, 'no lastfm account found saj', msg.messageID);
+    }
     return saySafe(msg.channelName, `You are not linked to last.fm 😭 Use ${getPrefix(msg.channelID)}link <username> to link your account.`, msg.messageID);
   }
 
-  let artistName: string | null = null;
-  if (args.length > 1) {
-    artistName = args.slice(1).join(' ').trim();
-  } else {
+  if (!artistName) {
     const recent = await getRecentTrackForUser(account);
     artistName = recent?.artist || null;
   }
