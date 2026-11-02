@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { timeLog } from '../utils.js';
+import config from '../config/index.js';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 const HEADERS = {
@@ -20,6 +21,58 @@ export type LetterboxdFilm = {
 	ratings: number | null;
 	director: string | null;
 };
+
+function filmSlug(title: string): string {
+	return title
+		.normalize('NFKD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '');
+}
+
+async function searchTmdbFilm(query: string): Promise<LetterboxdFilm | null> {
+	if (!config.tmdb?.api_key) return null;
+
+	try {
+		const search = await axios.get('https://api.themoviedb.org/3/search/movie', {
+			params: { api_key: config.tmdb.api_key, query, include_adult: true, page: 1 },
+			headers: { 'User-Agent': UA },
+		});
+		const movie = search.data?.results?.[0];
+		if (!movie?.id || !movie.title) return null;
+		return getTmdbFilmById(movie.id, movie);
+	} catch (err) {
+		timeLog(`tmdb movie search failed: ${err}`);
+		return null;
+	}
+}
+
+async function getTmdbFilmById(id: number | string, movie: any = null): Promise<LetterboxdFilm | null> {
+	if (!config.tmdb?.api_key) return null;
+
+	try {
+		const details = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
+			params: { api_key: config.tmdb.api_key, append_to_response: 'credits' },
+			headers: { 'User-Agent': UA },
+		});
+		const source = details.data || movie;
+		if (!source?.title) return null;
+		const director = details.data?.credits?.crew?.find((person: { job?: string }) => person.job === 'Director')?.name ?? null;
+
+		return {
+			title: source.title,
+			slug: filmSlug(source.title),
+			year: source.release_date?.slice(0, 4) || null,
+			average: typeof source.vote_average === 'number' ? source.vote_average / 2 : null,
+			ratings: typeof source.vote_count === 'number' ? source.vote_count : null,
+			director,
+		};
+	} catch (err) {
+		timeLog(`tmdb movie details failed: ${err}`);
+		return null;
+	}
+}
 
 function parseFilmHtml(html: string, slug: string): LetterboxdFilm {
 	const ogTitle = html.match(/property="og:title"[^>]*content="([^"]+)"/i)?.[1] ?? slug;
@@ -55,6 +108,16 @@ export async function searchFilmHtml(query: string): Promise<{ slug: string; tit
 	}
 }
 
+export async function searchFilm(query: string): Promise<LetterboxdFilm | null> {
+	const found = await searchFilmHtml(query);
+	if (found) {
+		const film = await scrapeFilm(found.slug);
+		if (film) return film;
+	}
+
+	return searchTmdbFilm(query);
+}
+
 export async function scrapeFilm(slug: string): Promise<LetterboxdFilm | null> {
 	const url = `https://letterboxd.com/film/${slug}/`;
 	try {
@@ -62,7 +125,7 @@ export async function scrapeFilm(slug: string): Promise<LetterboxdFilm | null> {
 		return parseFilmHtml(html, slug);
 	} catch (err) {
 		timeLog(`letterboxd scrape failed for ${slug}: ${err}`);
-		return null;
+		return searchTmdbFilm(slug.replace(/-/g, ' '));
 	}
 }
 
@@ -77,12 +140,14 @@ export async function scrapeFilmByTmdb(tmdbId: number | string): Promise<Letterb
 
 		const finalUrl = request?.res?.responseUrl || headers.location || '';
 		const slug = finalUrl.match(/\/film\/([^/?#]+)/)?.[1]?.replace(/\/$/, '');
-		if (!slug) return null;
+		if (!slug || !html || typeof html !== 'string' || html.includes('Just a moment')) {
+			return getTmdbFilmById(tmdbId);
+		}
 
 		return parseFilmHtml(html, slug);
 	} catch (err) {
 		timeLog(`letterboxd scrape failed for tmdb ${tmdbId}: ${err}`);
-		return null;
+		return getTmdbFilmById(tmdbId);
 	}
 }
 

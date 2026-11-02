@@ -5,15 +5,10 @@ import { getAccount, getPrefix } from '../db/dbManager.js';
 import { getUserId } from '../api/helix.js';
 import { timeLog } from '../utils.js';
 import config from '../config/index.js';
+import { searchFilm } from '../api/letterboxd.js';
 
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
-
-type FoundFilm = {
-  slug: string;
-  title: string;
-  year?: string;
-};
 
 type FilmData = {
   movieTitle: string;
@@ -40,82 +35,6 @@ function formatRating(
   }
 
   return stars;
-}
-
-async function searchFilmTmdb(
-  query: string
-): Promise<FoundFilm | null> {
-  try {
-    timeLog(
-      `tmdb query="${query}" key=${config.tmdb?.api_key ? 'present' : 'missing'}`
-    );
-
-    const tmdbRes = await axios.get(
-      'https://api.themoviedb.org/3/search/movie',
-      {
-        params: {
-          api_key: config.tmdb.api_key,
-          query,
-          include_adult: true,
-          page: 1,
-        },
-        headers: {
-          'User-Agent': UA,
-        },
-      }
-    );
-
-    if (tmdbRes.status !== 200) {
-      timeLog(`tmdb status=${tmdbRes.status}`);
-      return null;
-    }
-
-    const movie = tmdbRes.data?.results?.[0];
-
-    if (!movie?.id) {
-      timeLog(`tmdb no results for query="${query}"`);
-      return null;
-    }
-
-    const lbRes = await axios.get(
-      `https://letterboxd.com/tmdb/${movie.id}`,
-      {
-        headers: {
-          'User-Agent': UA,
-          Referer: 'https://letterboxd.com/',
-        },
-        maxRedirects: 10,
-        validateStatus: () => true,
-      }
-    );
-
-    const finalUrl =
-      lbRes.request?.res?.responseUrl ||
-      lbRes.headers.location ||
-      '';
-
-    const slug =
-      finalUrl
-        .match(/\/film\/([^/?#]+)/)?.[1]
-        ?.replace(/\/$/, '');
-
-    timeLog(
-      `letterboxd tmdb status=${lbRes.status} finalUrl=${finalUrl || 'none'} slug=${slug || 'none'}`
-    );
-
-    if (!slug) {
-      return null;
-    }
-
-    return {
-      slug,
-      title: movie.title,
-      year: movie.release_date?.slice(0, 4),
-    };
-  } catch (err: any) {
-    timeLog(`tmdb search failed ${err?.message || err}`);
-    return null;
-  }
 }
 
 async function getUserFilmData(
@@ -276,7 +195,7 @@ export default async function rating(
     );
   }
 
-  const found = await searchFilmTmdb(query);
+  const found = await searchFilm(query);
 
   if (!found) {
     return saySafe(
