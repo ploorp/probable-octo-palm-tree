@@ -46,9 +46,11 @@ async function getUserFilmDataFromRss(
       headers: { 'User-Agent': UA },
     });
     const items = String(response.data).match(/<item\b[^>]*>[\s\S]*?<\/item>/gi) || [];
+    const normalizeSlug = (value: string) => value.replace(/-\d{4}$/, '');
     const item = items.find((xml) => {
       const link = xml.match(/<link>(.*?)<\/link>/s)?.[1] || '';
-      return link.match(/\/film\/([^/?#]+)/)?.[1] === slug;
+      const feedSlug = link.match(/\/film\/([^/?#]+)/)?.[1];
+      return feedSlug && normalizeSlug(feedSlug) === normalizeSlug(slug);
     });
     if (!item) return null;
 
