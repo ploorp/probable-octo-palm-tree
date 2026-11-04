@@ -467,8 +467,8 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
 
     // user.gettoptracks is ordered by user playcount, so filtering this list preserves ranking.
     const PAGE_LIMIT = 200;
-    for (let page = 1; page <= 10; page++) {
-      const response = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+    const PAGE_BATCH_SIZE = 5;
+    const fetchPage = async (page: number) => axios.get('https://ws.audioscrobbler.com/2.0/', {
         headers: {
           'User-Agent': 'ploorp',
         },
@@ -484,6 +484,22 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
         timeout: 5000,
       });
 
+    const firstResponse = await fetchPage(1);
+    const firstAttr = firstResponse.data?.toptracks?.['@attr'];
+    const totalPages = parseInt(firstAttr?.totalPages ?? '0', 10);
+    const pages = [firstResponse];
+
+    for (let firstPage = 2; firstPage <= totalPages; firstPage += PAGE_BATCH_SIZE) {
+      const batch = await Promise.all(
+        Array.from(
+          { length: Math.min(PAGE_BATCH_SIZE, totalPages - firstPage + 1) },
+          (_, index) => fetchPage(firstPage + index)
+        )
+      );
+      pages.push(...batch);
+    }
+
+    for (const response of pages) {
       const topTracks = response.data?.toptracks?.track;
       const tracks = Array.isArray(topTracks) ? topTracks : topTracks ? [topTracks] : [];
 
@@ -500,12 +516,6 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
       }
 
       if (collected.length >= MAX_OUTPUT_ITEMS) break;
-
-      const attr = response.data?.toptracks?.['@attr'];
-      const totalPages = parseInt(attr?.totalPages ?? '0', 10);
-      if (!tracks.length || (Number.isFinite(totalPages) && totalPages <= page)) {
-        break;
-      }
     }
 
     if (collected.length === 0) {
