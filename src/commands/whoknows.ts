@@ -490,13 +490,17 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
     const pages = [firstResponse];
 
     for (let firstPage = 2; firstPage <= totalPages; firstPage += PAGE_BATCH_SIZE) {
-      const batch = await Promise.all(
+      const batch = await Promise.allSettled(
         Array.from(
           { length: Math.min(PAGE_BATCH_SIZE, totalPages - firstPage + 1) },
           (_, index) => fetchPage(firstPage + index)
         )
       );
-      pages.push(...batch);
+      pages.push(
+        ...batch
+          .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof fetchPage>>> => result.status === 'fulfilled')
+          .map((result) => result.value)
+      );
     }
 
     for (const response of pages) {
@@ -524,7 +528,8 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
 
     const parts = collected.slice(0, MAX_OUTPUT_ITEMS).map((track, i) => `${i + 1}. ${track.name} (${track.playcount})`);
     return sendLimitedListMessage(msg, `${account}'s top tracks for ${correctedArtist}`, parts, msg.messageID);
-  } catch {
+  } catch (error: any) {
+    timeLog(`artist tracks failed: ${error?.message || error}`);
     return saySafe(msg.channelName, 'error Reacting', msg.messageID);
   }
 }
