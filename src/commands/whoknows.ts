@@ -531,7 +531,32 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
       return saySafe(msg.channelName, 'no scrobbles for this artist', msg.messageID);
     }
 
-    const parts = collected.slice(0, MAX_OUTPUT_ITEMS).map((track, i) => `${i + 1}. ${track.name} (${track.playcount})`);
+    const outputTracks = collected.slice(0, MAX_OUTPUT_ITEMS);
+    if (!allScrobbles) {
+      await Promise.all(outputTracks.map(async (track) => {
+        try {
+          const response = await axios.get('https://ws.audioscrobbler.com/2.0/', {
+            headers: { 'User-Agent': 'ploorp' },
+            params: {
+              method: 'track.getinfo',
+              artist: correctedArtist,
+              track: track.name,
+              username: account,
+              api_key: config.lastfm.client_id,
+              format: 'json',
+              autocorrect: 1,
+            },
+            timeout: LASTFM_TIMEOUT,
+          });
+          const playcount = parseInt(response.data?.track?.userplaycount ?? '', 10);
+          if (Number.isFinite(playcount)) track.playcount = playcount;
+        } catch {
+          // Keep the recent-period count if the all-time lookup fails.
+        }
+      }));
+    }
+
+    const parts = outputTracks.map((track, i) => `${i + 1}. ${track.name} (${track.playcount})`);
     const scope = allScrobbles ? 'top tracks' : 'recent tracks';
     return sendLimitedListMessage(msg, `${account}'s ${scope} for ${correctedArtist}`, parts, msg.messageID);
   } catch (error: any) {
