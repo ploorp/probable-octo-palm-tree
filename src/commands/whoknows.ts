@@ -10,6 +10,7 @@ const IGNORE_FLAGS = new Set(['-ignore', '-i']);
 const SELF_FLAGS = new Set(['-self', '-s']);
 const MESSAGE_LIMIT = 490;
 const MAX_OUTPUT_ITEMS = 20;
+const LASTFM_TIMEOUT = 15000;
 
 function formatWhoKnowsUsername(displayName: string, antiPing: boolean, forceIgnore: boolean) {
   return antiPing || forceIgnore ? `@¾${unPing(displayName)}` : `@${displayName}`;
@@ -467,7 +468,7 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
 
     // user.gettoptracks is ordered by user playcount, so filtering this list preserves ranking.
     const PAGE_LIMIT = 200;
-    const PAGE_BATCH_SIZE = 5;
+    const PAGE_BATCH_SIZE = 3;
     const fetchPage = async (page: number) => axios.get('https://ws.audioscrobbler.com/2.0/', {
         headers: {
           'User-Agent': 'ploorp',
@@ -481,7 +482,7 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
           limit: PAGE_LIMIT,
           page,
         },
-        timeout: 5000,
+        timeout: LASTFM_TIMEOUT,
       });
 
     const firstResponse = await fetchPage(1);
