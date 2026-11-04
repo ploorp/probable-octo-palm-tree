@@ -503,7 +503,7 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
 
       const attr = response.data?.toptracks?.['@attr'];
       const totalPages = parseInt(attr?.totalPages ?? '0', 10);
-      if (!tracks.length || !Number.isFinite(totalPages) || totalPages <= page) {
+      if (!tracks.length || (Number.isFinite(totalPages) && totalPages <= page)) {
         break;
       }
     }
