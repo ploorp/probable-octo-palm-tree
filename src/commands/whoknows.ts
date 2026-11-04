@@ -8,6 +8,7 @@ import { getUserInfo, timeLog, unPing, uploadToHastebin } from '../utils.js';
 
 const IGNORE_FLAGS = new Set(['-ignore', '-i']);
 const SELF_FLAGS = new Set(['-self', '-s']);
+const ALL_ARTIST_FLAGS = new Set(['-all', '-a']);
 const MESSAGE_LIMIT = 490;
 const MAX_OUTPUT_ITEMS = 20;
 const LASTFM_TIMEOUT = 15000;
@@ -399,9 +400,11 @@ export async function whoKnowsTrack(msg: PrivmsgMessage, args: string[]) {
 export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
   let account: string | null = null;
   let artistName: string | null = null;
+  const allScrobbles = args.some((arg) => ALL_ARTIST_FLAGS.has(arg.toLowerCase()));
+  const filteredArgs = args.filter((arg) => !ALL_ARTIST_FLAGS.has(arg.toLowerCase()));
 
-  if (args.length > 1 && args[1].startsWith('@')) {
-    const twitchUsername = args[1].replace(/^@/, '');
+  if (filteredArgs.length > 1 && filteredArgs[1].startsWith('@')) {
+    const twitchUsername = filteredArgs[1].replace(/^@/, '');
     const twitchId = await getUserId(twitchUsername);
 
     if (!twitchId) {
@@ -419,14 +422,14 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
       }
     }
 
-    artistName = args.length > 2 ? args.slice(2).join(' ').trim() : null;
+    artistName = filteredArgs.length > 2 ? filteredArgs.slice(2).join(' ').trim() : null;
   } else {
     account = getAccount(msg.senderUserID, 'lastfm');
-    artistName = args.length > 1 ? args.slice(1).join(' ').trim() : null;
+    artistName = filteredArgs.length > 1 ? filteredArgs.slice(1).join(' ').trim() : null;
   }
 
   if (!account) {
-    if (args.length > 1 && args[1].startsWith('@')) {
+    if (filteredArgs.length > 1 && filteredArgs[1].startsWith('@')) {
       return saySafe(msg.channelName, 'no lastfm account found saj', msg.messageID);
     }
     return saySafe(msg.channelName, `You are not linked to last.fm 😭 Use ${getPrefix(msg.channelID)}link <username> to link your account.`, msg.messageID);
@@ -469,6 +472,7 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
     // user.gettoptracks is ordered by user playcount, so filtering this list preserves ranking.
     const PAGE_LIMIT = 200;
     const PAGE_BATCH_SIZE = 3;
+    const period = allScrobbles ? 'overall' : '7day';
     const fetchPage = async (page: number) => axios.get('https://ws.audioscrobbler.com/2.0/', {
         headers: {
           'User-Agent': 'ploorp',
@@ -478,7 +482,7 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
           user: account,
           api_key: config.lastfm.client_id,
           format: 'json',
-          period: 'overall',
+          period,
           limit: PAGE_LIMIT,
           page,
         },
@@ -490,7 +494,7 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
     const totalPages = parseInt(firstAttr?.totalPages ?? '0', 10);
     const pages = [firstResponse];
 
-    for (let firstPage = 2; firstPage <= totalPages; firstPage += PAGE_BATCH_SIZE) {
+    for (let firstPage = 2; allScrobbles && firstPage <= totalPages; firstPage += PAGE_BATCH_SIZE) {
       const batch = await Promise.allSettled(
         Array.from(
           { length: Math.min(PAGE_BATCH_SIZE, totalPages - firstPage + 1) },
@@ -528,7 +532,8 @@ export async function topArtistTracks(msg: PrivmsgMessage, args: string[]) {
     }
 
     const parts = collected.slice(0, MAX_OUTPUT_ITEMS).map((track, i) => `${i + 1}. ${track.name} (${track.playcount})`);
-    return sendLimitedListMessage(msg, `${account}'s top tracks for ${correctedArtist}`, parts, msg.messageID);
+    const scope = allScrobbles ? 'top tracks' : 'recent tracks';
+    return sendLimitedListMessage(msg, `${account}'s ${scope} for ${correctedArtist}`, parts, msg.messageID);
   } catch (error: any) {
     timeLog(`artist tracks failed: ${error?.message || error}`);
     return saySafe(msg.channelName, 'error Reacting', msg.messageID);
