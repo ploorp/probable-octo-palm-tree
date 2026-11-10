@@ -7,6 +7,7 @@ export type TwitchAccountStatus = {
   id?: string;
   login: string;
   banType?: string;
+  updatedAt?: string;
 };
 
 export async function getTwitchAccountStatus(username: string): Promise<TwitchAccountStatus | null> {
@@ -23,6 +24,7 @@ export async function getTwitchAccountStatus(username: string): Promise<TwitchAc
           ... on UserError { key }
           ... on User { id login }
         }
+        user(lookupType: ALL, login: $login) { id login updatedAt }
       }`,
       variables: { login: username }
     }])
@@ -36,13 +38,15 @@ export async function getTwitchAccountStatus(username: string): Promise<TwitchAc
   const payload = await response.json() as Array<{
     data?: {
       userResultByLogin?: { id?: string; login?: string; key?: string; reason?: string };
+      user?: { id?: string; login?: string; updatedAt?: string };
     };
   }>;
   const user = payload[0]?.data?.userResultByLogin;
+  const allUser = payload[0]?.data?.user;
   if (!user) return null;
 
   if (user.reason) {
-    return { login: user.key ?? username, banType: user.reason };
+    return { login: user.key ?? username, banType: user.reason, updatedAt: allUser?.updatedAt };
   }
 
   if (!user.id || !user.login) return null;
