@@ -132,7 +132,8 @@ export async function approveAutomodMessage(messageId: string, moderatorId: stri
 }
 
 export async function getUserId(username: string): Promise<string | null> {
-  const res = await fetch(`https://api.twitch.tv/helix/users?login=${username}`, {
+  const params = new URLSearchParams({ login: username });
+  const res = await fetch(`https://api.twitch.tv/helix/users?${params.toString()}`, {
     headers: {
       "Client-ID": clientId,
       "Authorization": `Bearer ${accessToken}`
@@ -153,7 +154,8 @@ export async function getUserId(username: string): Promise<string | null> {
 }
 
 export async function getUsername(userId: string): Promise<string | null> {
-  const res = await fetch(`https://api.twitch.tv/helix/users?id=${userId}`, {
+  const params = new URLSearchParams({ id: userId });
+  const res = await fetch(`https://api.twitch.tv/helix/users?${params.toString()}`, {
     headers: {
       "Client-ID": clientId,
       "Authorization": `Bearer ${accessToken}`

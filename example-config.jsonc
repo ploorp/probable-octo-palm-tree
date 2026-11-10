@@ -21,6 +21,9 @@
     "access_token": "https://twitchtokengenerator.com/", // pick the correct scopes (user:read:chat, user:write:chat, user:manage:whispers, channel:moderate, moderator:manage:automod)
     "helix_id": "gp762nuuoqcoxypju8c569th9wz7q5" // ttg default id
   },
+  "twitch": {
+    "web_client_id": "" // Twitch web client ID for GraphQL account-status lookups
+  },
   "lastfm": {
     "client_id": "", // https://www.last.fm/api/authentication
     "always_ignore": false // always use -ignore for whoknows output

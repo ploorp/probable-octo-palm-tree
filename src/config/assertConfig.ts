@@ -16,6 +16,9 @@ export type AppConfig = {
     access_token: string;
     helix_id: string;
   };
+  twitch: {
+    web_client_id: string;
+  };
   lastfm: {
     client_id: string;
     always_ignore?: boolean;
@@ -92,6 +95,10 @@ export function assertConfig(rawConfig: Record<string, unknown>): asserts rawCon
   
   if (typeof helix.helix_id !== 'string') {
     throw new Error('config.helix.helix_id must be a string');
+  }
+  const twitch = (rawConfig as any).twitch;
+  if (!twitch || typeof twitch !== 'object' || typeof twitch.web_client_id !== 'string') {
+    throw new Error('config.twitch.web_client_id must be a string');
   }
 
   const lastfm = (rawConfig as any).lastfm;

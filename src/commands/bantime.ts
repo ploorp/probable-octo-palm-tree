@@ -1,42 +1,61 @@
 import { PrivmsgMessage } from '@mastondzn/dank-twitch-irc';
 import { saySafe } from '../client.js';
-import { getBanInfo, getUserId } from '../api/helix.js';
+import { getBanInfo } from '../api/helix.js';
+import { getTwitchAccountStatus } from '../api/twitch.js';
 
-function formatDuration(createdAt: string): string {
-  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - Date.parse(createdAt)) / 1000));
-  const days = Math.floor(elapsedSeconds / 86400);
-  const hours = Math.floor((elapsedSeconds % 86400) / 3600);
-  const minutes = Math.floor((elapsedSeconds % 3600) / 60);
-
+function formatDuration(seconds: number): string {
+  let remaining = Math.max(0, Math.floor(seconds));
+  const units = [
+    { size: 31536000, name: 'year' },
+    { size: 86400, name: 'day' },
+    { size: 3600, name: 'hour' },
+    { size: 60, name: 'minute' }
+  ];
   const parts: string[] = [];
-  if (days) parts.push(`${days}d`);
-  if (hours || days) parts.push(`${hours}h`);
-  parts.push(`${minutes}m`);
-  return parts.join(' ');
+
+  for (const unit of units) {
+    const count = Math.floor(remaining / unit.size);
+    if (!count) continue;
+    parts.push(`${count} ${unit.name}${count === 1 ? '' : 's'}`);
+    remaining %= unit.size;
+    if (parts.length === 2) break;
+  }
+
+  return parts.join(' ') || 'less than 1 minute';
 }
 
 export async function bantimeCommand(msg: PrivmsgMessage, args: string[]) {
   const requestedName = args[1]?.replace(/^@/, '').trim();
-  const username = requestedName || msg.senderUsername || msg.displayName;
-  if (!username) {
-    return saySafe(msg.channelName, 'Usage: %bantime <username>', msg.messageID);
-  }
-
-  const userId = await getUserId(username);
-  if (!userId) {
-    return saySafe(msg.channelName, `user ${username} not found`, msg.messageID);
+  if (!requestedName) {
+    return saySafe(msg.channelName, '%bantime <username>', msg.messageID);
   }
 
   try {
-    const ban = await getBanInfo(userId, msg.channelID);
-    if (!ban) {
-      return saySafe(msg.channelName, `${username} is not currently banned.`, msg.messageID);
+    const account = await getTwitchAccountStatus(requestedName);
+    if (!account) {
+      return saySafe(msg.channelName, `${requestedName} not found`, msg.messageID);
     }
 
-    const duration = ban.endTime ? `${formatDuration(ban.createdAt)} (until ${ban.endTime})` : `${formatDuration(ban.createdAt)} (permanent)`;
-    const reason = ban.reason ? ` Reason: ${ban.reason}` : '';
-    return saySafe(msg.channelName, `${ban.userLogin} has been banned for ${duration}.${reason}`, msg.messageID);
+    if (account.banType) {
+      return saySafe(msg.channelName, `${account.login} ${account.banType}`, msg.messageID);
+    }
+
+    if (!account.id) {
+      return saySafe(msg.channelName, `${requestedName} not banned`, msg.messageID);
+    }
+
+    const ban = await getBanInfo(account.id, msg.channelID);
+    if (!ban) {
+      return saySafe(msg.channelName, `${account.login} not banned`, msg.messageID);
+    }
+
+    const elapsed = formatDuration((Date.now() - Date.parse(ban.createdAt)) / 1000);
+    const remaining = ban.endTime
+      ? ` remaining ${formatDuration((Date.parse(ban.endTime) - Date.now()) / 1000)}`
+      : ' permanent';
+    const reason = ban.reason ? ` reason ${ban.reason}` : '';
+    return saySafe(msg.channelName, `${ban.userLogin} BANNED ${elapsed}${remaining}${reason}`, msg.messageID);
   } catch {
-    return saySafe(msg.channelName, `could not look up ${username}'s ban`, msg.messageID);
+    return saySafe(msg.channelName, `${requestedName} lookup failed`, msg.messageID);
   }
 }
