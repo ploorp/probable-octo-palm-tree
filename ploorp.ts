@@ -32,6 +32,7 @@ import paste from './src/commands/paste.js';
 import { triviaCommand, handleTriviaAnswer } from './src/commands/trivia.js';
 import moviegame, { handleMoviegameQuickAnswer } from './src/commands/moviegame.js';
 import { importTriviaFromCsv } from './src/db/triviaLoader.js';
+import { bantimeCommand } from './src/commands/bantime.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
@@ -214,6 +215,10 @@ client.on('PRIVMSG', async (msg: PrivmsgMessage) => {
       case 'trivia':
       case 'triv':
         await triviaCommand(msg, args);
+        return;
+
+      case 'bantime':
+        await bantimeCommand(msg, args);
         return;
 
       case 'setlastfm':

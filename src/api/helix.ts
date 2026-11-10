@@ -204,6 +204,37 @@ export async function getUsernames(userIds: string[]): Promise<Map<string, strin
   return result;
 }
 
+export type TwitchBanInfo = {
+  userId: string;
+  userLogin: string;
+  reason: string | null;
+  createdAt: string;
+  endTime: string | null;
+};
+
+export async function getBanInfo(userId: string, broadcasterId: string): Promise<TwitchBanInfo | null> {
+  const params = new URLSearchParams({
+    broadcaster_id: broadcasterId,
+    moderator_id: config.id,
+    user_id: userId
+  });
+
+  const res = await fetch(`${BAN_API}?${params.toString()}`, {
+    headers: {
+      'Client-ID': clientId,
+      'Authorization': `Bearer ${accessToken}`
+    }
+  });
+
+  if (!res.ok) {
+    timeLog(`getBanInfo failed: status ${res.status}`);
+    throw new Error(`Twitch ban lookup failed with status ${res.status}`);
+  }
+
+  const data = await res.json() as { data?: TwitchBanInfo[] };
+  return data.data?.[0] ?? null;
+}
+
 export async function whisperUser(userId: string, message: string): Promise<[boolean, number, any]> {
   try {
     const url = `https://api.twitch.tv/helix/whispers?from_user_id=${encodeURIComponent(config.id)}&to_user_id=${encodeURIComponent(userId)}`;
