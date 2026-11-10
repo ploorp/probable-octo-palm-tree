@@ -31,11 +31,17 @@ import plays from './src/commands/plays.js';
 import paste from './src/commands/paste.js';
 import { triviaCommand, handleTriviaAnswer } from './src/commands/trivia.js';
 import moviegame, { handleMoviegameQuickAnswer } from './src/commands/moviegame.js';
+import { importTriviaFromCsv } from './src/db/triviaLoader.js';
 
 const startTime = new Date();
 const cooldowns = new Map();
 
 timeLog('Bot is starting');
+try {
+  importTriviaFromCsv();
+} catch (error) {
+  timeLog(`Failed to import trivia CSV: ${error instanceof Error ? error.message : String(error)}`);
+}
 await updateWhitelist();
 
 
