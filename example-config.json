@@ -20,6 +20,9 @@
     "access_token": "https://twitchtokengenerator.com/",
     "helix_id": "gp762nuuoqcoxypju8c569th9wz7q5"
   },
+  "twitch": {
+    "web_client_id": "kimne78kx3ncx6brgo4mv6wki5h1ko"
+  },
   "lastfm": {
     "client_id": "",
     "always_ignore": false
