@@ -22,7 +22,7 @@
     "helix_id": "gp762nuuoqcoxypju8c569th9wz7q5" // ttg default id
   },
   "twitch": {
-    "web_client_id": "" // Twitch web client ID for GraphQL account-status lookups
+    "web_client_id": "kimne78kx3ncx6brgo4mv6wki5h1ko" // Twitch web client ID for GraphQL account-status lookups
   },
   "lastfm": {
     "client_id": "", // https://www.last.fm/api/authentication
