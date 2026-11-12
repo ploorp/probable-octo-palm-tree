@@ -15,8 +15,8 @@ export default async function unicode(msg: PrivmsgMessage, args: string[]) {
   const link = `https://www.babelstone.co.uk/Unicode/whatisit.html?string=${encodeURIComponent(message)}`;
 
   try {
-    const shortenerResponse = await axios.get(`https://da.gd/shorten?url=${encodeURIComponent(link)}`);
-    const shortenedUrl = shortenerResponse.data;
+    const shortenerResponse = await axios.post('https://spoo.me/api/v1/shorten', { long_url: link });
+    const shortenedUrl = shortenerResponse.data.short_url;
 
     return saySafe(msg.channelName, `${shortenedUrl}`, msg.messageID);
   } catch (error: any) {
